@@ -7,3 +7,4 @@ __pycache__/
 data/
 repaircalc.zip
 repaircalc_local.sqlite
+.DS_Store
