@@ -1,0 +1,382 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Синтетический пример в формате YML, как у организаторов. Не реальные товары. -->
+<yml_catalog date="2026-10-20 10:00">
+<shop>
+<name>Демо-магазин</name>
+<currencies><currency id="RUR" rate="1"/></currencies>
+<categories>
+  <category id="2">Отделочные материалы</category>
+  <category id="33" parentId="2">Плитка и керамогранит</category>
+  <category id="34" parentId="2">Ламинат</category>
+  <category id="35" parentId="2">Обои</category>
+  <category id="36" parentId="2">Краски</category>
+  <category id="41" parentId="2">Линолеум</category>
+  <category id="3">Стройматериалы</category>
+  <category id="37" parentId="3">Гипсокартон</category>
+  <category id="38" parentId="3">Сухие смеси и грунтовки</category>
+  <category id="4">Электрика</category>
+  <category id="39" parentId="4">Кабель и провод</category>
+  <category id="40" parentId="4">Розетки и выключатели</category>
+  <category id="42" parentId="3">Крепёж</category>
+  <category id="43">Инструмент</category>
+</categories>
+<offers>
+  <offer id="96611" available="true">
+    <url>https://example.com/catalog/96611/</url>
+    <price>1650</price>
+    <oldprice>1800</oldprice>
+    <currencyId>RUR</currencyId>
+    <categoryId>33</categoryId>
+    <name>Керамогранит напольный Стоун серый 60x60 см</name>
+    <vendor>Бренд 33</vendor>
+    <vendorCode>SKU-96611</vendorCode>
+    <description>Керамогранит напольный Стоун серый 60x60 см. Синтетическое описание для разработки.</description>
+    <param name="Единица измерения">упак.</param>
+    <param name="Размер">600x600 мм</param>
+    <param name="Толщина, мм">9</param>
+    <param name="Количество в упаковке">4 шт</param>
+    <param name="Площадь в упаковке, м2">1,44</param>
+  </offer>
+  <offer id="96612" available="true">
+    <url>https://example.com/catalog/96612/</url>
+    <price>1290</price>
+    <currencyId>RUR</currencyId>
+    <categoryId>33</categoryId>
+    <name>Плитка настенная Аква белая глянцевая 25x40 см</name>
+    <vendor>Бренд 33</vendor>
+    <vendorCode>SKU-96612</vendorCode>
+    <description>Плитка настенная Аква белая глянцевая 25x40 см. Синтетическое описание для разработки.</description>
+    <param name="Единица измерения">упак.</param>
+    <param name="Размер">250x400 мм</param>
+    <param name="Назначение">для ванной комнаты</param>
+    <param name="Количество в упаковке">15 шт</param>
+    <param name="Площадь в упаковке, м2">1,5</param>
+  </offer>
+  <offer id="96613" available="true">
+    <url>https://example.com/catalog/96613/</url>
+    <price>1599</price>
+    <currencyId>RUR</currencyId>
+    <categoryId>34</categoryId>
+    <name>Ламинат Дуб натуральный 33 класс 8 мм</name>
+    <vendor>Бренд 34</vendor>
+    <vendorCode>SKU-96613</vendorCode>
+    <description>Ламинат Дуб натуральный 33 класс 8 мм. Синтетическое описание для разработки.</description>
+    <param name="Единица измерения">упак.</param>
+    <param name="Класс износостойкости">33</param>
+    <param name="Толщина">8 мм</param>
+    <param name="Площадь в упаковке, м2">2,131</param>
+    <param name="Площадь в упаковке, м2">2,131</param>
+  </offer>
+  <offer id="96614" available="true">
+    <url>https://example.com/catalog/96614/</url>
+    <price>2290</price>
+    <currencyId>RUR</currencyId>
+    <categoryId>34</categoryId>
+    <name>Ламинат влагостойкий Аквастоп Дуб серый 33 класс</name>
+    <vendor>Бренд 34</vendor>
+    <vendorCode>SKU-96614</vendorCode>
+    <description>Ламинат влагостойкий Аквастоп Дуб серый 33 класс. Синтетическое описание для разработки.</description>
+    <param name="Единица измерения">упак.</param>
+    <param name="Класс износостойкости">33</param>
+    <param name="Площадь в упаковке">1,996 м²</param>
+    <param name="Площадь в упаковке, м2">1,996</param>
+  </offer>
+  <offer id="96615" available="true">
+    <url>https://example.com/catalog/96615/</url>
+    <price>1890</price>
+    <currencyId>RUR</currencyId>
+    <categoryId>35</categoryId>
+    <name>Обои флизелиновые моющиеся Лён бежевые 1,06x10 м</name>
+    <vendor>Бренд 35</vendor>
+    <vendorCode>SKU-96615</vendorCode>
+    <description>Обои флизелиновые моющиеся Лён бежевые 1,06x10 м. Синтетическое описание для разработки.</description>
+    <param name="Единица измерения">шт</param>
+    <param name="Ширина, м">1,06</param>
+    <param name="Длина, м">10</param>
+    <param name="Раппорт">64 см</param>
+  </offer>
+  <offer id="96616" available="true">
+    <url>https://example.com/catalog/96616/</url>
+    <price>590</price>
+    <currencyId>RUR</currencyId>
+    <categoryId>35</categoryId>
+    <name>Обои бумажные Ромашки 0,53x10,05 м</name>
+    <vendor>Бренд 35</vendor>
+    <vendorCode>SKU-96616</vendorCode>
+    <description>Обои бумажные Ромашки 0,53x10,05 м. Синтетическое описание для разработки.</description>
+    <param name="Единица измерения">шт</param>
+    <param name="Ширина">0,53 м</param>
+    <param name="Длина">10,05 м</param>
+    <param name="Раппорт">0 см</param>
+  </offer>
+  <offer id="96617" available="true">
+    <url>https://example.com/catalog/96617/</url>
+    <price>1450</price>
+    <currencyId>RUR</currencyId>
+    <categoryId>36</categoryId>
+    <name>Краска интерьерная моющаяся белая 2,5 л</name>
+    <vendor>Бренд 36</vendor>
+    <vendorCode>SKU-96617</vendorCode>
+    <description>Краска интерьерная моющаяся белая 2,5 л. Синтетическое описание для разработки.</description>
+    <param name="Единица измерения">шт</param>
+    <param name="Объем">2,5 л</param>
+    <param name="Расход">0,1-0,14 л/м²</param>
+  </offer>
+  <offer id="96618" available="true">
+    <url>https://example.com/catalog/96618/</url>
+    <price>1790</price>
+    <currencyId>RUR</currencyId>
+    <categoryId>36</categoryId>
+    <name>Краска влагостойкая для ванных и кухонь 2,5 л</name>
+    <vendor>Бренд 36</vendor>
+    <vendorCode>SKU-96618</vendorCode>
+    <description>Краска влагостойкая для ванных и кухонь 2,5 л. Синтетическое описание для разработки.</description>
+    <param name="Единица измерения">шт</param>
+    <param name="Объем, л">2,5</param>
+    <param name="Расход, л/м2">0,12</param>
+  </offer>
+  <offer id="96619" available="true">
+    <url>https://example.com/catalog/96619/</url>
+    <price>520</price>
+    <currencyId>RUR</currencyId>
+    <categoryId>37</categoryId>
+    <name>Гипсокартон ГКЛ 12,5 мм 2500x1200 мм</name>
+    <vendor>Бренд 37</vendor>
+    <vendorCode>SKU-96619</vendorCode>
+    <description>Гипсокартон ГКЛ 12,5 мм 2500x1200 мм. Синтетическое описание для разработки.</description>
+    <param name="Единица измерения">шт</param>
+    <param name="Длина, мм">2500</param>
+    <param name="Ширина, мм">1200</param>
+    <param name="Толщина, мм">12,5</param>
+  </offer>
+  <offer id="96620" available="true">
+    <url>https://example.com/catalog/96620/</url>
+    <price>690</price>
+    <currencyId>RUR</currencyId>
+    <categoryId>37</categoryId>
+    <name>Гипсокартон влагостойкий ГКЛВ 12,5 мм 2500x1200 мм</name>
+    <vendor>Бренд 37</vendor>
+    <vendorCode>SKU-96620</vendorCode>
+    <description>Гипсокартон влагостойкий ГКЛВ 12,5 мм 2500x1200 мм. Синтетическое описание для разработки.</description>
+    <param name="Единица измерения">шт</param>
+    <param name="Длина, мм">2500</param>
+    <param name="Ширина, мм">1200</param>
+    <param name="Толщина, мм">12,5</param>
+  </offer>
+  <offer id="96621" available="true">
+    <url>https://example.com/catalog/96621/</url>
+    <price>590</price>
+    <currencyId>RUR</currencyId>
+    <categoryId>38</categoryId>
+    <name>Клей для плитки усиленный 25 кг</name>
+    <vendor>Бренд 38</vendor>
+    <vendorCode>SKU-96621</vendorCode>
+    <description>Клей для плитки усиленный 25 кг. Синтетическое описание для разработки.</description>
+    <param name="Единица измерения">шт</param>
+    <param name="Вес">25 кг</param>
+    <param name="Расход">4,5 кг/м2</param>
+  </offer>
+  <offer id="96622" available="true">
+    <url>https://example.com/catalog/96622/</url>
+    <price>890</price>
+    <currencyId>RUR</currencyId>
+    <categoryId>38</categoryId>
+    <name>Грунтовка глубокого проникновения 10 л</name>
+    <vendor>Бренд 38</vendor>
+    <vendorCode>SKU-96622</vendorCode>
+    <description>Грунтовка глубокого проникновения 10 л. Синтетическое описание для разработки.</description>
+    <param name="Единица измерения">шт</param>
+    <param name="Объем">10 л</param>
+    <param name="Расход">0,1-0,2 л/м²</param>
+  </offer>
+  <offer id="96623" available="true">
+    <url>https://example.com/catalog/96623/</url>
+    <price>89</price>
+    <currencyId>RUR</currencyId>
+    <categoryId>39</categoryId>
+    <name>Кабель ВВГнг-LS 3x2,5 мм²</name>
+    <vendor>Бренд 39</vendor>
+    <vendorCode>SKU-96623</vendorCode>
+    <description>Кабель ВВГнг-LS 3x2,5 мм². Синтетическое описание для разработки.</description>
+    <param name="Единица измерения">м</param>
+    <param name="Сечение жилы">2,5 мм²</param>
+    <param name="Количество жил">3</param>
+  </offer>
+  <offer id="96624" available="true">
+    <url>https://example.com/catalog/96624/</url>
+    <price>290</price>
+    <currencyId>RUR</currencyId>
+    <categoryId>40</categoryId>
+    <name>Розетка с заземлением белая</name>
+    <vendor>Бренд 40</vendor>
+    <vendorCode>SKU-96624</vendorCode>
+    <description>Розетка с заземлением белая. Синтетическое описание для разработки.</description>
+    <param name="Единица измерения">шт</param>
+    <param name="Цвет">Белый</param>
+  </offer>
+  <offer id="96625" available="true">
+    <url>https://example.com/catalog/96625/</url>
+    <price>240</price>
+    <currencyId>RUR</currencyId>
+    <categoryId>40</categoryId>
+    <name>Выключатель одноклавишный белый</name>
+    <vendor>Бренд 40</vendor>
+    <vendorCode>SKU-96625</vendorCode>
+    <description>Выключатель одноклавишный белый. Синтетическое описание для разработки.</description>
+    <param name="Единица измерения">шт</param>
+    <param name="Цвет">Белый</param>
+  </offer>
+  <offer id="96626" available="true">
+    <url>https://example.com/catalog/96626/</url>
+    <price>549</price>
+    <currencyId>RUR</currencyId>
+    <categoryId>41</categoryId>
+    <name>Линолеум бытовой Паркет светлый ширина 3 м</name>
+    <vendor>Бренд 41</vendor>
+    <vendorCode>SKU-96626</vendorCode>
+    <description>Линолеум бытовой Паркет светлый ширина 3 м. Синтетическое описание для разработки.</description>
+    <param name="Единица измерения">м2</param>
+    <param name="Ширина рулона">3 м</param>
+    <param name="Толщина">2,5 мм</param>
+  </offer>
+  <offer id="96627" available="false">
+    <url>https://example.com/catalog/96627/</url>
+    <price>1199</price>
+    <currencyId>RUR</currencyId>
+    <categoryId>34</categoryId>
+    <name>Ламинат Ясень 32 класс 7 мм (нет в наличии)</name>
+    <vendor>Бренд 34</vendor>
+    <vendorCode>SKU-96627</vendorCode>
+    <description>Ламинат Ясень 32 класс 7 мм (нет в наличии). Синтетическое описание для разработки.</description>
+    <param name="Единица измерения">упак.</param>
+    <param name="Площадь в упаковке, м2">2,397</param>
+    <param name="Площадь в упаковке, м2">2,397</param>
+  </offer>
+  <offer id="96628" available="true">
+    <url>https://example.com/catalog/96628/</url>
+    <price>320</price>
+    <currencyId>RUR</currencyId>
+    <categoryId>38</categoryId>
+    <name>Затирка для швов плитки цементная белая 2 кг</name>
+    <vendor>Бренд</vendor>
+    <vendorCode>SKU-96628</vendorCode>
+    <description>Затирка для швов плитки цементная белая 2 кг. Синтетическое описание для разработки.</description>
+    <param name="Единица измерения">шт</param>
+    <param name="Вес">2 кг</param>
+    <param name="Расход">0,5 кг/м2</param>
+  </offer>
+  <offer id="96629" available="true">
+    <url>https://example.com/catalog/96629/</url>
+    <price>210</price>
+    <currencyId>RUR</currencyId>
+    <categoryId>37</categoryId>
+    <name>Профиль потолочный для гипсокартона ПП 60x27, 3 м</name>
+    <vendor>Бренд</vendor>
+    <vendorCode>SKU-96629</vendorCode>
+    <description>Профиль потолочный для гипсокартона ПП 60x27, 3 м. Синтетическое описание для разработки.</description>
+    <param name="Единица измерения">шт</param>
+    <param name="Длина, м">3</param>
+  </offer>
+  <offer id="96630" available="true">
+    <url>https://example.com/catalog/96630/</url>
+    <price>260</price>
+    <currencyId>RUR</currencyId>
+    <categoryId>42</categoryId>
+    <name>Саморезы по гипсокартону 3,5x25 мм, 200 шт</name>
+    <vendor>Бренд</vendor>
+    <vendorCode>SKU-96630</vendorCode>
+    <description>Саморезы по гипсокартону 3,5x25 мм, 200 шт. Синтетическое описание для разработки.</description>
+    <param name="Единица измерения">упак.</param>
+    <param name="Количество в упаковке">200</param>
+  </offer>
+  <offer id="96631" available="true">
+    <url>https://example.com/catalog/96631/</url>
+    <price>980</price>
+    <currencyId>RUR</currencyId>
+    <categoryId>38</categoryId>
+    <name>Шпаклёвка финишная полимерная 20 кг</name>
+    <vendor>Бренд</vendor>
+    <vendorCode>SKU-96631</vendorCode>
+    <description>Шпаклёвка финишная полимерная 20 кг. Синтетическое описание для разработки.</description>
+    <param name="Единица измерения">шт</param>
+    <param name="Вес">20 кг</param>
+    <param name="Расход">1,2 кг/м2</param>
+  </offer>
+  <offer id="96632" available="true">
+    <url>https://example.com/catalog/96632/</url>
+    <price>2150</price>
+    <currencyId>RUR</currencyId>
+    <categoryId>38</categoryId>
+    <name>Гидроизоляция обмазочная для ванной 15 кг</name>
+    <vendor>Бренд</vendor>
+    <vendorCode>SKU-96632</vendorCode>
+    <description>Гидроизоляция обмазочная для ванной 15 кг. Синтетическое описание для разработки.</description>
+    <param name="Единица измерения">шт</param>
+    <param name="Вес">15 кг</param>
+    <param name="Расход">1,5 кг/м2</param>
+  </offer>
+  <offer id="96633" available="true">
+    <url>https://example.com/catalog/96633/</url>
+    <price>450</price>
+    <currencyId>RUR</currencyId>
+    <categoryId>34</categoryId>
+    <name>Подложка под ламинат 2 мм, 10 м2</name>
+    <vendor>Бренд</vendor>
+    <vendorCode>SKU-96633</vendorCode>
+    <description>Подложка под ламинат 2 мм, 10 м2. Синтетическое описание для разработки.</description>
+    <param name="Единица измерения">упак.</param>
+    <param name="Толщина, мм">2</param>
+    <param name="Площадь в упаковке, м2">10</param>
+  </offer>
+  <offer id="96634" available="true">
+    <url>https://example.com/catalog/96634/</url>
+    <price>390</price>
+    <currencyId>RUR</currencyId>
+    <categoryId>35</categoryId>
+    <name>Клей для флизелиновых обоев 250 г</name>
+    <vendor>Бренд</vendor>
+    <vendorCode>SKU-96634</vendorCode>
+    <description>Клей для флизелиновых обоев 250 г. Синтетическое описание для разработки.</description>
+    <param name="Единица измерения">шт</param>
+    <param name="Вес">250 г</param>
+  </offer>
+  <offer id="96635" available="true">
+    <url>https://example.com/catalog/96635/</url>
+    <price>350</price>
+    <currencyId>RUR</currencyId>
+    <categoryId>43</categoryId>
+    <name>Валик малярный велюровый 250 мм</name>
+    <vendor>Бренд</vendor>
+    <vendorCode>SKU-96635</vendorCode>
+    <description>Валик малярный велюровый 250 мм. Синтетическое описание для разработки.</description>
+    <param name="Единица измерения">шт</param>
+    <param name="Ширина">250 мм</param>
+  </offer>
+  <offer id="96636" available="true">
+    <url>https://example.com/catalog/96636/</url>
+    <price>290</price>
+    <currencyId>RUR</currencyId>
+    <categoryId>38</categoryId>
+    <name>Клей монтажный универсальный «Жидкие гвозди» 310 мл</name>
+    <vendor>Бренд</vendor>
+    <vendorCode>SKU-96636</vendorCode>
+    <description>Клей монтажный универсальный «Жидкие гвозди» 310 мл. Синтетическое описание для разработки.</description>
+    <param name="Единица измерения">шт</param>
+    <param name="Объем">310 мл</param>
+  </offer>
+  <offer id="96637" available="true">
+    <url>https://example.com/catalog/96637/</url>
+    <price>2490</price>
+    <currencyId>RUR</currencyId>
+    <categoryId>35</categoryId>
+    <name>Обои под покраску флизелиновые 1,06x25 м</name>
+    <vendor>Бренд</vendor>
+    <vendorCode>SKU-96637</vendorCode>
+    <description>Обои под покраску флизелиновые 1,06x25 м. Синтетическое описание для разработки.</description>
+    <param name="Единица измерения">шт</param>
+    <param name="Ширина, м">1,06</param>
+    <param name="Длина, м">25</param>
+  </offer>
+</offers>
+</shop>
+</yml_catalog>

@@ -1,0 +1,57 @@
+x-app-env: &app-env
+  RC_DATABASE_URL: postgresql+psycopg://repaircalc:repaircalc@postgres:5432/repaircalc
+  RC_OLLAMA_URL: ${RC_OLLAMA_URL:-http://host.docker.internal:11434}
+  RC_LLM_MODEL: ${RC_LLM_MODEL:-qwen2.5:3b}
+  RC_EMBED_MODEL: ${RC_EMBED_MODEL:-bge-m3}
+  RC_CATALOG_PATH: data/catalog.json
+
+services:
+  api:
+    build: .
+    environment: *app-env
+    ports: ["8000:8000"]
+    extra_hosts: ["host.docker.internal:host-gateway"]
+    depends_on:
+      postgres: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      retries: 5
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: repaircalc
+      POSTGRES_PASSWORD: repaircalc
+      POSTGRES_DB: repaircalc
+    ports: ["5433:5432"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U repaircalc"]
+      interval: 3s
+      retries: 20
+    restart: unless-stopped
+
+  ingest:
+    build: .
+    entrypoint: ["python", "-m", "scripts.ingest"]
+    command: ["--file", "data/catalog.json"]
+    volumes: ["./data:/srv/data:ro"]
+    environment: *app-env
+    depends_on:
+      postgres: { condition: service_healthy }
+    profiles: ["tools"]
+
+  ollama:
+    image: ollama/ollama:latest
+    ports: ["11434:11434"]
+    volumes: [ollama:/root/.ollama]
+    environment:
+      OLLAMA_KEEP_ALIVE: 24h
+    profiles: ["ollama"]
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  ollama:

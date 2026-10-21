@@ -1,0 +1,7 @@
+.git
+.venv
+data
+*.sqlite
+__pycache__
+.pytest_cache
+repaircalc.zip

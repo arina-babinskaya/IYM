@@ -1,0 +1,9 @@
+*.pyc
+*.sqlite
+.env
+.pytest_cache/
+.venv/
+__pycache__/
+data/
+repaircalc.zip
+repaircalc_local.sqlite

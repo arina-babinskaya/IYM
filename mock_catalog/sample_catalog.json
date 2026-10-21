@@ -1,0 +1,939 @@
+{
+  "products": [
+    {
+      "id": 96611,
+      "cod_good": "1096611",
+      "name": "Керамогранит напольный Стоун серый 60x60 см",
+      "marketing_description": "Керамогранит напольный Стоун серый 60x60 см. Синтетическое описание для разработки.",
+      "url_key": "/catalog/demo/96611/",
+      "price": 1650.0,
+      "currency": "RUB",
+      "brand": {
+        "id": 1,
+        "name": "Бренд 33"
+      },
+      "collection": null,
+      "country": {
+        "id": 1879,
+        "name": "Россия"
+      },
+      "categories": {
+        "33": "Плитка и керамогранит"
+      },
+      "unit": "упак.",
+      "description": "Размер: 600x600 мм<br>Толщина, мм: 9<br>Количество в упаковке: 4 шт<br>Площадь в упаковке, м2: 1,44",
+      "weight": null,
+      "characteristics": [
+        {
+          "name": "Размер",
+          "value": "600x600 мм"
+        },
+        {
+          "name": "Толщина, мм",
+          "value": "9"
+        },
+        {
+          "name": "Количество в упаковке",
+          "value": "4 шт"
+        },
+        {
+          "name": "Площадь в упаковке, м2",
+          "value": "1,44"
+        }
+      ]
+    },
+    {
+      "id": 96612,
+      "cod_good": "1096612",
+      "name": "Плитка настенная Аква белая глянцевая 25x40 см",
+      "marketing_description": "Плитка настенная Аква белая глянцевая 25x40 см. Синтетическое описание для разработки.",
+      "url_key": "/catalog/demo/96612/",
+      "price": 1290.0,
+      "currency": "RUB",
+      "brand": {
+        "id": 1,
+        "name": "Бренд 33"
+      },
+      "collection": null,
+      "country": {
+        "id": 1879,
+        "name": "Россия"
+      },
+      "categories": {
+        "33": "Плитка и керамогранит"
+      },
+      "unit": "упак.",
+      "description": "Размер: 250x400 мм<br>Назначение: для ванной комнаты<br>Количество в упаковке: 15 шт<br>Площадь в упаковке, м2: 1,5",
+      "weight": null,
+      "characteristics": [
+        {
+          "name": "Размер",
+          "value": "250x400 мм"
+        },
+        {
+          "name": "Назначение",
+          "value": "для ванной комнаты"
+        },
+        {
+          "name": "Количество в упаковке",
+          "value": "15 шт"
+        },
+        {
+          "name": "Площадь в упаковке, м2",
+          "value": "1,5"
+        }
+      ]
+    },
+    {
+      "id": 96613,
+      "cod_good": "1096613",
+      "name": "Ламинат Дуб натуральный 33 класс 8 мм",
+      "marketing_description": "Ламинат Дуб натуральный 33 класс 8 мм. Синтетическое описание для разработки.",
+      "url_key": "/catalog/demo/96613/",
+      "price": 1599.0,
+      "currency": "RUB",
+      "brand": {
+        "id": 1,
+        "name": "Бренд 34"
+      },
+      "collection": null,
+      "country": {
+        "id": 1879,
+        "name": "Россия"
+      },
+      "categories": {
+        "34": "Ламинат"
+      },
+      "unit": "упак.",
+      "description": "Класс износостойкости: 33<br>Толщина: 8 мм<br>Площадь в упаковке, м2: 2,131<br>Площадь в упаковке, м2: 2,131",
+      "weight": null,
+      "characteristics": [
+        {
+          "name": "Класс износостойкости",
+          "value": "33"
+        },
+        {
+          "name": "Толщина",
+          "value": "8 мм"
+        },
+        {
+          "name": "Площадь в упаковке, м2",
+          "value": "2,131"
+        },
+        {
+          "name": "Площадь в упаковке, м2",
+          "value": "2,131"
+        }
+      ]
+    },
+    {
+      "id": 96614,
+      "cod_good": "1096614",
+      "name": "Ламинат влагостойкий Аквастоп Дуб серый 33 класс",
+      "marketing_description": "Ламинат влагостойкий Аквастоп Дуб серый 33 класс. Синтетическое описание для разработки.",
+      "url_key": "/catalog/demo/96614/",
+      "price": 2290.0,
+      "currency": "RUB",
+      "brand": {
+        "id": 1,
+        "name": "Бренд 34"
+      },
+      "collection": null,
+      "country": {
+        "id": 1879,
+        "name": "Россия"
+      },
+      "categories": {
+        "34": "Ламинат"
+      },
+      "unit": "упак.",
+      "description": "Класс износостойкости: 33<br>Площадь в упаковке: 1,996 м²<br>Площадь в упаковке, м2: 1,996",
+      "weight": null,
+      "characteristics": [
+        {
+          "name": "Класс износостойкости",
+          "value": "33"
+        },
+        {
+          "name": "Площадь в упаковке",
+          "value": "1,996 м²"
+        },
+        {
+          "name": "Площадь в упаковке, м2",
+          "value": "1,996"
+        }
+      ]
+    },
+    {
+      "id": 96615,
+      "cod_good": "1096615",
+      "name": "Обои флизелиновые моющиеся Лён бежевые 1,06x10 м",
+      "marketing_description": "Обои флизелиновые моющиеся Лён бежевые 1,06x10 м. Синтетическое описание для разработки.",
+      "url_key": "/catalog/demo/96615/",
+      "price": 1890.0,
+      "currency": "RUB",
+      "brand": {
+        "id": 1,
+        "name": "Бренд 35"
+      },
+      "collection": null,
+      "country": {
+        "id": 1879,
+        "name": "Россия"
+      },
+      "categories": {
+        "35": "Обои"
+      },
+      "unit": "шт",
+      "description": "Ширина, м: 1,06<br>Длина, м: 10<br>Раппорт: 64 см",
+      "weight": null,
+      "characteristics": [
+        {
+          "name": "Ширина, м",
+          "value": "1,06"
+        },
+        {
+          "name": "Длина, м",
+          "value": "10"
+        },
+        {
+          "name": "Раппорт",
+          "value": "64 см"
+        }
+      ]
+    },
+    {
+      "id": 96616,
+      "cod_good": "1096616",
+      "name": "Обои бумажные Ромашки 0,53x10,05 м",
+      "marketing_description": "Обои бумажные Ромашки 0,53x10,05 м. Синтетическое описание для разработки.",
+      "url_key": "/catalog/demo/96616/",
+      "price": 590.0,
+      "currency": "RUB",
+      "brand": {
+        "id": 1,
+        "name": "Бренд 35"
+      },
+      "collection": null,
+      "country": {
+        "id": 1879,
+        "name": "Россия"
+      },
+      "categories": {
+        "35": "Обои"
+      },
+      "unit": "шт",
+      "description": "Ширина: 0,53 м<br>Длина: 10,05 м<br>Раппорт: 0 см",
+      "weight": null,
+      "characteristics": [
+        {
+          "name": "Ширина",
+          "value": "0,53 м"
+        },
+        {
+          "name": "Длина",
+          "value": "10,05 м"
+        },
+        {
+          "name": "Раппорт",
+          "value": "0 см"
+        }
+      ]
+    },
+    {
+      "id": 96617,
+      "cod_good": "1096617",
+      "name": "Краска интерьерная моющаяся белая 2,5 л",
+      "marketing_description": "Краска интерьерная моющаяся белая 2,5 л. Синтетическое описание для разработки.",
+      "url_key": "/catalog/demo/96617/",
+      "price": 1450.0,
+      "currency": "RUB",
+      "brand": {
+        "id": 1,
+        "name": "Бренд 36"
+      },
+      "collection": null,
+      "country": {
+        "id": 1879,
+        "name": "Россия"
+      },
+      "categories": {
+        "36": "Краски"
+      },
+      "unit": "шт",
+      "description": "Объем: 2,5 л<br>Расход: 0,1-0,14 л/м²",
+      "weight": null,
+      "characteristics": [
+        {
+          "name": "Объем",
+          "value": "2,5 л"
+        },
+        {
+          "name": "Расход",
+          "value": "0,1-0,14 л/м²"
+        }
+      ]
+    },
+    {
+      "id": 96618,
+      "cod_good": "1096618",
+      "name": "Краска влагостойкая для ванных и кухонь 2,5 л",
+      "marketing_description": "Краска влагостойкая для ванных и кухонь 2,5 л. Синтетическое описание для разработки.",
+      "url_key": "/catalog/demo/96618/",
+      "price": 1790.0,
+      "currency": "RUB",
+      "brand": {
+        "id": 1,
+        "name": "Бренд 36"
+      },
+      "collection": null,
+      "country": {
+        "id": 1879,
+        "name": "Россия"
+      },
+      "categories": {
+        "36": "Краски"
+      },
+      "unit": "шт",
+      "description": "Объем, л: 2,5<br>Расход, л/м2: 0,12",
+      "weight": null,
+      "characteristics": [
+        {
+          "name": "Объем, л",
+          "value": "2,5"
+        },
+        {
+          "name": "Расход, л/м2",
+          "value": "0,12"
+        }
+      ]
+    },
+    {
+      "id": 96619,
+      "cod_good": "1096619",
+      "name": "Гипсокартон ГКЛ 12,5 мм 2500x1200 мм",
+      "marketing_description": "Гипсокартон ГКЛ 12,5 мм 2500x1200 мм. Синтетическое описание для разработки.",
+      "url_key": "/catalog/demo/96619/",
+      "price": 520.0,
+      "currency": "RUB",
+      "brand": {
+        "id": 1,
+        "name": "Бренд 37"
+      },
+      "collection": null,
+      "country": {
+        "id": 1879,
+        "name": "Россия"
+      },
+      "categories": {
+        "37": "Гипсокартон"
+      },
+      "unit": "шт",
+      "description": "Длина, мм: 2500<br>Ширина, мм: 1200<br>Толщина, мм: 12,5",
+      "weight": null,
+      "characteristics": [
+        {
+          "name": "Длина, мм",
+          "value": "2500"
+        },
+        {
+          "name": "Ширина, мм",
+          "value": "1200"
+        },
+        {
+          "name": "Толщина, мм",
+          "value": "12,5"
+        }
+      ]
+    },
+    {
+      "id": 96620,
+      "cod_good": "1096620",
+      "name": "Гипсокартон влагостойкий ГКЛВ 12,5 мм 2500x1200 мм",
+      "marketing_description": "Гипсокартон влагостойкий ГКЛВ 12,5 мм 2500x1200 мм. Синтетическое описание для разработки.",
+      "url_key": "/catalog/demo/96620/",
+      "price": 690.0,
+      "currency": "RUB",
+      "brand": {
+        "id": 1,
+        "name": "Бренд 37"
+      },
+      "collection": null,
+      "country": {
+        "id": 1879,
+        "name": "Россия"
+      },
+      "categories": {
+        "37": "Гипсокартон"
+      },
+      "unit": "шт",
+      "description": "Длина, мм: 2500<br>Ширина, мм: 1200<br>Толщина, мм: 12,5",
+      "weight": null,
+      "characteristics": [
+        {
+          "name": "Длина, мм",
+          "value": "2500"
+        },
+        {
+          "name": "Ширина, мм",
+          "value": "1200"
+        },
+        {
+          "name": "Толщина, мм",
+          "value": "12,5"
+        }
+      ]
+    },
+    {
+      "id": 96621,
+      "cod_good": "1096621",
+      "name": "Клей для плитки усиленный 25 кг",
+      "marketing_description": "Клей для плитки усиленный 25 кг. Синтетическое описание для разработки.",
+      "url_key": "/catalog/demo/96621/",
+      "price": 590.0,
+      "currency": "RUB",
+      "brand": {
+        "id": 1,
+        "name": "Бренд 38"
+      },
+      "collection": null,
+      "country": {
+        "id": 1879,
+        "name": "Россия"
+      },
+      "categories": {
+        "38": "Сухие смеси и грунтовки"
+      },
+      "unit": "шт",
+      "description": "Вес: 25 кг<br>Расход: 4,5 кг/м2",
+      "weight": null,
+      "characteristics": [
+        {
+          "name": "Вес",
+          "value": "25 кг"
+        },
+        {
+          "name": "Расход",
+          "value": "4,5 кг/м2"
+        }
+      ]
+    },
+    {
+      "id": 96622,
+      "cod_good": "1096622",
+      "name": "Грунтовка глубокого проникновения 10 л",
+      "marketing_description": "Грунтовка глубокого проникновения 10 л. Синтетическое описание для разработки.",
+      "url_key": "/catalog/demo/96622/",
+      "price": 890.0,
+      "currency": "RUB",
+      "brand": {
+        "id": 1,
+        "name": "Бренд 38"
+      },
+      "collection": null,
+      "country": {
+        "id": 1879,
+        "name": "Россия"
+      },
+      "categories": {
+        "38": "Сухие смеси и грунтовки"
+      },
+      "unit": "шт",
+      "description": "Объем: 10 л<br>Расход: 0,1-0,2 л/м²",
+      "weight": null,
+      "characteristics": [
+        {
+          "name": "Объем",
+          "value": "10 л"
+        },
+        {
+          "name": "Расход",
+          "value": "0,1-0,2 л/м²"
+        }
+      ]
+    },
+    {
+      "id": 96623,
+      "cod_good": "1096623",
+      "name": "Кабель ВВГнг-LS 3x2,5 мм²",
+      "marketing_description": "Кабель ВВГнг-LS 3x2,5 мм². Синтетическое описание для разработки.",
+      "url_key": "/catalog/demo/96623/",
+      "price": 89.0,
+      "currency": "RUB",
+      "brand": {
+        "id": 1,
+        "name": "Бренд 39"
+      },
+      "collection": null,
+      "country": {
+        "id": 1879,
+        "name": "Россия"
+      },
+      "categories": {
+        "39": "Кабель и провод"
+      },
+      "unit": "м",
+      "description": "Сечение жилы: 2,5 мм²<br>Количество жил: 3",
+      "weight": null,
+      "characteristics": [
+        {
+          "name": "Сечение жилы",
+          "value": "2,5 мм²"
+        },
+        {
+          "name": "Количество жил",
+          "value": "3"
+        }
+      ]
+    },
+    {
+      "id": 96624,
+      "cod_good": "1096624",
+      "name": "Розетка с заземлением белая",
+      "marketing_description": "Розетка с заземлением белая. Синтетическое описание для разработки.",
+      "url_key": "/catalog/demo/96624/",
+      "price": 290.0,
+      "currency": "RUB",
+      "brand": {
+        "id": 1,
+        "name": "Бренд 40"
+      },
+      "collection": null,
+      "country": {
+        "id": 1879,
+        "name": "Россия"
+      },
+      "categories": {
+        "40": "Розетки и выключатели"
+      },
+      "unit": "шт",
+      "description": "Цвет: Белый",
+      "weight": null,
+      "characteristics": [
+        {
+          "name": "Цвет",
+          "value": "Белый"
+        }
+      ]
+    },
+    {
+      "id": 96625,
+      "cod_good": "1096625",
+      "name": "Выключатель одноклавишный белый",
+      "marketing_description": "Выключатель одноклавишный белый. Синтетическое описание для разработки.",
+      "url_key": "/catalog/demo/96625/",
+      "price": 240.0,
+      "currency": "RUB",
+      "brand": {
+        "id": 1,
+        "name": "Бренд 40"
+      },
+      "collection": null,
+      "country": {
+        "id": 1879,
+        "name": "Россия"
+      },
+      "categories": {
+        "40": "Розетки и выключатели"
+      },
+      "unit": "шт",
+      "description": "Цвет: Белый",
+      "weight": null,
+      "characteristics": [
+        {
+          "name": "Цвет",
+          "value": "Белый"
+        }
+      ]
+    },
+    {
+      "id": 96626,
+      "cod_good": "1096626",
+      "name": "Линолеум бытовой Паркет светлый ширина 3 м",
+      "marketing_description": "Линолеум бытовой Паркет светлый ширина 3 м. Синтетическое описание для разработки.",
+      "url_key": "/catalog/demo/96626/",
+      "price": 549.0,
+      "currency": "RUB",
+      "brand": {
+        "id": 1,
+        "name": "Бренд 41"
+      },
+      "collection": null,
+      "country": {
+        "id": 1879,
+        "name": "Россия"
+      },
+      "categories": {
+        "41": "Линолеум"
+      },
+      "unit": "м2",
+      "description": "Ширина рулона: 3 м<br>Толщина: 2,5 мм",
+      "weight": null,
+      "characteristics": [
+        {
+          "name": "Ширина рулона",
+          "value": "3 м"
+        },
+        {
+          "name": "Толщина",
+          "value": "2,5 мм"
+        }
+      ]
+    },
+    {
+      "id": 96627,
+      "cod_good": "1096627",
+      "name": "Ламинат Ясень 32 класс 7 мм (нет в наличии)",
+      "marketing_description": "Ламинат Ясень 32 класс 7 мм (нет в наличии). Синтетическое описание для разработки.",
+      "url_key": "/catalog/demo/96627/",
+      "price": 1199.0,
+      "currency": "RUB",
+      "brand": {
+        "id": 1,
+        "name": "Бренд 34"
+      },
+      "collection": null,
+      "country": {
+        "id": 1879,
+        "name": "Россия"
+      },
+      "categories": {
+        "34": "Ламинат"
+      },
+      "unit": "упак.",
+      "description": "Площадь в упаковке, м2: 2,397<br>Площадь в упаковке, м2: 2,397",
+      "weight": null,
+      "characteristics": [
+        {
+          "name": "Площадь в упаковке, м2",
+          "value": "2,397"
+        },
+        {
+          "name": "Площадь в упаковке, м2",
+          "value": "2,397"
+        }
+      ],
+      "in_stock": false
+    },
+    {
+      "id": 96628,
+      "cod_good": "1096628",
+      "name": "Затирка для швов плитки цементная белая 2 кг",
+      "marketing_description": "Затирка для швов плитки цементная белая 2 кг. Синтетическое описание для разработки.",
+      "url_key": "/catalog/demo/96628/",
+      "price": 320.0,
+      "currency": "RUB",
+      "brand": {
+        "id": 1,
+        "name": "Бренд"
+      },
+      "collection": null,
+      "country": {
+        "id": 1879,
+        "name": "Россия"
+      },
+      "categories": {
+        "38": "Сухие смеси и грунтовки"
+      },
+      "unit": "шт",
+      "description": "Вес: 2 кг<br>Расход: 0,5 кг/м2",
+      "weight": null,
+      "characteristics": [
+        {
+          "name": "Вес",
+          "value": "2 кг"
+        },
+        {
+          "name": "Расход",
+          "value": "0,5 кг/м2"
+        }
+      ]
+    },
+    {
+      "id": 96629,
+      "cod_good": "1096629",
+      "name": "Профиль потолочный для гипсокартона ПП 60x27, 3 м",
+      "marketing_description": "Профиль потолочный для гипсокартона ПП 60x27, 3 м. Синтетическое описание для разработки.",
+      "url_key": "/catalog/demo/96629/",
+      "price": 210.0,
+      "currency": "RUB",
+      "brand": {
+        "id": 1,
+        "name": "Бренд"
+      },
+      "collection": null,
+      "country": {
+        "id": 1879,
+        "name": "Россия"
+      },
+      "categories": {
+        "37": "Гипсокартон"
+      },
+      "unit": "шт",
+      "description": "Длина, м: 3",
+      "weight": null,
+      "characteristics": [
+        {
+          "name": "Длина, м",
+          "value": "3"
+        }
+      ]
+    },
+    {
+      "id": 96630,
+      "cod_good": "1096630",
+      "name": "Саморезы по гипсокартону 3,5x25 мм, 200 шт",
+      "marketing_description": "Саморезы по гипсокартону 3,5x25 мм, 200 шт. Синтетическое описание для разработки.",
+      "url_key": "/catalog/demo/96630/",
+      "price": 260.0,
+      "currency": "RUB",
+      "brand": {
+        "id": 1,
+        "name": "Бренд"
+      },
+      "collection": null,
+      "country": {
+        "id": 1879,
+        "name": "Россия"
+      },
+      "categories": {
+        "42": "Крепёж"
+      },
+      "unit": "упак.",
+      "description": "Количество в упаковке: 200",
+      "weight": null,
+      "characteristics": [
+        {
+          "name": "Количество в упаковке",
+          "value": "200"
+        }
+      ]
+    },
+    {
+      "id": 96631,
+      "cod_good": "1096631",
+      "name": "Шпаклёвка финишная полимерная 20 кг",
+      "marketing_description": "Шпаклёвка финишная полимерная 20 кг. Синтетическое описание для разработки.",
+      "url_key": "/catalog/demo/96631/",
+      "price": 980.0,
+      "currency": "RUB",
+      "brand": {
+        "id": 1,
+        "name": "Бренд"
+      },
+      "collection": null,
+      "country": {
+        "id": 1879,
+        "name": "Россия"
+      },
+      "categories": {
+        "38": "Сухие смеси и грунтовки"
+      },
+      "unit": "шт",
+      "description": "Вес: 20 кг<br>Расход: 1,2 кг/м2",
+      "weight": null,
+      "characteristics": [
+        {
+          "name": "Вес",
+          "value": "20 кг"
+        },
+        {
+          "name": "Расход",
+          "value": "1,2 кг/м2"
+        }
+      ]
+    },
+    {
+      "id": 96632,
+      "cod_good": "1096632",
+      "name": "Гидроизоляция обмазочная для ванной 15 кг",
+      "marketing_description": "Гидроизоляция обмазочная для ванной 15 кг. Синтетическое описание для разработки.",
+      "url_key": "/catalog/demo/96632/",
+      "price": 2150.0,
+      "currency": "RUB",
+      "brand": {
+        "id": 1,
+        "name": "Бренд"
+      },
+      "collection": null,
+      "country": {
+        "id": 1879,
+        "name": "Россия"
+      },
+      "categories": {
+        "38": "Сухие смеси и грунтовки"
+      },
+      "unit": "шт",
+      "description": "Вес: 15 кг<br>Расход: 1,5 кг/м2",
+      "weight": null,
+      "characteristics": [
+        {
+          "name": "Вес",
+          "value": "15 кг"
+        },
+        {
+          "name": "Расход",
+          "value": "1,5 кг/м2"
+        }
+      ]
+    },
+    {
+      "id": 96633,
+      "cod_good": "1096633",
+      "name": "Подложка под ламинат 2 мм, 10 м2",
+      "marketing_description": "Подложка под ламинат 2 мм, 10 м2. Синтетическое описание для разработки.",
+      "url_key": "/catalog/demo/96633/",
+      "price": 450.0,
+      "currency": "RUB",
+      "brand": {
+        "id": 1,
+        "name": "Бренд"
+      },
+      "collection": null,
+      "country": {
+        "id": 1879,
+        "name": "Россия"
+      },
+      "categories": {
+        "34": "Ламинат"
+      },
+      "unit": "упак.",
+      "description": "Толщина, мм: 2<br>Площадь в упаковке, м2: 10",
+      "weight": null,
+      "characteristics": [
+        {
+          "name": "Толщина, мм",
+          "value": "2"
+        },
+        {
+          "name": "Площадь в упаковке, м2",
+          "value": "10"
+        }
+      ]
+    },
+    {
+      "id": 96634,
+      "cod_good": "1096634",
+      "name": "Клей для флизелиновых обоев 250 г",
+      "marketing_description": "Клей для флизелиновых обоев 250 г. Синтетическое описание для разработки.",
+      "url_key": "/catalog/demo/96634/",
+      "price": 390.0,
+      "currency": "RUB",
+      "brand": {
+        "id": 1,
+        "name": "Бренд"
+      },
+      "collection": null,
+      "country": {
+        "id": 1879,
+        "name": "Россия"
+      },
+      "categories": {
+        "35": "Обои"
+      },
+      "unit": "шт",
+      "description": "Вес: 250 г",
+      "weight": null,
+      "characteristics": [
+        {
+          "name": "Вес",
+          "value": "250 г"
+        }
+      ]
+    },
+    {
+      "id": 96635,
+      "cod_good": "1096635",
+      "name": "Валик малярный велюровый 250 мм",
+      "marketing_description": "Валик малярный велюровый 250 мм. Синтетическое описание для разработки.",
+      "url_key": "/catalog/demo/96635/",
+      "price": 350.0,
+      "currency": "RUB",
+      "brand": {
+        "id": 1,
+        "name": "Бренд"
+      },
+      "collection": null,
+      "country": {
+        "id": 1879,
+        "name": "Россия"
+      },
+      "categories": {
+        "43": "Инструмент"
+      },
+      "unit": "шт",
+      "description": "Ширина: 250 мм",
+      "weight": null,
+      "characteristics": [
+        {
+          "name": "Ширина",
+          "value": "250 мм"
+        }
+      ]
+    },
+    {
+      "id": 96636,
+      "cod_good": "1096636",
+      "name": "Клей монтажный универсальный «Жидкие гвозди» 310 мл",
+      "marketing_description": "Клей монтажный универсальный «Жидкие гвозди» 310 мл. Синтетическое описание для разработки.",
+      "url_key": "/catalog/demo/96636/",
+      "price": 290.0,
+      "currency": "RUB",
+      "brand": {
+        "id": 1,
+        "name": "Бренд"
+      },
+      "collection": null,
+      "country": {
+        "id": 1879,
+        "name": "Россия"
+      },
+      "categories": {
+        "38": "Сухие смеси и грунтовки"
+      },
+      "unit": "шт",
+      "description": "Объем: 310 мл",
+      "weight": null,
+      "characteristics": [
+        {
+          "name": "Объем",
+          "value": "310 мл"
+        }
+      ]
+    },
+    {
+      "id": 96637,
+      "cod_good": "1096637",
+      "name": "Обои под покраску флизелиновые 1,06x25 м",
+      "marketing_description": "Обои под покраску флизелиновые 1,06x25 м. Синтетическое описание для разработки.",
+      "url_key": "/catalog/demo/96637/",
+      "price": 2490.0,
+      "currency": "RUB",
+      "brand": {
+        "id": 1,
+        "name": "Бренд"
+      },
+      "collection": null,
+      "country": {
+        "id": 1879,
+        "name": "Россия"
+      },
+      "categories": {
+        "35": "Обои"
+      },
+      "unit": "шт",
+      "description": "Ширина, м: 1,06<br>Длина, м: 25",
+      "weight": null,
+      "characteristics": [
+        {
+          "name": "Ширина, м",
+          "value": "1,06"
+        },
+        {
+          "name": "Длина, м",
+          "value": "25"
+        }
+      ]
+    }
+  ]
+}

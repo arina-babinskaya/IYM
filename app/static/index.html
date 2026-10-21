@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RepairCalc — демо</title>
+<style>
+:root {
+  --bg: #f4f5f3; --surface: #fff; --ink: #1d2427; --muted: #5f6a6e; --line: #dde1de;
+  --accent: #24505f; --accent-ink: #fff; --ok: #2f7d4f; --warn: #a15c00; --warn-bg: #fff4dc;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #14191b; --surface: #1d2427; --ink: #e9ecea; --muted: #9aa6aa; --line: #313b3f;
+    --accent: #7fb6c8; --accent-ink: #10181b; --ok: #5fbf86; --warn: #f2b51c; --warn-bg: #3a2f10; color-scheme: dark; }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+header { background: var(--surface); border-bottom: 1px solid var(--line); padding: 14px 20px; display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: center; }
+header h1 { margin: 0; font-size: 19px; }
+.status { font-size: 13px; color: var(--muted); }
+.status b.ok { color: var(--ok); } .status b.bad { color: var(--warn); }
+nav { display: flex; gap: 4px; margin-left: auto; flex-wrap: wrap; }
+nav button { font: inherit; font-weight: 600; border: 0; background: none; color: var(--muted); padding: 8px 14px; border-radius: 8px; cursor: pointer; }
+nav button.on { background: var(--accent); color: var(--accent-ink); }
+main { max-width: 1000px; margin: 0 auto; padding: 24px 20px 60px; display: grid; gap: 20px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 18px; display: grid; gap: 14px; }
+h2 { margin: 0; font-size: 18px; }
+h3 { margin: 0; font-size: 16px; }
+.row { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: end; }
+label { display: grid; gap: 4px; font-size: 13px; color: var(--muted); }
+input, select { font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; }
+input[type=number] { width: 100px; }
+button.primary, button.secondary { font: inherit; font-weight: 600; border-radius: 8px; padding: 9px 16px; cursor: pointer; }
+button.primary { background: var(--accent); color: var(--accent-ink); border: 0; }
+button.secondary { background: var(--surface); color: var(--ink); border: 1px solid var(--line); }
+button.small { padding: 5px 10px; font-size: 13px; }
+.room { border: 1px dashed var(--line); border-radius: 10px; padding: 12px; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; font-variant-numeric: tabular-nums; }
+th { text-align: left; font-size: 12px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; padding: 6px 8px 6px 0; border-bottom: 1px solid var(--line); }
+td { padding: 7px 8px 7px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+td.num { text-align: right; white-space: nowrap; }
+.muted { color: var(--muted); font-size: 13px; }
+.empty td { color: var(--muted); }
+.total { font-size: 20px; font-weight: 700; }
+.warn { background: var(--warn-bg); color: var(--warn); border-radius: 8px; padding: 10px 12px; font-size: 14px; }
+.formula { background: var(--bg); border-radius: 8px; padding: 10px 12px; font-family: ui-monospace, Consolas, monospace; font-size: 13px; }
+.big { font-size: 22px; font-weight: 700; }
+.pill { display: inline-block; font-size: 12px; padding: 1px 8px; border-radius: 999px; background: var(--bg); border: 1px solid var(--line); margin: 2px 4px 2px 0; }
+.pill.ok { color: var(--ok); border-color: var(--ok); }
+.scroll { overflow-x: auto; }
+[hidden] { display: none !important; }
+.stage td { background: var(--bg); font-weight: 600; font-size: 13px; color: var(--muted); padding-left: 8px; }
+.results { display: grid; gap: 6px; max-height: 260px; overflow-y: auto; }
+.results button { text-align: left; font: inherit; background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; cursor: pointer; }
+.results button.on { border-color: var(--accent); }
+select[multiple] { min-width: 220px; min-height: 110px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>RepairCalc</h1>
+  <span class="status" id="status">проверяю сервисы…</span>
+  <nav>
+    <button data-tab="calc" class="on">Калькулятор</button>
+    <button data-tab="card">Карточка товара</button>
+    <button data-tab="admin">Админка</button>
+  </nav>
+</header>
+
+<main>
+  <section data-panel="calc" class="card">
+    <h2>Калькулятор ремонта</h2>
+    <div class="row">
+      <label>Объект
+        <select id="object"><option value="apartment">Квартира</option><option value="house">Дом</option><option value="studio">Студия</option></select>
+      </label>
+      <label>Вид ремонта <select id="renovation"></select></label>
+    </div>
+    <div id="rooms" style="display:grid;gap:10px"></div>
+    <div class="row">
+      <button class="secondary" id="add-room">+ Добавить комнату</button>
+      <button class="primary" id="run-estimate">Рассчитать</button>
+    </div>
+  </section>
+  <section data-panel="calc" class="card" id="estimate-result" hidden></section>
+
+  <section data-panel="card" class="card" hidden>
+    <h2>Расчёт в карточке товара</h2>
+    <label>Найти товар <input id="product-q" placeholder="например: обои, плитка, ГКЛВ" style="width:100%"></label>
+    <div class="results" id="product-results"></div>
+    <div id="product-info"></div>
+    <div class="row" id="calc-form" hidden>
+      <label>Длина, м<input type="number" id="c-len" value="4" step="0.1" min="0"></label>
+      <label>Высота / ширина, м<input type="number" id="c-wid" value="2.7" step="0.1" min="0"></label>
+      <label>Окна и двери, м²<input type="number" id="c-open" value="0" step="0.1" min="0"></label>
+      <label>Слоёв (для краски)<input type="number" id="c-layers" value="1" min="1" max="5"></label>
+      <button class="primary" id="run-calc">Посчитать</button>
+    </div>
+    <div id="calc-result"></div>
+  </section>
+
+  <section data-panel="admin" class="card" hidden>
+    <div class="row" style="justify-content:space-between;align-items:center">
+      <h2>Привязка товаров к видам работ</h2>
+      <button class="secondary" id="autobind">Привязать автоматически (ML)</button>
+    </div>
+    <div class="row">
+      <input id="admin-q" placeholder="поиск товара" style="flex:1">
+      <button class="secondary" id="admin-search">Найти</button>
+    </div>
+    <div id="admin-stats" class="muted"></div>
+    <div class="scroll"><table id="admin-table"></table></div>
+  </section>
+</main>
+
+<script>
+const ROOMS = { bathroom: "Санузел / ванная", toilet: "Туалет", kitchen: "Кухня", living: "Гостиная", bedroom: "Спальня", kids: "Детская", hallway: "Коридор", balcony: "Балкон" };
+const T = { stages: {}, works: {}, materials: {}, renovation: {} };
+const rub = v => v == null ? "—" : Number(v).toLocaleString("ru-RU", { maximumFractionDigits: 2 }) + " ₽";
+const num = v => Number(v).toLocaleString("ru-RU", { maximumFractionDigits: 2 });
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const opts = (map, sel) => Object.entries(map).map(([k, v]) => `<option value="${k}" ${[].concat(sel).includes(k) ? "selected" : ""}>${esc(v)}</option>`).join("");
+
+async function api(path, options = {}) {
+  const res = await fetch(path, { headers: { "Content-Type": "application/json" }, ...options });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    const d = body.detail;
+    throw new Error(Array.isArray(d) ? d.map(x => x.msg).join("; ") : d || `Ошибка ${res.status}`);
+  }
+  return body;
+}
+
+document.querySelectorAll("nav button").forEach(b => b.onclick = () => {
+  document.querySelectorAll("nav button").forEach(x => x.classList.toggle("on", x === b));
+  document.querySelectorAll("[data-panel]").forEach(p => p.hidden = p.dataset.panel !== b.dataset.tab
+    || (p.id === "estimate-result" && !p.dataset.filled));
+  if (b.dataset.tab === "admin") loadAdmin();
+});
+
+api("/health").then(h => {
+  const llm = h.llm.ok ? `<b class="ok">подключена (${esc(h.llm.llm_model.name)})</b>` : `<b class="bad">не подключена</b>`;
+  document.getElementById("status").innerHTML = `База: <b class="${h.db.ok ? "ok" : "bad"}">${h.db.ok ? "ок" : "ошибка"}</b> · Нейросеть: ${llm}`;
+}).catch(() => document.getElementById("status").textContent = "сервер не отвечает");
+
+let roomSeq = 0;
+function addRoom(r = {}) {
+  const div = document.createElement("div");
+  div.className = "room";
+  div.dataset.id = ++roomSeq;
+  div.innerHTML = `<div class="row">
+    <label>Комната<select data-f="room_type">${opts(ROOMS, r.room_type || "living")}</select></label>
+    <label>Длина, м<input type="number" data-f="length_m" value="${r.length_m ?? ""}" step="0.1" min="0"></label>
+    <label>Ширина, м<input type="number" data-f="width_m" value="${r.width_m ?? ""}" step="0.1" min="0"></label>
+    <label>Высота, м<input type="number" data-f="height_m" value="${r.height_m ?? 2.7}" step="0.1" min="0"></label>
+    <label>Влажность<select data-f="humidity"><option value="">по типу комнаты</option><option value="low">низкая</option><option value="normal">обычная</option><option value="high" ${r.humidity === "high" ? "selected" : ""}>высокая</option></select></label>
+    <button class="secondary small" title="Удалить">✕</button></div>`;
+  div.querySelector("button").onclick = () => div.remove();
+  document.getElementById("rooms").append(div);
+}
+document.getElementById("add-room").onclick = () => addRoom();
+
+function readRooms() {
+  return [...document.querySelectorAll("#rooms .room")].map(div => {
+    const room = {};
+    div.querySelectorAll("[data-f]").forEach(el => {
+      if (el.value !== "") room[el.dataset.f] = el.type === "number" ? Number(el.value) : el.value;
+    });
+    return room;
+  });
+}
+
+document.getElementById("run-estimate").onclick = async () => {
+  const out = document.getElementById("estimate-result");
+  out.hidden = false; out.dataset.filled = "1";
+  out.innerHTML = `<p class="muted">Считаю…</p>`;
+  try {
+    const r = await api("/api/v1/estimate", { method: "POST", body: JSON.stringify({
+      object_type: document.getElementById("object").value,
+      renovation_type: document.getElementById("renovation").value,
+      rooms: readRooms(),
+    }) });
+    out.innerHTML = renderEstimate(r);
+    document.getElementById("copy-list").onclick = () => copyList(r);
+  } catch (e) { out.innerHTML = `<div class="warn">${esc(e.message)}</div>`; }
+};
+
+function renderEstimate(r) {
+  const rooms = r.rooms.map(room => {
+    let stage = null;
+    const rows = room.items.map(i => {
+      const head = i.stage !== stage ? `<tr class="stage"><td colspan="6">${esc(T.stages[i.stage])}</td></tr>` : "";
+      stage = i.stage;
+      const work = `${esc(i.title)}<div class="muted">${esc(T.works[i.work_type])}${i.surface === "floor" ? " · пол" : i.surface === "wall" ? " · стены" : ""}</div>`;
+      if (i.packages === 0) return head + `<tr class="empty"><td>${work}</td><td colspan="5">${esc(i.reason)}</td></tr>`;
+      return head + `<tr><td>${work}${i.reason ? `<div class="muted">${esc(i.reason)}</div>` : ""}</td>
+        <td>${esc(i.product?.name)}</td>
+        <td class="num">${num(i.required_amount)} ${esc(i.required_unit)}</td>
+        <td class="num">${i.packages} × ${esc(i.product?.unit || "шт")}</td>
+        <td class="num">${rub(i.unit_price)}</td>
+        <td class="num"><b>${rub(i.cost)}</b></td></tr>`;
+    }).join("");
+    return `<h3>${ROOMS[room.room.room_type]} · пол ${num(room.floor_area_m2)} м², стены ${num(room.wall_area_m2)} м²</h3>
+      <div class="scroll"><table>
+        <tr><th>Материал / работа</th><th>Товар</th><th style="text-align:right">Нужно</th><th style="text-align:right">Купить</th><th style="text-align:right">Цена</th><th style="text-align:right">Сумма</th></tr>
+        ${rows}
+        <tr><td colspan="5"><b>Итого по комнате</b></td><td class="num"><b>${rub(room.subtotal)}</b></td></tr>
+      </table></div>`;
+  }).join("");
+  const warns = r.warnings.length ? `<div class="warn">${r.warnings.map(esc).join("<br>")}</div>` : "";
+  return `<h2>Смета · ${esc(T.renovation[r.renovation_type])}</h2>${rooms}${warns}
+    <div class="row" style="justify-content:space-between;align-items:center">
+      <span class="total">Итого: ${rub(r.total)}</span>
+      <span class="row"><button class="secondary" id="copy-list">Скопировать список для прораба</button><button class="primary" onclick="alert('Демо: корзину подключит магазин')">В корзину</button></span>
+    </div>
+    <p class="muted">Рассчитано за ${r.elapsed_ms} мс. Цены ориентировочные.</p>`;
+}
+
+function copyList(r) {
+  const lines = r.rooms.flatMap(room => [`${ROOMS[room.room.room_type]}:`, ...room.items.filter(i => i.packages)
+    .map(i => `  [${T.stages[i.stage]}] ${i.product.name} — ${i.packages} ${i.product.unit || "шт"}`)]);
+  navigator.clipboard.writeText(lines.join("\n")).then(
+    () => document.getElementById("copy-list").textContent = "Скопировано ✓",
+    () => alert(lines.join("\n")));
+}
+
+let productId = null, searchTimer = null;
+async function searchProducts() {
+  const q = document.getElementById("product-q").value.trim();
+  const list = await api(`/api/v1/products?limit=30${q ? `&q=${encodeURIComponent(q)}` : ""}`);
+  const box = document.getElementById("product-results");
+  box.innerHTML = list.length ? list.map(p => `<button data-id="${p.id}" class="${p.id === productId ? "on" : ""}">${esc(p.name)} — ${rub(p.result_price)}</button>`).join("")
+    : `<span class="muted">ничего не найдено</span>`;
+  box.querySelectorAll("button").forEach(b => b.onclick = () => showProduct(Number(b.dataset.id)));
+}
+document.getElementById("product-q").oninput = () => { clearTimeout(searchTimer); searchTimer = setTimeout(searchProducts, 250); };
+
+async function showProduct(id) {
+  productId = id;
+  document.querySelectorAll("#product-results button").forEach(b => b.classList.toggle("on", Number(b.dataset.id) === id));
+  const p = await api(`/api/v1/products/${id}`);
+  const chars = p.characteristics.map(c => `<span class="pill">${esc(c.name)}: ${esc(c.value)}</span>`).join("");
+  const binding = p.binding ? `${esc(T.materials[p.binding.material])} → ${p.binding.work_types.map(w => esc(T.works[w])).join(", ")}` : "не привязан";
+  document.getElementById("product-info").innerHTML = `
+    <h3>${esc(p.name)}</h3>
+    <div class="big">${rub(p.result_price)} <span class="muted">за ${esc(p.unit || "шт")}</span></div>
+    <div>${chars || '<span class="muted">характеристик нет</span>'}</div>
+    <div class="muted">Как понял сервис: ${Object.keys(p.specs).length ? esc(JSON.stringify(p.specs)) : "размеров не найдено"}</div>
+    <div class="muted">Привязка: ${binding}</div>`;
+  document.getElementById("calc-form").hidden = false;
+  document.getElementById("calc-result").innerHTML = "";
+}
+
+document.getElementById("run-calc").onclick = async () => {
+  const out = document.getElementById("calc-result");
+  try {
+    const r = await api(`/api/v1/product/${productId}/calc`, { method: "POST", body: JSON.stringify({
+      length_m: Number(document.getElementById("c-len").value),
+      width_m: Number(document.getElementById("c-wid").value),
+      openings_area_m2: Number(document.getElementById("c-open").value || 0),
+      layers: Number(document.getElementById("c-layers").value || 1),
+    }) });
+    out.innerHTML = `<div class="big">Нужно ${r.packages} × ${esc(r.product.unit || "шт")} — ${rub(r.total_cost)}</div>
+      <div class="formula">${esc(r.formula)}</div>
+      <p class="muted">Площадь ${num(r.area_m2)} м², запас ${num(r.reserve_pct)}%</p>`;
+  } catch (e) { out.innerHTML = `<div class="warn">Не получается посчитать: ${esc(e.message)}</div>`; }
+};
+
+async function loadAdmin() {
+  const q = document.getElementById("admin-q").value.trim();
+  const [stats, rows] = await Promise.all([
+    api("/api/v1/admin/stats"),
+    api(`/api/v1/admin/products?only_unbound=false&limit=100${q ? `&q=${encodeURIComponent(q)}` : ""}`),
+  ]);
+  document.getElementById("admin-stats").textContent =
+    `Товаров: ${stats.products_total} · подтверждено вручную: ${stats.bound_manual} · привязано ML: ${stats.bound_ml} · без привязки: ${stats.unbound} · доля автопривязки: ${Math.round(stats.auto_bound_share * 100)}%`;
+  document.getElementById("admin-table").innerHTML = `
+    <tr><th>Товар</th><th>Подсказка ML</th><th>Привязка</th><th>Материал и виды работ</th><th></th></tr>
+    ${rows.map(r => {
+      const s = r.suggestion, b = r.binding;
+      const flags = Object.entries(s.flags).filter(([, v]) => v).map(([k]) => k === "moisture_resistant" ? "влагостойкий" : k === "washable" ? "моющийся" : k);
+      const status = !b ? '<span class="muted">нет</span>' : `<span class="pill ${b.confirmed ? "ok" : ""}">${b.confirmed ? "✓ вручную" : "ML"}</span>`;
+      const cur = b || s;
+      return `<tr data-id="${r.product.id}">
+        <td>${esc(r.product.name)}<div class="muted">${esc(r.category)}</div></td>
+        <td>${esc(T.materials[s.material])} · ${Math.round(s.confidence * 100)}%
+          <div class="muted">${s.work_types.map(w => esc(T.works[w])).join(", ")}</div>
+          <div>${flags.map(f => `<span class="pill">${f}</span>`).join("")}</div></td>
+        <td>${status}</td>
+        <td><select data-m>${opts(T.materials, cur.material)}</select><br>
+          <select data-w multiple>${opts(T.works, cur.work_types)}</select></td>
+        <td><button class="primary small" data-save>Сохранить</button></td></tr>`;
+    }).join("")}`;
+  document.querySelectorAll("[data-save]").forEach(btn => btn.onclick = async () => {
+    const tr = btn.closest("tr");
+    const row = rows.find(r => String(r.product.id) === tr.dataset.id);
+    await api(`/api/v1/admin/products/${tr.dataset.id}/binding`, { method: "PUT", body: JSON.stringify({
+      material: tr.querySelector("[data-m]").value,
+      work_types: [...tr.querySelector("[data-w]").selectedOptions].map(o => o.value),
+      room_types: row.suggestion.room_types, flags: row.suggestion.flags,
+    }) });
+    loadAdmin();
+  });
+}
+document.getElementById("admin-search").onclick = loadAdmin;
+document.getElementById("autobind").onclick = async () => { await api("/api/v1/admin/autobind", { method: "POST" }); loadAdmin(); };
+
+api("/api/v1/taxonomy").then(t => {
+  t.stages.forEach(s => T.stages[s.id] = s.title);
+  t.works.forEach(w => T.works[w.id] = w.title);
+  t.materials.forEach(m => T.materials[m.id] = m.title);
+  t.renovation_types.forEach(r => T.renovation[r.id] = r.title);
+  document.getElementById("renovation").innerHTML = opts(T.renovation, "capital");
+  addRoom({ room_type: "bathroom", length_m: 2, width_m: 3, height_m: 2.5, humidity: "high" });
+  searchProducts();
+});
+</script>
+</body>
+</html>
