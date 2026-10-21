@@ -1,0 +1,5 @@
+{
+  "max_features": 50000,
+  "seed": 20261022,
+  "allow_weak_labels": true
+}
