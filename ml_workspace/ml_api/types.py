@@ -11,7 +11,8 @@ class SentenceEncoder(Protocol):
 @dataclass(frozen=True)
 class ProductInput:
     product_id: int | None; name: str; source_category: str = ""; category_names: str = ""
-    description: str = ""; marketing_description: str = ""; characteristics: dict[str, Any] = field(default_factory=dict)
+    description: str = ""; marketing_description: str = ""
+    characteristics: dict[str, Any] | list[dict[str, Any]] = field(default_factory=dict)
     price: float | None = None; sale_unit: str = ""; brand_name: str = ""
 @dataclass
 class DatasetBundle:

@@ -1,0 +1,616 @@
+{
+  "room_types": {
+    "micro_precision": 0.319672131147541,
+    "micro_recall": 0.8478260869565217,
+    "micro_f1": 0.4642857142857143,
+    "macro_precision": 0.4353675378675379,
+    "macro_recall": 0.7294505494505494,
+    "macro_f1": 0.4825203451519241,
+    "weighted_f1": 0.7488604581281928,
+    "samples_f1": 0.4511583011583012,
+    "subset_accuracy": 0.0,
+    "hamming_loss": 0.24324324324324326,
+    "n_samples": 37,
+    "per_class": {
+      "kitchen": {
+        "precision": 0.9230769230769231,
+        "recall": 0.9230769230769231,
+        "f1": 0.9230769230769231,
+        "support": 13,
+        "undefined_reason": null,
+        "pr_auc": 0.9945054945054943,
+        "roc_auc": 0.9967948717948718
+      },
+      "dining_room": {
+        "precision": 0.75,
+        "recall": 0.8571428571428571,
+        "f1": 0.8,
+        "support": 7,
+        "undefined_reason": null,
+        "pr_auc": 0.9047619047619047,
+        "roc_auc": 0.9666666666666667
+      },
+      "living_room": {
+        "precision": 0.6666666666666666,
+        "recall": 1.0,
+        "f1": 0.8,
+        "support": 2,
+        "undefined_reason": null,
+        "pr_auc": 0.5833333333333333,
+        "roc_auc": 0.9714285714285714
+      },
+      "bedroom": {
+        "precision": 0.6666666666666666,
+        "recall": 1.0,
+        "f1": 0.8,
+        "support": 4,
+        "undefined_reason": null,
+        "pr_auc": 0.8875,
+        "roc_auc": 0.9848484848484849
+      },
+      "bathroom": {
+        "precision": 0.625,
+        "recall": 0.7142857142857143,
+        "f1": 0.6666666666666666,
+        "support": 7,
+        "undefined_reason": null,
+        "pr_auc": 0.7350340136054421,
+        "roc_auc": 0.861904761904762
+      },
+      "hallway": {
+        "precision": 0.02857142857142857,
+        "recall": 1.0,
+        "f1": 0.05555555555555555,
+        "support": 1,
+        "undefined_reason": null,
+        "pr_auc": 0.05263157894736842,
+        "roc_auc": 0.5
+      },
+      "home_office": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 1,
+        "undefined_reason": null,
+        "pr_auc": 0.02702702702702703,
+        "roc_auc": 0.5
+      },
+      "utility_room": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 0,
+        "undefined_reason": "no_positive_examples",
+        "pr_auc": null,
+        "roc_auc": null
+      },
+      "balcony": {
+        "precision": 0.02702702702702703,
+        "recall": 1.0,
+        "f1": 0.05263157894736842,
+        "support": 1,
+        "undefined_reason": null,
+        "pr_auc": 0.07692307692307693,
+        "roc_auc": 0.6666666666666667
+      },
+      "general_indoor": {
+        "precision": 0.6666666666666666,
+        "recall": 0.8,
+        "f1": 0.7272727272727273,
+        "support": 10,
+        "undefined_reason": null,
+        "pr_auc": 0.7939926739926739,
+        "roc_auc": 0.8925925925925926
+      }
+    },
+    "precision_at_3": 0.3693693693693693,
+    "recall_at_3": 0.8648648648648649,
+    "macro_pr_auc": 0.5617454558995912,
+    "excluded_invalid_rows": 177
+  },
+  "activities": {
+    "micro_precision": 0.946524064171123,
+    "micro_recall": 0.9619565217391305,
+    "micro_f1": 0.954177897574124,
+    "macro_precision": 0.9673202614379085,
+    "macro_recall": 0.9215277777777777,
+    "macro_f1": 0.9409409409409409,
+    "weighted_f1": 0.953388170779475,
+    "samples_f1": 0.8894472361809045,
+    "subset_accuracy": 0.9296482412060302,
+    "hamming_loss": 0.04271356783919598,
+    "n_samples": 199,
+    "per_class": {
+      "renovation": {
+        "precision": 0.934640522875817,
+        "recall": 0.9930555555555556,
+        "f1": 0.9629629629629629,
+        "support": 144,
+        "undefined_reason": null,
+        "pr_auc": 0.9924356704817947,
+        "roc_auc": 0.9815656565656565
+      },
+      "room_furnishing": {
+        "precision": 1.0,
+        "recall": 0.85,
+        "f1": 0.918918918918919,
+        "support": 40,
+        "undefined_reason": null,
+        "pr_auc": 0.9747745117419125,
+        "roc_auc": 0.9922955974842768
+      }
+    },
+    "precision_at_2": 0.4623115577889447,
+    "recall_at_2": 0.9246231155778895,
+    "macro_pr_auc": 0.9836050911118537,
+    "excluded_invalid_rows": 15
+  },
+  "work_types": {
+    "micro_precision": 0.9436619718309859,
+    "micro_recall": 0.8375,
+    "micro_f1": 0.8874172185430463,
+    "macro_precision": 0.8775000000000001,
+    "macro_recall": 0.8066666666666666,
+    "macro_f1": 0.8299603174603174,
+    "weighted_f1": 0.8660714285714285,
+    "samples_f1": 0.3350083752093802,
+    "subset_accuracy": 0.9195979899497487,
+    "hamming_loss": 0.004271356783919598,
+    "n_samples": 199,
+    "per_class": {
+      "demolition": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 0,
+        "undefined_reason": "no_positive_examples",
+        "pr_auc": null,
+        "roc_auc": null
+      },
+      "electrical_wiring": {
+        "precision": 1.0,
+        "recall": 0.8,
+        "f1": 0.8888888888888888,
+        "support": 5,
+        "undefined_reason": null,
+        "pr_auc": 0.8909090909090909,
+        "roc_auc": 0.9938144329896907
+      },
+      "plumbing_rough": {
+        "precision": 1.0,
+        "recall": 0.75,
+        "f1": 0.8571428571428571,
+        "support": 4,
+        "undefined_reason": null,
+        "pr_auc": 0.8928571428571428,
+        "roc_auc": 0.9961538461538462
+      },
+      "ventilation_install": {
+        "precision": 1.0,
+        "recall": 0.75,
+        "f1": 0.8571428571428571,
+        "support": 4,
+        "undefined_reason": null,
+        "pr_auc": 0.9166666666666666,
+        "roc_auc": 0.9974358974358974
+      },
+      "heating_climate_install": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 4,
+        "undefined_reason": null,
+        "pr_auc": 0.20876124311988187,
+        "roc_auc": 0.7371794871794871
+      },
+      "waterproofing": {
+        "precision": 0.8,
+        "recall": 1.0,
+        "f1": 0.8888888888888888,
+        "support": 4,
+        "undefined_reason": null,
+        "pr_auc": 1.0,
+        "roc_auc": 1.0
+      },
+      "floor_screed": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 4,
+        "undefined_reason": null,
+        "pr_auc": 1.0,
+        "roc_auc": 1.0
+      },
+      "wall_plastering": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 4,
+        "undefined_reason": null,
+        "pr_auc": 1.0,
+        "roc_auc": 1.0
+      },
+      "drywall_install": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 4,
+        "undefined_reason": null,
+        "pr_auc": 1.0,
+        "roc_auc": 1.0
+      },
+      "wall_putty": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 4,
+        "undefined_reason": null,
+        "pr_auc": 1.0,
+        "roc_auc": 1.0
+      },
+      "priming": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 4,
+        "undefined_reason": null,
+        "pr_auc": 1.0,
+        "roc_auc": 1.0
+      },
+      "wall_painting": {
+        "precision": 1.0,
+        "recall": 0.75,
+        "f1": 0.8571428571428571,
+        "support": 4,
+        "undefined_reason": null,
+        "pr_auc": 0.7722222222222221,
+        "roc_auc": 0.9474358974358974
+      },
+      "wallpapering": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 4,
+        "undefined_reason": null,
+        "pr_auc": 1.0,
+        "roc_auc": 1.0
+      },
+      "tiling": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 4,
+        "undefined_reason": null,
+        "pr_auc": 1.0,
+        "roc_auc": 1.0
+      },
+      "floor_covering_install": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 5,
+        "undefined_reason": null,
+        "pr_auc": 1.0,
+        "roc_auc": 1.0
+      },
+      "door_window_install": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 4,
+        "undefined_reason": null,
+        "pr_auc": 1.0,
+        "roc_auc": 1.0
+      },
+      "electrical_fittings": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 4,
+        "undefined_reason": null,
+        "pr_auc": 1.0,
+        "roc_auc": 1.0
+      },
+      "plumbing_fixture_install": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 4,
+        "undefined_reason": null,
+        "pr_auc": 1.0,
+        "roc_auc": 1.0
+      },
+      "lighting_install": {
+        "precision": 0.75,
+        "recall": 0.75,
+        "f1": 0.75,
+        "support": 4,
+        "undefined_reason": null,
+        "pr_auc": 0.693086592178771,
+        "roc_auc": 0.7743589743589744
+      },
+      "decorative_finish_install": {
+        "precision": 1.0,
+        "recall": 0.3333333333333333,
+        "f1": 0.5,
+        "support": 6,
+        "undefined_reason": null,
+        "pr_auc": 0.39609237536656894,
+        "roc_auc": 0.8411053540587219
+      }
+    },
+    "precision_at_3": 0.12562814070351755,
+    "recall_at_3": 0.37185929648241206,
+    "macro_pr_auc": 0.8826629122800179,
+    "excluded_invalid_rows": 15
+  },
+  "domain": {
+    "macro_precision": 0.9502361673414305,
+    "macro_recall": 0.8041666666666667,
+    "macro_f1": 0.8532490938930124,
+    "weighted_f1": 0.9250234572885251,
+    "per_class": {
+      "renovation": {
+        "precision": 0.9276315789473685,
+        "recall": 0.9791666666666666,
+        "f1": 0.9527027027027027,
+        "support": 144
+      },
+      "furnishing": {
+        "precision": 0.9230769230769231,
+        "recall": 0.9,
+        "f1": 0.9113924050632911,
+        "support": 40
+      },
+      "non_renovation": {
+        "precision": 1.0,
+        "recall": 0.5333333333333333,
+        "f1": 0.6956521739130435,
+        "support": 15
+      }
+    }
+  },
+  "product_category": {
+    "macro_precision": 0.806511223818916,
+    "macro_recall": 0.8089133089133089,
+    "macro_f1": 0.7812527703215962,
+    "weighted_f1": 0.7884088007085718,
+    "per_class": {
+      "primer": {
+        "precision": 0.8,
+        "recall": 1.0,
+        "f1": 0.8888888888888888,
+        "support": 4
+      },
+      "paint": {
+        "precision": 0.75,
+        "recall": 1.0,
+        "f1": 0.8571428571428571,
+        "support": 6
+      },
+      "putty": {
+        "precision": 1.0,
+        "recall": 0.75,
+        "f1": 0.8571428571428571,
+        "support": 4
+      },
+      "plaster": {
+        "precision": 0.5,
+        "recall": 1.0,
+        "f1": 0.6666666666666666,
+        "support": 4
+      },
+      "drywall": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 4
+      },
+      "tile": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 4
+      },
+      "floor_covering": {
+        "precision": 0.8,
+        "recall": 1.0,
+        "f1": 0.8888888888888888,
+        "support": 4
+      },
+      "waterproofing_material": {
+        "precision": 0.6666666666666666,
+        "recall": 0.5,
+        "f1": 0.5714285714285714,
+        "support": 4
+      },
+      "adhesive": {
+        "precision": 1.0,
+        "recall": 0.5,
+        "f1": 0.6666666666666666,
+        "support": 4
+      },
+      "sealant": {
+        "precision": 0.8,
+        "recall": 1.0,
+        "f1": 0.8888888888888888,
+        "support": 4
+      },
+      "construction_mix": {
+        "precision": 1.0,
+        "recall": 0.8571428571428571,
+        "f1": 0.9230769230769231,
+        "support": 7
+      },
+      "fasteners": {
+        "precision": 0.8,
+        "recall": 1.0,
+        "f1": 0.8888888888888888,
+        "support": 4
+      },
+      "hand_tools": {
+        "precision": 0.4,
+        "recall": 0.4,
+        "f1": 0.4,
+        "support": 5
+      },
+      "power_tools": {
+        "precision": 0.8,
+        "recall": 1.0,
+        "f1": 0.8888888888888888,
+        "support": 4
+      },
+      "tool_accessories": {
+        "precision": 0.6,
+        "recall": 0.75,
+        "f1": 0.6666666666666666,
+        "support": 4
+      },
+      "consumables": {
+        "precision": 0.8,
+        "recall": 1.0,
+        "f1": 0.8888888888888888,
+        "support": 4
+      },
+      "protective_equipment": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 4
+      },
+      "plumbing": {
+        "precision": 0.5384615384615384,
+        "recall": 1.0,
+        "f1": 0.7,
+        "support": 7
+      },
+      "electrical_goods": {
+        "precision": 0.9,
+        "recall": 1.0,
+        "f1": 0.9473684210526315,
+        "support": 9
+      },
+      "ventilation": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 4
+      },
+      "heating_climate": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 4
+      },
+      "lighting": {
+        "precision": 0.75,
+        "recall": 0.75,
+        "f1": 0.75,
+        "support": 4
+      },
+      "doors_windows": {
+        "precision": 0.875,
+        "recall": 1.0,
+        "f1": 0.9333333333333333,
+        "support": 7
+      },
+      "decorative_panels": {
+        "precision": 0.8,
+        "recall": 1.0,
+        "f1": 0.8888888888888888,
+        "support": 4
+      },
+      "decorative_materials": {
+        "precision": 1.0,
+        "recall": 0.25,
+        "f1": 0.4,
+        "support": 4
+      },
+      "installation_accessories": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 4
+      },
+      "insulation": {
+        "precision": 0.75,
+        "recall": 0.75,
+        "f1": 0.75,
+        "support": 4
+      },
+      "lumber_sheet_material": {
+        "precision": 1.0,
+        "recall": 0.25,
+        "f1": 0.4,
+        "support": 4
+      },
+      "tables": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 4
+      },
+      "seating": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 4
+      },
+      "shelving_storage": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 4
+      },
+      "cabinets_wardrobes": {
+        "precision": 0.8571428571428571,
+        "recall": 0.8571428571428571,
+        "f1": 0.8571428571428571,
+        "support": 7
+      },
+      "beds": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 4
+      },
+      "countertops": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 4
+      },
+      "mirrors": {
+        "precision": 0.6666666666666666,
+        "recall": 1.0,
+        "f1": 0.8,
+        "support": 4
+      },
+      "interior_accessories": {
+        "precision": 0.6,
+        "recall": 0.6,
+        "f1": 0.6,
+        "support": 5
+      },
+      "decorative_objects": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 4
+      },
+      "other_renovation_material": {
+        "precision": 1.0,
+        "recall": 0.3333333333333333,
+        "f1": 0.5,
+        "support": 15
+      },
+      "other_furnishing": {
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 0
+      }
+    }
+  },
+  "limitation": "Technical agreement with automatic labels, not real-world accuracy."
+}

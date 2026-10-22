@@ -1,36 +1,16 @@
-# ML workspace
+# RepairCalc ML workspace (`taxonomy_v2`)
 
-Временная, независимая от backend область подготовки каталога и предварительной слабой разметки.
-
-Запуск из корня репозитория:
+Активный workflow полностью автоматический и не зависит от ручной разметки.
 
 ```bash
-.venv-sandbox/bin/python ml_workspace/scripts/prepare_datasets.py
-.venv-sandbox/bin/python ml_workspace/scripts/prepare_extended_labels.py
-.venv-sandbox/bin/python ml_workspace/scripts/explore_labels.py
-.venv-sandbox/bin/python ml_workspace/scripts/validate_annotations.py ml_workspace/data/manual_review_500.csv
-.venv-sandbox/bin/python ml_workspace/scripts/run_unified_experiment.py --experiment tfidf_logreg --label-policy reviewed_only --output ml_workspace/artifacts/tfidf_verified_v1
-.venv-sandbox/bin/python -m pytest -q ml_workspace/tests
+.venv-sandbox/bin/python -m ml_workspace.scripts.build_taxonomy_v2_dataset
+.venv-sandbox/bin/pytest -q ml_workspace/tests/test_taxonomy_v1.py ml_workspace/tests/test_leakage_v1.py ml_workspace/tests/test_pipeline_v1.py
 ```
 
-Скрипт проверяет SHA-256 read-only источника, строит CSV через pandas, выполняет валидации и повторно проверяет hash. Все work-type метки являются предварительными (`unreviewed`), не ground truth.
+Результаты: master table `data/products_taxonomy_v2.csv`, готовые Colab-файлы `data/splits_v2/{train,validation,test}.csv`, повторно используемый manifest и class support. Таксономия находится в `taxonomy/README_taxonomy_v2.md`; аудит утечек — в `reports/data_leakage_audit_v2.md`.
 
-Структура:
+Обучение выполняется через публичные функции `load_data`, `prepare_features`, `train`, `validate`, `evaluate`, `save_model`, `load_model`, `predict`. Targets: domain, activities, primary product category, multi-label work types и room types. Стадии выводятся из work types.
 
-- `data/products_clean.csv` — очищенный каталог без новых меток;
-- `data/product_characteristics.csv` — все вхождения характеристик в long format;
-- `data/categories_summary.csv` — категории и черновые контекстные соответствия;
-- `data/products_weak_labeled.csv` — отдельные слабые multi-label аннотации;
-- `data/manual_review_sample.csv` — стратифицированная выборка для проверки;
-- `taxonomy/*.csv` — черновая таксономия;
-- `reports/*.md` — русскоязычные отчёты и руководство.
+Generated-only manual review CSV проверены на отсутствие правок и перенесены в `archive/manual_review_generated/`. Старые эксперименты сохранены для сравнения, но не являются входом нового workflow.
 
-V2 сохраняет clean data и v1 weak labels, а многомерные labels пишет в
-`products_multidim_weak_labeled.csv`. Два review-файла защищены от перезаписи,
-если в них появились ручные изменения. Эксперименты и prototype ranking находятся
-в `experiments/` и `recommendation/`; generated artifacts не являются production-моделями.
-
-- `data/manual_review_500.csv` — единый набор из 500 уникальных товаров;
-- `notebooks/train_and_evaluate_colab.ipynb` — последовательный Colab workflow;
-- `ml_api/` — единые load/prepare/train/validate/evaluate/save/load/predict функции;
-- `reports/training_and_deployment_guide.md` — полное руководство.
+Все labels эвристические. Test split измеряет согласие с правилами и не доказывает реальную точность.

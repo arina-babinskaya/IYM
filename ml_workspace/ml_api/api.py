@@ -150,12 +150,25 @@ def save_model(model: ModelBundle,artifact_dir: Path,validation: ValidationResul
 
 def load_model(artifact_dir: Path,expected_taxonomy_version: str=TAXONOMY_VERSION,trusted: bool=False,encoder: Any=None)->ModelBundle:
     if not trusted: raise PermissionError("trusted=True required for local serialized artifacts")
-    meta=json.loads((artifact_dir/"metadata.json").read_text())
+    artifact_dir=Path(artifact_dir)
+    required={"metadata.json","thresholds.json","dependency_versions.json","estimators.joblib","preprocessor.joblib"}
+    if missing:=sorted(name for name in required if not (artifact_dir/name).is_file()):
+        raise FileNotFoundError(f"Incomplete model artifact at {artifact_dir}; missing: {missing}")
+    meta=json.loads((artifact_dir/"metadata.json").read_text(encoding="utf-8"))
+    if meta.get("format_version")!=2: raise ValueError(f"Unsupported artifact format: {meta.get('format_version')!r}")
     if meta["taxonomy_version"]!=expected_taxonomy_version: raise ValueError("Taxonomy mismatch")
+    expected_tasks={"domain","activities","product_category","work_types","room_types"}
+    if missing_tasks:=sorted(expected_tasks-set(meta.get("task_classes",{}))): raise ValueError(f"Artifact task mappings missing: {missing_tasks}")
+    if set(meta["task_classes"]["work_types"])!=set(WORK_IDS): raise ValueError("Artifact work types do not match taxonomy_v2")
     validate_feature_schema(meta["feature_schema"]); raw=meta["training_config"]; raw["tasks"]=tuple(raw.get("tasks",[])); cfg=TrainingConfig(**raw)
     if meta["experiment"]=="embeddings_logreg" and encoder is None:
         local=artifact_dir/"sentence_encoder"; encoder=_load_encoder(str(local) if local.exists() else cfg.embedding_model,"cuda" if cfg.use_gpu else "cpu")
-    return ModelBundle(meta["experiment"],joblib.load(artifact_dir/"estimators.joblib"),joblib.load(artifact_dir/"preprocessor.joblib"),meta["class_names"],json.loads((artifact_dir/"thresholds.json").read_text()),meta["taxonomy_version"],meta["feature_schema"],cfg,encoder,meta.get("metadata",{}),meta["task_classes"])
+    thresholds=json.loads((artifact_dir/"thresholds.json").read_text(encoding="utf-8"))
+    multilabel_classes={label for task in MULTILABEL_TASKS for label in meta["task_classes"][task]}
+    if missing_thresholds:=sorted(multilabel_classes-set(thresholds)): raise ValueError(f"Artifact thresholds missing: {missing_thresholds}")
+    estimators=joblib.load(artifact_dir/"estimators.joblib")
+    if missing_estimators:=sorted(expected_tasks-set(estimators)): raise ValueError(f"Artifact estimators missing: {missing_estimators}")
+    return ModelBundle(meta["experiment"],estimators,joblib.load(artifact_dir/"preprocessor.joblib"),meta["class_names"],thresholds,meta["taxonomy_version"],meta["feature_schema"],cfg,encoder,meta.get("metadata",{}),meta["task_classes"])
 
 def _frame(products: Sequence[ProductInput])->pd.DataFrame:
     rows=[]
