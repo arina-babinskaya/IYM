@@ -1,0 +1,27 @@
+{
+  "taxonomy_version": "taxonomy_v2",
+  "rows": 88790,
+  "manifest_sha256": "9e78da4122b48ab25fe839f3a8a67bac1cff36f3786223bb9f32fee43c440f77",
+  "domain": {
+    "renovation": 45421,
+    "unknown_needs_review": 19223,
+    "non_renovation": 17124,
+    "furnishing": 7022
+  },
+  "splits": {
+    "train": 62081,
+    "validation": 13392,
+    "test": 13317
+  },
+  "unknown": 19223,
+  "moved_from_v1_unknown": 5658,
+  "changed_rows": 12336,
+  "multi_work_rows": 232,
+  "valid_rows": {
+    "domain_valid": 69567,
+    "activity_valid": 69567,
+    "product_category_valid": 52443,
+    "work_types_valid": 69567,
+    "room_types_valid": 6236
+  }
+}
