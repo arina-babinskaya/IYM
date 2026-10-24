@@ -49,9 +49,11 @@ docker compose down                          # остановить (данны�
 | GET | `/api/v1/taxonomy` | Справочник: этапы, виды ремонта, виды работ, материалы |
 | POST | `/api/v1/product/{id}/calc` | Расчёт в карточке: размеры → упаковки и цена |
 | GET | `/api/v1/products?q=`, `/api/v1/products/{id}` | Поиск и карточка товара |
-| GET | `/api/v1/admin/products` | Товары с ML-подсказкой: материал и виды работ |
+| GET | `/api/v1/admin/products?status=unbound\|ml\|confirmed\|all&q=` | Товары с ML-подсказкой по статусу привязки |
+| POST | `/api/v1/admin/products` | Добавить товар вручную (не удаляется при загрузке каталога) |
+| DELETE | `/api/v1/admin/products/{id}` | Удалить товар, добавленный вручную |
 | PUT | `/api/v1/admin/products/{id}/binding` | Подтвердить или исправить привязку |
-| POST | `/api/v1/admin/autobind` | Автопривязка уверенных предсказаний |
+| POST | `/api/v1/admin/autobind` | Автопривязка предсказаний с уверенностью от `RC_AUTOBIND_MIN_CONFIDENCE` (по умолчанию 0.8) |
 | GET | `/api/v1/admin/stats` | Доля автопривязанных товаров |
 | GET | `/health` | БД и нейросеть |
 | POST | `/internal/llm/chat`, `/internal/llm/embed` | Нейросеть и эмбеддинги для команды |

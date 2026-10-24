@@ -86,3 +86,12 @@ def test_extract_specs_without_units_and_from_name():
     assert extract_specs([], product_name="обои виниловые 10,05х1,06м")["width_m"] == "1.06"
     assert extract_specs([], product_name="клей обойный 240г")["weight_kg"] == "0.24"
     assert extract_specs([], product_name="шпатлевка 18кг")["weight_kg"] == "18"
+
+
+def test_pack_length():
+    assert extract_specs([], product_name="кабель ВВГ-нг(А) 3х4,0 ГОСТ уп.20м")["pack_length_m"] == "20"
+    assert extract_specs([], product_name="провод ПВС 3х1,5 бухта 50 метров")["pack_length_m"] == "50"
+    assert extract_specs([], product_name="кабель-канал ПВХ 50х12 мм 2 м.")["pack_length_m"] == "2"
+    assert "pack_length_m" not in extract_specs([], product_name="обои 10,05х1,06м")
+    assert "pack_length_m" not in extract_specs([], product_name="кабель-канал 25х25мм")
+    assert extract_specs([{"name": "Метраж упаковки", "value": "100"}])["pack_length_m"] == "100"

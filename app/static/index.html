@@ -68,7 +68,14 @@ td.num { text-align: right; white-space: nowrap; }
 .results { display: grid; gap: 6px; max-height: 260px; overflow-y: auto; }
 .results button { text-align: left; font: inherit; background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; cursor: pointer; }
 .results button.on { border-color: var(--accent); }
-select[multiple] { min-width: 220px; min-height: 110px; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.seg button { font: inherit; font-size: 13px; border: 0; background: var(--surface); color: var(--muted); padding: 7px 12px; cursor: pointer; }
+.seg button.on { background: var(--accent); color: var(--accent-ink); }
+.add-form { display: grid; gap: 10px; background: var(--bg); border-radius: 10px; padding: 12px; }
+.add-form input, .add-form textarea { width: 100%; font: inherit; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; }
+.works-pick { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 2px 12px; margin-top: 6px; font-size: 13px; }
+.works-pick label { display: flex; gap: 6px; color: var(--ink); font-size: 13px; }
+.actions { display: flex; gap: 6px; flex-wrap: wrap; }
 </style>
 </head>
 <body>
@@ -113,13 +120,35 @@ select[multiple] { min-width: 220px; min-height: 110px; }
   <section data-panel="admin" class="card" hidden>
     <div class="row" style="justify-content:space-between;align-items:center">
       <h2>Привязка товаров к видам работ</h2>
-      <button class="secondary" id="autobind">Привязать автоматически (ML)</button>
+      <span class="row">
+        <button class="secondary" id="add-toggle">+ Добавить товар</button>
+        <button class="secondary" id="autobind">Привязать автоматически (ML)</button>
+      </span>
     </div>
-    <div class="row">
-      <input id="admin-q" placeholder="поиск товара" style="flex:1">
-      <button class="secondary" id="admin-search">Найти</button>
+    <form id="add-form" class="add-form" hidden>
+      <div class="row">
+        <label style="flex:2">Название*<input name="name" required minlength="2" placeholder="Краска интерьерная моющаяся белая 2,5 л"></label>
+        <label>Цена, ₽*<input name="price" type="number" min="0.01" step="0.01" required></label>
+        <label>Единица<input name="unit" placeholder="шт"></label>
+      </div>
+      <div class="row">
+        <label>Категория<input name="category" placeholder="Краски"></label>
+        <label>Бренд<input name="brand"></label>
+        <label>Площадь в упаковке, м²<input name="package_area" type="number" min="0" step="0.01"></label>
+        <label>Штук в упаковке<input name="quantity_in_package" type="number" min="0" step="1"></label>
+      </div>
+      <label>Характеристики, по одной на строку «Название: значение»
+        <textarea name="characteristics" rows="3" placeholder="Влагостойкость краски: да&#10;Расход материала: 0,12&#10;Литраж банки: 2,5"></textarea></label>
+      <div class="row"><button class="primary" type="submit">Добавить</button><button class="secondary" type="button" id="add-cancel">Отмена</button></div>
+    </form>
+    <div class="row" style="justify-content:space-between">
+      <div class="seg" id="admin-filter">
+        <button data-status="unbound" class="on">Без привязки</button><button data-status="ml">ML</button><button data-status="confirmed">Подтверждённые</button><button data-status="all">Все</button>
+      </div>
+      <span class="row" style="flex:1;justify-content:flex-end"><input id="admin-q" placeholder="поиск товара" style="flex:1;max-width:320px"><button class="secondary" id="admin-search">Найти</button></span>
     </div>
     <div id="admin-stats" class="muted"></div>
+    <div id="admin-msg" class="muted"></div>
     <div class="scroll"><table id="admin-table"></table></div>
   </section>
 </main>
@@ -309,7 +338,10 @@ function renderEstimate(r) {
       const head = i.stage !== stage ? `<tr class="stage"><td colspan="6">${esc(T.stages[i.stage])}</td></tr>` : "";
       stage = i.stage;
       const work = `${esc(i.title)}<div class="muted">${esc(T.works[i.work_type])}${({ floor: " · пол", wall: " · стены", ceiling: " · потолок" })[i.surface] || ""}</div>`;
-      if (i.packages === 0) return head + `<tr class="empty"><td>${work}</td><td colspan="5">${esc(i.reason)}</td></tr>`;
+      if (i.packages === 0 && !i.product) return head + `<tr class="empty"><td>${work}</td><td colspan="5">${esc(i.reason)}</td></tr>`;
+      if (i.packages === 0) return head + `<tr><td>${work}</td><td>${esc(i.product.name)}<div class="muted">${esc(i.reason)}</div></td>
+        <td class="num" colspan="2"><span class="muted">количество уточните</span></td>
+        <td class="num">${rub(i.product.result_price)}</td><td class="num">—</td></tr>`;
       return head + `<tr><td>${work}${i.reason ? `<div class="muted">${esc(i.reason)}</div>` : ""}</td>
         <td>${esc(i.product?.name)}</td>
         <td class="num">${num(i.required_amount)} ${esc(i.required_unit)}</td>
@@ -383,44 +415,128 @@ document.getElementById("run-calc").onclick = async () => {
   } catch (e) { out.innerHTML = `<div class="warn">Не получается посчитать: ${esc(e.message)}</div>`; }
 };
 
+let adminStatus = "unbound", adminRows = [];
+const flagTitles = { moisture_resistant: "влагостойкий", washable: "моющийся" };
+const describe = x => `<b>${esc(T.materials[x.material])}</b><div class="muted">${x.work_types.map(w => esc(T.works[w])).join(", ") || "виды работ не указаны"}</div>`;
+
 async function loadAdmin() {
   const q = document.getElementById("admin-q").value.trim();
   const [stats, rows] = await Promise.all([
     api("/api/v1/admin/stats"),
-    api(`/api/v1/admin/products?only_unbound=false&limit=100${q ? `&q=${encodeURIComponent(q)}` : ""}`),
+    api(`/api/v1/admin/products?status=${adminStatus}&limit=100${q ? `&q=${encodeURIComponent(q)}` : ""}`),
   ]);
+  adminRows = rows;
   document.getElementById("admin-stats").textContent =
     `Товаров: ${stats.products_total} · подтверждено вручную: ${stats.bound_manual} · привязано ML: ${stats.bound_ml} · без привязки: ${stats.unbound} · доля автопривязки: ${Math.round(stats.auto_bound_share * 100)}%`;
-  document.getElementById("admin-table").innerHTML = `
-    <tr><th>Товар</th><th>Подсказка ML</th><th>Привязка</th><th>Материал и виды работ</th><th></th></tr>
+  document.getElementById("admin-table").innerHTML = rows.length ? `
+    <tr><th>Товар</th><th>Подсказка ML</th><th>Текущая привязка</th><th></th></tr>
     ${rows.map(r => {
       const s = r.suggestion, b = r.binding;
-      const flags = Object.entries(s.flags).filter(([, v]) => v).map(([k]) => k === "moisture_resistant" ? "влагостойкий" : k === "washable" ? "моющийся" : k);
-      const status = !b ? '<span class="muted">нет</span>' : `<span class="pill ${b.confirmed ? "ok" : ""}">${b.confirmed ? "✓ вручную" : "ML"}</span>`;
-      const cur = b || s;
+      const flags = Object.entries(s.flags).filter(([, v]) => v).map(([k]) => `<span class="pill">${esc(flagTitles[k] || k)}</span>`).join("");
+      const bound = !b ? '<span class="muted">нет</span>'
+        : `<span class="pill ${b.confirmed ? "ok" : ""}">${b.confirmed ? "✓ подтверждено" : "ML"}</span>${describe(b)}`;
       return `<tr data-id="${r.product.id}">
-        <td>${esc(r.product.name)}<div class="muted">${esc(r.category)}</div></td>
-        <td>${esc(T.materials[s.material])} · ${Math.round(s.confidence * 100)}%
-          <div class="muted">${s.work_types.map(w => esc(T.works[w])).join(", ")}</div>
-          <div>${flags.map(f => `<span class="pill">${f}</span>`).join("")}</div></td>
-        <td>${status}</td>
-        <td><select data-m>${opts(T.materials, cur.material)}</select><br>
-          <select data-w multiple>${opts(T.works, cur.work_types)}</select></td>
-        <td><button class="primary small" data-save>Сохранить</button></td></tr>`;
-    }).join("")}`;
-  document.querySelectorAll("[data-save]").forEach(btn => btn.onclick = async () => {
-    const tr = btn.closest("tr");
-    const row = rows.find(r => String(r.product.id) === tr.dataset.id);
-    await api(`/api/v1/admin/products/${tr.dataset.id}/binding`, { method: "PUT", body: JSON.stringify({
-      material: tr.querySelector("[data-m]").value,
-      work_types: [...tr.querySelector("[data-w]").selectedOptions].map(o => o.value),
-      room_types: row.suggestion.room_types, flags: row.suggestion.flags,
-    }) });
-    loadAdmin();
+        <td>${esc(r.product.name)}<div class="muted">${[esc(r.category || ""), r.manual ? '<span class="pill">ручной</span>' : ""].filter(Boolean).join(" · ")}</div></td>
+        <td>${describe(s)}<div class="muted">уверенность ${Math.round(s.confidence * 100)}%</div><div>${flags}</div></td>
+        <td>${bound}</td>
+        <td data-cell>${actionButtons(r)}</td></tr>`;
+    }).join("")}` : `<tr><td class="muted">Здесь пусто.</td></tr>`;
+  bindRowButtons();
+}
+
+function actionButtons(r) {
+  const confirmed = r.binding && r.binding.confirmed;
+  return `<div class="actions">${confirmed ? "" : '<button class="primary small" data-confirm>✓ Подтвердить</button>'}
+    <button class="secondary small" data-edit>Изменить</button>
+    ${r.manual ? '<button class="secondary small" data-delete title="Удалить ручной товар">Удалить</button>' : ""}</div>`;
+}
+
+function bindRowButtons() {
+  document.querySelectorAll("#admin-table tr[data-id]").forEach(tr => {
+    const r = adminRows.find(x => String(x.product.id) === tr.dataset.id);
+    const cell = tr.querySelector("[data-cell]");
+    const save = async body => {
+      await api(`/api/v1/admin/products/${r.product.id}/binding`, { method: "PUT", body: JSON.stringify(body) });
+      document.getElementById("admin-msg").textContent = `Сохранено: ${r.product.name}`;
+      loadAdmin();
+    };
+    const src = r.binding || r.suggestion;
+    tr.querySelector("[data-confirm]")?.addEventListener("click", () => save({
+      material: src.material, work_types: src.work_types, room_types: src.room_types, flags: src.flags }));
+    tr.querySelector("[data-delete]")?.addEventListener("click", async () => {
+      if (!confirm(`Удалить «${r.product.name}»?`)) return;
+      await api(`/api/v1/admin/products/${r.product.id}`, { method: "DELETE" });
+      document.getElementById("admin-msg").textContent = `Удалён: ${r.product.name}`;
+      loadAdmin();
+    });
+    tr.querySelector("[data-edit]").addEventListener("click", () => {
+      const chosen = new Set(src.work_types);
+      cell.innerHTML = `<select data-m>${opts(T.materials, src.material)}</select>
+        <div class="works-pick">${Object.entries(T.works).map(([id, title]) =>
+          `<label><input type="checkbox" value="${id}" ${chosen.has(id) ? "checked" : ""}>${esc(title)}</label>`).join("")}</div>
+        <div class="actions" style="margin-top:6px"><button class="primary small" data-save>Сохранить</button><button class="secondary small" data-cancel>Отмена</button></div>`;
+      cell.querySelector("[data-cancel]").onclick = () => { cell.innerHTML = actionButtons(r); bindRowButtons(); };
+      cell.querySelector("[data-save]").onclick = () => save({
+        material: cell.querySelector("[data-m]").value,
+        work_types: [...cell.querySelectorAll(".works-pick input:checked")].map(c => c.value),
+        room_types: src.room_types, flags: src.flags,
+      });
+    });
   });
 }
+
+document.querySelectorAll("#admin-filter button").forEach(b => b.onclick = () => {
+  adminStatus = b.dataset.status;
+  document.querySelectorAll("#admin-filter button").forEach(x => x.classList.toggle("on", x === b));
+  loadAdmin();
+});
 document.getElementById("admin-search").onclick = loadAdmin;
-document.getElementById("autobind").onclick = async () => { await api("/api/v1/admin/autobind", { method: "POST" }); loadAdmin(); };
+document.getElementById("admin-q").addEventListener("keydown", e => { if (e.key === "Enter") loadAdmin(); });
+
+const addForm = document.getElementById("add-form");
+document.getElementById("add-toggle").onclick = () => { addForm.hidden = !addForm.hidden; };
+document.getElementById("add-cancel").onclick = () => { addForm.hidden = true; };
+addForm.onsubmit = async e => {
+  e.preventDefault();
+  const f = new FormData(addForm);
+  const num = k => f.get(k) ? Number(f.get(k)) : null;
+  const text = k => (f.get(k) || "").trim() || null;
+  const characteristics = (f.get("characteristics") || "").split("\n").map(l => l.split(":"))
+    .filter(p => p.length >= 2 && p[0].trim() && p.slice(1).join(":").trim())
+    .map(p => ({ name: p[0].trim(), value: p.slice(1).join(":").trim() }));
+  try {
+    const row = await api("/api/v1/admin/products", { method: "POST", body: JSON.stringify({
+      name: text("name"), price: num("price"), unit: text("unit"), category: text("category"), brand: text("brand"),
+      package_area: num("package_area"), quantity_in_package: num("quantity_in_package"), characteristics,
+    }) });
+    addForm.reset(); addForm.hidden = true;
+    adminStatus = "unbound";
+    document.querySelectorAll("#admin-filter button").forEach(x => x.classList.toggle("on", x.dataset.status === "unbound"));
+    document.getElementById("admin-q").value = "";
+    await loadAdmin();
+    document.getElementById("admin-msg").textContent =
+      `Добавлен «${row.product.name}». ML предлагает: ${T.materials[row.suggestion.material]} — проверьте и подтвердите.`;
+  } catch (err) {
+    document.getElementById("admin-msg").textContent = `Не удалось добавить: ${err.message}`;
+  }
+};
+document.getElementById("autobind").onclick = async () => {
+  const btn = document.getElementById("autobind");
+  const info = document.getElementById("admin-stats");
+  btn.disabled = true;
+  btn.textContent = "Привязываю… (до минуты)";
+  try {
+    const before = await api("/api/v1/admin/stats");
+    const after = await api("/api/v1/admin/autobind", { method: "POST" });
+    await loadAdmin();
+    info.textContent = `Новых привязок: ${after.bound_ml - before.bound_ml}. ` + info.textContent;
+  } catch (e) {
+    info.textContent = `Ошибка привязки: ${e.message}`;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Привязать автоматически (ML)";
+  }
+};
 
 api("/api/v1/taxonomy").then(t => {
   t.stages.forEach(s => T.stages[s.id] = s.title);

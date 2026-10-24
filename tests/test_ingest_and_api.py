@@ -205,3 +205,41 @@ def test_step_by_step(ingested):
         assert {i["work_type"] for i in demo.json()["rooms"][0]["items"]} == {"electrical_wiring"}
 
 
+
+
+def test_admin_manual_product_and_status_filter(ingested):
+    from app.catalog.repository import MANUAL_ID_START
+
+    with TestClient(app) as client:
+        created = client.post("/api/v1/admin/products", json={
+            "name": "Краска интерьерная моющаяся тестовая 2,5л", "price": 999, "unit": "шт",
+            "characteristics": [{"name": "Расход материала", "value": "0,12"}],
+        })
+        assert created.status_code == 201
+        row = created.json()
+        pid = row["product"]["id"]
+        assert pid >= MANUAL_ID_START and row["manual"] and row["binding"] is None
+        assert row["suggestion"]["material"] == "paint"
+
+        unbound = client.get("/api/v1/admin/products", params={"status": "unbound"}).json()
+        assert pid in {r["product"]["id"] for r in unbound}
+
+        s = row["suggestion"]
+        client.put(f"/api/v1/admin/products/{pid}/binding", json={
+            "material": s["material"], "work_types": s["work_types"], "room_types": s["room_types"], "flags": s["flags"]})
+        confirmed = client.get("/api/v1/admin/products", params={"status": "confirmed"}).json()
+        assert pid in {r["product"]["id"] for r in confirmed}
+        assert pid not in {r["product"]["id"] for r in client.get("/api/v1/admin/products", params={"status": "ml"}).json()}
+
+        card = client.get(f"/api/v1/products/{pid}").json()
+        assert card["specs"]["volume_l"] == "2.5" and card["specs"]["consumption"]["unit"] == "l/m2"
+
+        with get_sessionmaker()() as s2:
+            load_catalog(s2, SAMPLE)
+        assert client.get(f"/api/v1/products/{pid}").json()["name"].startswith("Краска")
+        assert pid in {r["product"]["id"] for r in client.get("/api/v1/admin/products", params={"status": "confirmed"}).json()}
+
+        assert client.delete("/api/v1/admin/products/96611").status_code == 404
+        assert client.delete(f"/api/v1/admin/products/{pid}").status_code == 204
+        assert client.get(f"/api/v1/products/{pid}").status_code == 404
+        assert client.post("/api/v1/admin/products", json={"name": "x", "price": 0}).status_code == 422
