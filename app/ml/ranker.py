@@ -22,8 +22,61 @@ LOW_EMISSION = _rx(r"без запаха|гипоаллерг|экологич|\
 NO = _rx(r"^(нет|no|-|отсутств|0$)")
 WEAR_CLASS = _rx(r"\b(3[1-4])\s*класс|класс\w*\s*(?:износостойкости|эксплуатации|нагрузки)?\D{0,3}(3[1-4])\b")
 PEI = _rx(r"\bPEI\s*(I{1,3}V?|V|[1-5])\b")
+OUTDOOR = _rx(r"уличн|прожектор|садов|ландшафт|солнечн\w* батар|промышленн|наземн|фасадн|грунтов\w* светил")
 IP = _rx(r"\bIP\s?(\d{2})\b")
 ROMAN = {"I": 1, "II": 2, "III": 3, "IV": 4, "V": 5}
+
+ROOM_WORDS: dict[RoomType, re.Pattern[str]] = {r: _rx(p) for r, p in {
+    R.kitchen: r"\bкухн",
+    R.bathroom: r"\bванн|\bдуш|\bсанузл|\bтуалет",
+    R.hallway: r"\bприхож|\bкоридор",
+    R.balcony: r"\bбалкон|\bлоджи",
+    R.bedroom: r"\bспальн",
+    R.living_room: r"\bгостин",
+    R.utility_room: r"\bпостироч|\bкладов",
+}.items()}
+
+TYPICAL: dict[Material, re.Pattern[str]] = {m: _rx(p) for m, p in {
+    M.cable: r"^(кабель|провод)\b(?!-канал)(?!.*(с вилкой|utp|ftp|hdmi|usb|антенн|акустич|телефон|коаксиал|сетев|удлинит|шнур|нагрев|грею|торшер|для светильник|для ламп))",
+    M.cable_channel: r"^(кабель-канал|гофротруб|труба гофрир)",
+    M.electrical_boxes: r"^(подрозетник|коробка|распределительн\w* коробк|распаечн)",
+    M.circuit_breakers: r"^(автомат|выключатель автомат|узо|дифавтомат|щит)",
+    M.socket: r"^розетк(?!.*(переносн|удлинит|колодк|таймер))",
+    M.switch: r"^выключател(?!\w* автомат)",
+    M.lighting: r"^(светильник|люстр|бра\b|спот|торшер)",
+    M.lamps: r"^(лампа|лампочк)(?!.*(настольн|напольн|растени|аквариум|автомоб|\b12\s?в\b|h[1-9]\b|ультрафиолет|бактерицид|холодильн|швейн|духов|печ))",
+    M.pipes: r"^труб(?!.*(газ|гофр|гоф\b|дренаж|кабел|вентиляц|рейлинг|алюмин|квадрат|профильн|карниз|штанг|мебел))",
+    M.plumbing: r"^(смесител|унитаз|раковин|ванна|душев\w* (кабин|поддон|стойк|систем)|инсталляц)",
+    M.heating: r"^(радиатор|полотенцесушител|т[её]плый пол|конвектор|кот[её]л)",
+    M.ventilation: r"^(вентилятор|воздуховод|решетк\w* вентил|решётк\w* вентил)",
+    M.doors: r"^(двер|полотно дверн|блок дверн|окно)",
+    M.door_hardware: r"^(ручк\w* дверн|петл|замок|защ[её]лк)",
+    M.fasteners: r"^(дюбел|саморез|шуруп|анкер)",
+    M.mounting_foam: r"^пена",
+    M.mounting_adhesive: r"^(жидкие гвозди|клей монтажн)",
+    M.skirting: r"^(плинтус|порож)",
+    M.decorative: r"^(панел|молдинг|плинтус потолоч|карниз потолоч|карниз декоратив|розетк\w* потолоч)",
+    M.paint: r"^краска",
+    M.primer: r"^грунт(овка)?\b(?!.*(для пластик|аэрозол|по металл|по ржавч|для osb|osb|дерев|wood|авто|-эмаль|-краска))",
+    M.putty: r"^шпа[кт]л",
+    M.plaster: r"^штукатурк",
+    M.screed_mix: r"^(смесь для пол|пол наливн|наливной пол|ровнител|пескобетон|цементно-песчан|стяжка для пол)",
+    M.waterproofing: r"^(гидроизол|мастика)",
+    M.tile: r"^(плитка|керамогранит)",
+    M.tile_adhesive: r"^клей (плиточн|для плитк)",
+    M.grout: r"^затирк",
+    M.tile_leveling: r"^(свп|система для выравнив|зажим|клин)",
+    M.laminate: r"^(ламинат|плитка spc|кварцвинил)",
+    M.linoleum: r"^линолеум",
+    M.underlay: r"^подложк(?!\w* под ков)",
+    M.wallpaper: r"^обои",
+    M.wallpaper_glue: r"^клей (обойн|для обоев)",
+    M.drywall: r"^(гипсокартон|гкл|лист гипс)",
+    M.profile: r"^профил\w* (потолочн|направляющ|стоечн|для гкл|для гипсокартон|пп\b|пн\b|пс\b|cd\b|ud\b|cw\b|uw\b)",
+    M.beacons: r"^(маяк|профиль маяч)",
+    M.reinforcing_mesh: r"^(серпянк|сетка|лента стекловолок)",
+    M.damper_tape: r"^лента демпф",
+}.items()}
 
 WALLPAPER_WASH = {"супермою": 1.0, "моющ": 2 / 3, "влагост": 1 / 3}
 FLOOR_USE = {"полукоммерч": 2 / 3, "коммерч": 1.0, "бытов": 1 / 3}
@@ -60,6 +113,7 @@ def rule(signal: str, weight: float, materials=None, rooms=None, humidity: Level
 
 
 RULES: list[Rule] = [
+    rule("typical", 6),
     rule("moisture_resistant", 5, FINISH, humidity=Level.high),
     rule("moisture_resistant", 2, FINISH, rooms=WET),
     rule("antifungal", 3, MIXES, humidity=Level.high),
@@ -71,11 +125,12 @@ RULES: list[Rule] = [
     rule("frost_resistant", 4, {M.tile, M.tile_adhesive, M.grout, M.paint, M.plaster, M.putty}, rooms={R.balcony}),
     rule("ip_protected", 5, ELECTRIC, rooms={R.bathroom}),
     rule("ip_protected", 3, ELECTRIC, humidity=Level.high),
+    rule("outdoor", -10, ELECTRIC, rooms=set(RoomType) - {R.balcony}),
     rule("low_emission", 2, {M.paint, M.wallpaper, M.laminate, M.linoleum, M.primer, M.wallpaper_glue},
          rooms=LIVING),
 ]
 
-BASE_WEIGHTS = {"in_stock": 3.0, "calculable": 2.0, "confirmed": 1.0, "recsys": 1.5, "rating": 1.0}
+BASE_WEIGHTS = {"in_stock": 3.0, "calculable": 2.0, "confirmed": 1.0, "recsys": 1.5, "rating": 1.0, "room_match": 3.0}
 
 PIECE_MATERIALS = {M.cable, M.cable_channel, M.socket, M.switch, M.electrical_boxes, M.circuit_breakers, M.lighting,
                    M.lamps, M.heating, M.profile, M.beacons, M.skirting, M.damper_tape, M.fasteners,
@@ -88,6 +143,7 @@ class Scored:
     product: Product
     score: float
     parts: dict[str, float] = field(default_factory=dict)
+    filled: int = 0
 
 
 def _num(v: object) -> float | None:
@@ -181,6 +237,25 @@ def _frost(chars: dict[str, str], text: str) -> float:
     return 1.0 if FROST.search(text) else 0.0
 
 
+def _outdoor(chars: dict[str, str], text: str) -> float:
+    use = chars.get("применение", "")
+    if "наружн" in use and "внутр" not in use:
+        return 1.0
+    return 1.0 if OUTDOOR.search(text) else 0.0
+
+
+def _typical(material: Material | None, name: str | None) -> float:
+    pattern = TYPICAL.get(material)
+    return 1.0 if pattern and pattern.search((name or "").strip()) else 0.0
+
+
+def room_match(name: str | None, room: RoomType) -> float:
+    mentioned = {r for r, pattern in ROOM_WORDS.items() if pattern.search(name or "")}
+    if not mentioned:
+        return 0.0
+    return 1.0 if room in mentioned else -1.0
+
+
 def signals(p: Product, b: ProductBinding) -> dict[str, float]:
     chars = characteristics(p)
     text = " ".join([p.name or "", (p.description or "")[:500]])
@@ -194,6 +269,8 @@ def signals(p: Product, b: ProductBinding) -> dict[str, float]:
         "antifungal": 1.0 if ANTIFUNGAL.search(text) else 0.0,
         "low_emission": _low_emission(chars, text),
         "ip_protected": _ip(chars, text),
+        "outdoor": _outdoor(chars, text),
+        "typical": _typical(_material(b), p.name),
     }
 
 
@@ -251,6 +328,7 @@ class ContextRanker:
                 "confirmed": w["confirmed"] * (1.0 if b.confirmed else 0.0),
                 "recsys": w["recsys"] * rs,
                 "rating": w["rating"] * (min(max(rating / 5, 0.0), 1.0) if rating else 0.0),
+                "room_match": w["room_match"] * room_match(p.name, room.room_type),
             }
             material = _material(b)
             sig = signals(p, b)
@@ -258,7 +336,7 @@ class ContextRanker:
                 if sig.get(r.signal) and r.applies(material, room):
                     parts[r.signal] = parts.get(r.signal, 0.0) + r.weight * sig[r.signal]
             parts = {k: round(v, 4) for k, v in parts.items() if v}
-            scored.append(Scored(p, round(sum(parts.values()), 4), parts))
+            scored.append(Scored(p, round(sum(parts.values()), 4), parts, len(characteristics(p))))
 
-        scored.sort(key=lambda s: (-s.score, s.product.id))
+        scored.sort(key=lambda s: (-s.score, -s.filled, s.product.id))
         return scored

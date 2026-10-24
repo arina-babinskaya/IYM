@@ -102,3 +102,45 @@ def test_calculable():
     assert calculable(*item(1, unit="м²"))
     assert calculable(*item(2, "skirting"))
     assert not calculable(*item(3))
+
+
+def test_outdoor_lights_pushed_down_indoors():
+    street = item(1, "lighting", name="Светильник уличный настенный IP54")
+    indoor = item(2, "lighting", name="Светильник потолочный для ванной IP44")
+    assert ids(ContextRanker().rank([street, indoor], room("bathroom"))) == [2, 1]
+    assert ContextRanker().score([street], room("bathroom"))[0].parts["outdoor"] == -10
+    assert "outdoor" not in ContextRanker().score([street], room("balcony"))[0].parts
+
+
+def test_typical_product_and_filled_card_win_ties():
+    tee = item(1, "pipes", name="тройник ПНД 25х3/4")
+    pipe = item(2, "pipes", name="труба полипропиленовая 20 мм 2 м")
+    assert ids(ContextRanker().rank([tee, pipe], room("bathroom"))) == [2, 1]
+    empty = item(3, "pipes", name="труба ПНД 25 мм")
+    filled = item(4, "pipes", name="труба ПНД 32 мм", chars={"Диаметр": "32", "Материал": "ПНД"})
+    assert ids(ContextRanker().rank([empty, filled], room())) == [4, 3]
+
+
+def test_room_in_name_and_refined_typical():
+    kitchen = item(1, "plumbing", name="смеситель для кухни AM.PM Gem хром")
+    bath = item(2, "plumbing", name="смеситель для ванны с душем")
+    assert ids(ContextRanker().rank([kitchen, bath], room("bathroom"))) == [2, 1]
+    assert ids(ContextRanker().rank([kitchen, bath], room("kitchen"))) == [1, 2]
+    cord = item(3, "cable", name="кабель с вилкой DORI 2x0,75")
+    power = item(4, "cable", name="кабель ВВГнг-LS 3х2,5 10м")
+    assert ids(ContextRanker().rank([cord, power], room())) == [4, 3]
+
+
+def test_room_words_match_whole_words_only():
+    from app.ml.ranker import room_match
+
+    assert room_match("труба PPR армированная стекловолокном", RoomType.bathroom) == 0
+    assert room_match("кабель экранированный", RoomType.bathroom) == 0
+    assert room_match("смеситель для ванны", RoomType.bathroom) == 1
+    assert room_match("смеситель для кухни", RoomType.bathroom) == -1
+
+
+def test_typical_outweighs_moisture_of_wrong_product():
+    moment = item(1, "wallpaper_glue", name="клей МОМЕНТ особопрочный 30мл", chars={"Влагостойкость": "да"})
+    glue = item(2, "wallpaper_glue", name="клей обойный KLEO флизелиновый 240г", **PACK)
+    assert ids(ContextRanker().rank([moment, glue], room("bathroom"))) == [2, 1]

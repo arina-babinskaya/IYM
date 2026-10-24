@@ -137,7 +137,7 @@ def offer_rows(
         "in_stock": offer["available"],
         "categories": categories,
         "categories_tree": tree,
-        "specs": nz.extract_specs(characteristics, pack_area, qty_in_pack),
+        "specs": nz.extract_specs(characteristics, pack_area, qty_in_pack, offer.get("name")),
         "raw": offer,
     }
     links = [{"product_id": pid, "category_id": int(c)} for c in categories]

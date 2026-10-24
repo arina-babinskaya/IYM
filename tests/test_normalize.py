@@ -68,3 +68,21 @@ def test_to_decimal():
     assert to_decimal("1 145,83") == D("1145.83")
     assert to_decimal(1.44) == D("1.44")
     assert to_decimal("abc") is None and to_decimal(True) is None
+
+
+def test_extract_specs_without_units_and_from_name():
+    wallpaper = extract_specs([{"name": "Длина", "value": "10.05"}, {"name": "Ширина", "value": "1,06"}])
+    assert wallpaper["length_m"] == "10.05" and wallpaper["width_m"] == "1.06"
+    assert extract_specs([{"name": "Ширина", "value": "600"}])["width_m"] == "0.6"
+    assert "length_m" not in extract_specs([{"name": "Длина", "value": "60"}])
+
+    paint = extract_specs([{"name": "Литраж банки", "value": "2.5"}, {"name": "Расход материала", "value": "0,12"}])
+    assert paint["volume_l"] == "2.5" and paint["consumption"] == {"value": "0.12", "unit": "l/m2"}
+    mix = extract_specs([{"name": "Вес", "value": "25"}, {"name": "Расход материала", "value": "1,2"}])
+    assert mix["consumption"] == {"value": "1.2", "unit": "kg/m2"}
+    grams = extract_specs([{"name": "Расход материала", "value": "200"}], product_name="краска 2,5л")
+    assert grams["volume_l"] == "2.5" and grams["consumption"] == {"value": "0.2", "unit": "l/m2"}
+
+    assert extract_specs([], product_name="обои виниловые 10,05х1,06м")["width_m"] == "1.06"
+    assert extract_specs([], product_name="клей обойный 240г")["weight_kg"] == "0.24"
+    assert extract_specs([], product_name="шпатлевка 18кг")["weight_kg"] == "18"

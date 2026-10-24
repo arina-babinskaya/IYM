@@ -40,6 +40,7 @@ RULES: list[tuple[str, Material]] = [
     (r"\bламп[аы]\b|светодиодн\w* ламп", Material.lamps),
     (r"молдинг|стенов\w* панел|панел\w* пвх|потолочн\w* плинтус|плинтус потолоч|карниз|розетк\w* потолочн", Material.decorative),
     (r"водорозетк|\bтруб[аыу]?\b|фитинг|канализац|муфт|тройник", Material.pipes),
+    (r"\bspc\b|\blvt\b|кварцвинил|кварц-винил|винилов\w* плитк|плитк\w* пвх|пвх[- ]плитк", Material.laminate),
     (r"керамогранит|плитк|кафел", Material.tile),
     (r"ламинат", Material.laminate),
     (r"линолеум", Material.linoleum),

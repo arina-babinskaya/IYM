@@ -22,6 +22,7 @@ from app.schemas import (
 from app.taxonomy import MATERIAL_TITLES, STAGE_ORDER, WORKS, Material, RenovationType, WorkType
 
 CENT = Decimal("0.01")
+CANDIDATES_LIMIT = 20000
 RESERVE: dict[Material, Decimal] = {
     Material.tile: Decimal(10), Material.laminate: Decimal(7), Material.wallpaper: Decimal(10),
     Material.linoleum: Decimal(5), Material.drywall: Decimal(10),
@@ -124,7 +125,8 @@ class BaselineEngine:
         info = WORKS[work]
         area = walls if surface == Surface.wall else floor
         wet = room.effective_humidity == Level.high and material in NEEDS_MOISTURE
-        cands = repo.candidates(material, required_flags=["moisture_resistant"] if wet else [], min_confidence=0.8)
+        cands = repo.candidates(material, required_flags=["moisture_resistant"] if wet else [], min_confidence=0.8,
+                                limit=CANDIDATES_LIMIT)
         ranked = self.ranker.rank(cands, room)
         hint = SURFACE_HINTS.get(surface) if material == Material.tile else None
         if hint:
