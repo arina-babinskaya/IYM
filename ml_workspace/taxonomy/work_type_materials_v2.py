@@ -107,10 +107,12 @@ WORK_TYPE_MATERIALS: dict[str, list[dict]] = {
         {"item": "комплект тёплого пола (мат/кабель/плёнка)","role": "primary_material", "weight": 0.15},
         {"item": "котёл / коллектор",                      "role": "primary_material",   "weight": 0.10},
         {"item": "трубы для отопления",                    "role": "auxiliary_material", "weight": 0.12},
-        {"item": "регулирующая арматура (термостаты, вентили)", "role": "auxiliary_material","weight": 0.10},
+        {"item": "регулирующая арматура (термостаты, вентили)", "role": "auxiliary_material","weight": 0.10,
+         "note": "радиаторные термостатические клапаны и вентили на приборы отопления"},
         {"item": "теплоизоляция труб",                     "role": "auxiliary_material", "weight": 0.07},
         {"item": "крепёж радиаторов (кронштейны, дюбели)", "role": "fastener",           "weight": 0.06},
-        {"item": "терморегулятор / датчик температуры",    "role": "primary_material",   "weight": 0.07},
+        {"item": "терморегулятор / датчик температуры",    "role": "primary_material",   "weight": 0.07,
+         "note": "комнатный настенный терморегулятор или датчик теплого пола"},
         {"item": "паяльник / пресс-клещи",                 "role": "tool",               "weight": 0.07},
         {"item": "манометр / опрессовочный насос",         "role": "tool",               "weight": 0.04},
         {"item": "ФУМ-лента / герметик",                   "role": "consumable",         "weight": 0.02},
@@ -127,7 +129,7 @@ WORK_TYPE_MATERIALS: dict[str, list[dict]] = {
         {"item": "грунтовка глубокого проникновения",          "role": "preparation_material","weight": 0.10},
         {"item": "валик / кисть / шпатель",                    "role": "tool",               "weight": 0.10},
         {"item": "строительный миксер",                        "role": "tool",               "weight": 0.05},
-        {"item": "ёмкость для замеса",                         "role": "consumable",         "weight": 0.04},
+        {"item": "ёмкость для замеса",                         "role": "tool",               "weight": 0.04},
         {"item": "перчатки / защитные очки",                   "role": "protective_equipment","weight": 0.04},
     ],  # sum = 1.00
 
@@ -141,11 +143,10 @@ WORK_TYPE_MATERIALS: dict[str, list[dict]] = {
         {"item": "грунтовка",                               "role": "preparation_material","weight": 0.10},
         {"item": "демпферная лента",                        "role": "auxiliary_material", "weight": 0.07},
         {"item": "маяки для стяжки",                        "role": "auxiliary_material", "weight": 0.08},
-        {"item": "правило / уровень",                       "role": "tool",               "weight": 0.07},
+        {"item": "правило / уровень",                       "role": "tool",               "weight": 0.09},
         {"item": "строительный миксер / бетономешалка",    "role": "tool",               "weight": 0.08},
         {"item": "игольчатый валик (для дегазации)",        "role": "tool",               "weight": 0.04},
         {"item": "плёнка полиэтиленовая (подстилка)",       "role": "auxiliary_material", "weight": 0.04},
-        {"item": "вода",                                    "role": "consumable",         "weight": 0.02},
     ],  # sum = 1.00
 
     # ────────────────────────────────────────────────────────────────────────
@@ -160,9 +161,8 @@ WORK_TYPE_MATERIALS: dict[str, list[dict]] = {
         {"item": "правило / полутёрок",                       "role": "tool",               "weight": 0.08},
         {"item": "кельма / шпатель",                          "role": "tool",               "weight": 0.07},
         {"item": "строительный миксер",                       "role": "tool",               "weight": 0.06},
-        {"item": "уровень / отвес",                           "role": "tool",               "weight": 0.05},
-        {"item": "вода",                                      "role": "consumable",         "weight": 0.03},
-        {"item": "ёмкость для замеса",                        "role": "consumable",         "weight": 0.02},
+        {"item": "уровень / отвес",                           "role": "tool",               "weight": 0.08},
+        {"item": "ёмкость для замеса",                        "role": "tool",               "weight": 0.02},
     ],  # sum = 1.00
 
     # ────────────────────────────────────────────────────────────────────────
@@ -236,8 +236,7 @@ WORK_TYPE_MATERIALS: dict[str, list[dict]] = {
         {"item": "обойный клей",                    "role": "auxiliary_material", "weight": 0.10},
         {"item": "грунтовка",                       "role": "preparation_material","weight": 0.10},
         {"item": "шпатель / разглаживающий инструмент", "role": "tool",          "weight": 0.08},
-        {"item": "валик для обоев",                 "role": "tool",               "weight": 0.05},
-        {"item": "вода",                            "role": "consumable",         "weight": 0.03},
+        {"item": "валик для обоев",                 "role": "tool",               "weight": 0.08},
         {"item": "ножницы / строительный нож",      "role": "tool",               "weight": 0.04,
          "note": "нарезка обоев по раппорту"},
     ],  # sum = 1.00
@@ -302,7 +301,7 @@ WORK_TYPE_MATERIALS: dict[str, list[dict]] = {
         {"item": "розетки",                         "role": "primary_material",   "weight": 0.28},
         {"item": "выключатели",                     "role": "primary_material",   "weight": 0.20},
         {"item": "установочные коробки (подрозетники)", "role": "auxiliary_material","weight": 0.12},
-        {"item": "клеммники / колпачки СИЗ",        "role": "auxiliary_material", "weight": 0.08},
+        {"item": "клеммники / колпачки СИЗ",        "role": "fastener",           "weight": 0.08},
         {"item": "отвёртка / шуруповёрт",           "role": "tool",               "weight": 0.10},
         {"item": "индикаторная отвёртка / мультиметр", "role": "tool",            "weight": 0.10},
         {"item": "изолента",                        "role": "consumable",         "weight": 0.07},
@@ -334,7 +333,7 @@ WORK_TYPE_MATERIALS: dict[str, list[dict]] = {
         {"item": "светильник / люстра / встраиваемый спот", "role": "primary_material","weight": 0.40},
         {"item": "лампы (LED, E27, GU10 и пр.)",     "role": "primary_material",   "weight": 0.15},
         {"item": "монтажная планка / крюк / кронштейн", "role": "auxiliary_material","weight": 0.10},
-        {"item": "клеммники / распределительная коробка", "role": "auxiliary_material","weight": 0.10},
+        {"item": "клеммники / распределительная коробка", "role": "fastener",           "weight": 0.10},
         {"item": "дюбели / шурупы",                 "role": "fastener",           "weight": 0.07},
         {"item": "изолента / термоусадка",          "role": "consumable",         "weight": 0.06},
         {"item": "отвёртка / шуруповёрт",           "role": "tool",               "weight": 0.07},

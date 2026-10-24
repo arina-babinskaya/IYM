@@ -72,7 +72,7 @@ BENCHMARK_SCENARIOS = [
             "rooms": [
                 {
                     "name": "Гостиная",
-                    "room_type": "living",
+                    "room_type": "living_room",
                     "length_m": 4.0,
                     "width_m": 5.0,
                     "height_m": 2.7,
