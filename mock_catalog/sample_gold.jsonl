@@ -1,7 +1,7 @@
 {"id": 96611, "material": "tile", "work_types": ["tiling"]}
 {"id": 96612, "material": "tile", "work_types": ["tiling"]}
-{"id": 96613, "material": "laminate", "work_types": ["laminate_laying"]}
-{"id": 96614, "material": "laminate", "work_types": ["laminate_laying"]}
+{"id": 96613, "material": "laminate", "work_types": ["floor_covering_install"]}
+{"id": 96614, "material": "laminate", "work_types": ["floor_covering_install"]}
 {"id": 96615, "material": "wallpaper", "work_types": ["wallpapering"]}
 {"id": 96616, "material": "wallpaper", "work_types": ["wallpapering"]}
 {"id": 96617, "material": "paint", "work_types": ["wall_painting"]}
@@ -13,14 +13,14 @@
 {"id": 96623, "material": "cable", "work_types": ["electrical_wiring"]}
 {"id": 96624, "material": "socket", "work_types": ["electrical_fittings"]}
 {"id": 96625, "material": "switch", "work_types": ["electrical_fittings"]}
-{"id": 96626, "material": "linoleum", "work_types": ["linoleum_laying"]}
-{"id": 96627, "material": "laminate", "work_types": ["laminate_laying"]}
+{"id": 96626, "material": "linoleum", "work_types": ["floor_covering_install"]}
+{"id": 96627, "material": "laminate", "work_types": ["floor_covering_install"]}
 {"id": 96628, "material": "grout", "work_types": ["tiling"]}
 {"id": 96629, "material": "profile", "work_types": ["drywall_install"]}
 {"id": 96630, "material": "fasteners", "work_types": ["drywall_install"]}
 {"id": 96631, "material": "putty", "work_types": ["drywall_install", "wall_putty"]}
 {"id": 96632, "material": "waterproofing", "work_types": ["waterproofing"]}
-{"id": 96633, "material": "underlay", "work_types": ["laminate_laying"]}
+{"id": 96633, "material": "underlay", "work_types": ["floor_covering_install"]}
 {"id": 96634, "material": "wallpaper_glue", "work_types": ["wallpapering"]}
 {"id": 96635, "material": "painting_tools", "work_types": ["wall_painting"]}
 {"id": 96636, "material": "other", "work_types": []}

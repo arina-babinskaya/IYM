@@ -1,0 +1,211 @@
+{
+  "experiment": "tfidf_logreg",
+  "split_version": "splits_v3",
+  "work_types": {
+    "micro_precision": 0.9770642201834863,
+    "micro_recall": 0.9799539927702925,
+    "micro_f1": 0.97850697292863,
+    "macro_precision": 0.9487560587938804,
+    "macro_recall": 0.9760774448312828,
+    "macro_f1": 0.9601399245300462,
+    "weighted_f1": 0.9785271333106322,
+    "samples_f1": 0.2923682140047207,
+    "subset_accuracy": 0.987411487018096,
+    "hamming_loss": 0.0006441778127458694,
+    "n_samples": 10168,
+    "per_class": {
+      "demolition": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 4,
+        "undefined_reason": null,
+        "pr_auc": 1.0,
+        "roc_auc": 1.0
+      },
+      "electrical_wiring": {
+        "precision": 0.9823529411764705,
+        "recall": 0.9709302325581395,
+        "f1": 0.9766081871345029,
+        "support": 172,
+        "undefined_reason": null,
+        "pr_auc": 0.99737943994194,
+        "roc_auc": 0.9999499799919969
+      },
+      "plumbing_rough": {
+        "precision": 0.9865470852017937,
+        "recall": 0.9322033898305084,
+        "f1": 0.9586056644880174,
+        "support": 236,
+        "undefined_reason": null,
+        "pr_auc": 0.9965064960360903,
+        "roc_auc": 0.9999249131381529
+      },
+      "ventilation_install": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 80,
+        "undefined_reason": null,
+        "pr_auc": 0.9999999999999998,
+        "roc_auc": 1.0
+      },
+      "heating_climate_install": {
+        "precision": 0.979381443298969,
+        "recall": 1.0,
+        "f1": 0.9895833333333334,
+        "support": 95,
+        "undefined_reason": null,
+        "pr_auc": 0.9997829625610419,
+        "roc_auc": 0.9999979099938867
+      },
+      "waterproofing": {
+        "precision": 0.8571428571428571,
+        "recall": 1.0,
+        "f1": 0.9230769230769231,
+        "support": 6,
+        "undefined_reason": null,
+        "pr_auc": 1.0,
+        "roc_auc": 0.9999999999999999
+      },
+      "floor_screed": {
+        "precision": 0.8,
+        "recall": 1.0,
+        "f1": 0.8888888888888888,
+        "support": 4,
+        "undefined_reason": null,
+        "pr_auc": 1.0,
+        "roc_auc": 1.0
+      },
+      "wall_plastering": {
+        "precision": 0.7142857142857143,
+        "recall": 1.0,
+        "f1": 0.8333333333333334,
+        "support": 5,
+        "undefined_reason": null,
+        "pr_auc": 1.0,
+        "roc_auc": 1.0
+      },
+      "drywall_install": {
+        "precision": 0.8461538461538461,
+        "recall": 0.8148148148148148,
+        "f1": 0.8301886792452831,
+        "support": 27,
+        "undefined_reason": null,
+        "pr_auc": 0.964168418108768,
+        "roc_auc": 0.9998977381878477
+      },
+      "wall_putty": {
+        "precision": 1.0,
+        "recall": 0.9090909090909091,
+        "f1": 0.9523809523809523,
+        "support": 11,
+        "undefined_reason": null,
+        "pr_auc": 0.9403409090909092,
+        "roc_auc": 0.9998120418520143
+      },
+      "priming": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 11,
+        "undefined_reason": null,
+        "pr_auc": 1.0,
+        "roc_auc": 1.0
+      },
+      "wall_painting": {
+        "precision": 0.9925373134328358,
+        "recall": 0.9708029197080292,
+        "f1": 0.981549815498155,
+        "support": 137,
+        "undefined_reason": null,
+        "pr_auc": 0.9988105165444441,
+        "roc_auc": 0.9999832635617906
+      },
+      "wallpapering": {
+        "precision": 0.9852941176470589,
+        "recall": 0.995049504950495,
+        "f1": 0.9901477832512315,
+        "support": 202,
+        "undefined_reason": null,
+        "pr_auc": 0.9994069626450789,
+        "roc_auc": 0.9999870848011954
+      },
+      "tiling": {
+        "precision": 0.9574468085106383,
+        "recall": 0.989010989010989,
+        "f1": 0.972972972972973,
+        "support": 273,
+        "undefined_reason": null,
+        "pr_auc": 0.9984915342670353,
+        "roc_auc": 0.9999574284566705
+      },
+      "floor_covering_install": {
+        "precision": 0.9964285714285714,
+        "recall": 0.9964285714285714,
+        "f1": 0.9964285714285714,
+        "support": 280,
+        "undefined_reason": null,
+        "pr_auc": 0.9993100456551319,
+        "roc_auc": 0.9999819405917707
+      },
+      "door_window_install": {
+        "precision": 0.9924812030075187,
+        "recall": 1.0,
+        "f1": 0.9962264150943396,
+        "support": 132,
+        "undefined_reason": null,
+        "pr_auc": 1.0,
+        "roc_auc": 1.0
+      },
+      "electrical_fittings": {
+        "precision": 0.9313725490196079,
+        "recall": 1.0,
+        "f1": 0.9644670050761421,
+        "support": 190,
+        "undefined_reason": null,
+        "pr_auc": 0.999891481280521,
+        "roc_auc": 0.9999978900950512
+      },
+      "plumbing_fixture_install": {
+        "precision": 0.9819819819819819,
+        "recall": 0.961764705882353,
+        "f1": 0.9717682020802377,
+        "support": 340,
+        "undefined_reason": null,
+        "pr_auc": 0.9877128333964922,
+        "roc_auc": 0.9993101941631354
+      },
+      "lighting_install": {
+        "precision": 0.9769230769230769,
+        "recall": 0.98145285935085,
+        "f1": 0.9791827293754819,
+        "support": 647,
+        "undefined_reason": null,
+        "pr_auc": 0.9962174025277857,
+        "roc_auc": 0.9997646137140596
+      },
+      "decorative_finish_install": {
+        "precision": 0.9947916666666666,
+        "recall": 1.0,
+        "f1": 0.9973890339425587,
+        "support": 191,
+        "undefined_reason": null,
+        "pr_auc": 0.998276310050342,
+        "roc_auc": 0.999971662572608
+      }
+    },
+    "precision_at_3": 0.09969184369263046,
+    "recall_at_3": 0.2981904012588513,
+    "macro_pr_auc": 0.9938147656052791,
+    "excluded_invalid_rows": 3150
+  },
+  "timings": {
+    "feature_preparation_sec": 49.288334880999855,
+    "training_sec": 127.12105614799998,
+    "validation_sec": 1.7342677510000613,
+    "evaluation_sec": 0.6759382759998971,
+    "total_sec": 178.82116420700004
+  },
+  "multi_label_subset_f1": 0.7741935483870968
+}

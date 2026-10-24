@@ -1,4 +1,6 @@
 from functools import lru_cache
+from pathlib import Path
+from typing import Literal
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -27,6 +29,11 @@ class Settings(BaseSettings):
 
     engine_impl: str = "app.engine.baseline:BaselineEngine"
     classifier_impl: str = "app.ml.baseline:KeywordClassifier"
+    # ``tfidf`` remains accepted as a backwards-compatible alias for ``trained``.
+    ml_classifier_backend: Literal["baseline", "trained", "tfidf"] = "baseline"
+    ml_classifier_artifact_path: Path = Path(
+        "ml_workspace/data/experiments_v3/tfidf_logreg/model"
+    )
     ranker_impl: str = "app.ml.baseline:RatingRanker"
     autobind_min_confidence: float = 0.8
 

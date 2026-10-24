@@ -1,0 +1,6 @@
+old_id,taxonomy_v1_id,compatibility
+laminate_laying,floor_covering_install,renamed_or_merged
+linoleum_laying,floor_covering_install,renamed_or_merged
+door_install,door_window_install,renamed_or_merged
+plumbing_install,plumbing_fixture_install,renamed_or_merged
+lighting_install,lighting_install,renamed_or_merged

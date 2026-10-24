@@ -1,0 +1,8 @@
+material_role_id,material_role_name,description,scope
+primary_material,Основной материал,"Формирует основное покрытие, конструкцию или установленное изделие.","Role is assigned per product-work_type relation, not globally per product."
+auxiliary_material,Вспомогательный материал,Обеспечивает монтаж или совместную работу основного материала.,"Role is assigned per product-work_type relation, not globally per product."
+consumable,Расходный материал,Расходуется при выполнении работы и обычно не является основным покрытием.,"Role is assigned per product-work_type relation, not globally per product."
+tool,Инструмент,Используется для выполнения операции и обычно не остается частью результата.,"Role is assigned per product-work_type relation, not globally per product."
+fastener,Крепёж,Механически соединяет элементы в рамках конкретной работы.,"Role is assigned per product-work_type relation, not globally per product."
+preparation_material,Подготовительный материал,Подготавливает основание под конкретную последующую операцию.,"Role is assigned per product-work_type relation, not globally per product."
+finishing_material,Финишный/доборный материал,"Закрывает стыки, кромки или завершает внешний вид.","Role is assigned per product-work_type relation, not globally per product."

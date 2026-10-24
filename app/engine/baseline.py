@@ -1,22 +1,22 @@
-"""Расчётный движок сметы, карточки товара, доменных правил и RAG-пояснений."""
+"""
+Расчётный движок сметы, карточки товара, доменной логики и RAG-пояснений.
+
+Совместим с app/plans.py и расширенным taxonomy.py из ветки main.
+"""
 
 from __future__ import annotations
 
 import logging
 import re
 from decimal import ROUND_CEILING, ROUND_HALF_UP, Decimal
-from typing import Any
 
 from app.catalog.normalize import to_decimal
 from app.catalog.repository import CatalogRepo, to_brief
-from app.engine.consumption_standards import (
-    CONSUMPTION_RATES,
-    RAG_KNOWLEDGE_BASE,
-    RESERVE_PCT,
-)
+from app.engine.consumption_standards import CONSUMPTION_RATES, RAG_KNOWLEDGE_BASE
 from app.engine.interface import CalcError
 from app.ml.interface import Ranker
 from app.models import Product
+from app.plans import WORK_SURFACE, works_for_room, work_materials
 from app.schemas import (
     EstimateItem,
     EstimateRequest,
@@ -34,50 +34,48 @@ from app.taxonomy import (
     MATERIAL_TITLES,
     RENOVATION_TITLES,
     STAGE_ORDER,
-    STAGE_TITLES,
     WORKS,
     Material,
     RenovationType,
-    Stage,
     WorkType,
 )
 
 log = logging.getLogger(__name__)
 
 CENT = Decimal("0.01")
+CANDIDATES_LIMIT = 20000
 
 # ---------------------------------------------------------------------------
-# Поправочные коэффициенты запаса (RESERVE) по материалам
+# Поправочные коэффициенты запаса на подрезку, отходы, раппорт (СНиП 3.04.01-87)
 # ---------------------------------------------------------------------------
 RESERVE: dict[Material, Decimal] = {
-    Material.tile: Decimal("10"),
-    Material.tile_adhesive: Decimal("10"),
-    Material.grout: Decimal("10"),
-    Material.primer: Decimal("10"),
-    Material.paint: Decimal("10"),
-    Material.wallpaper: Decimal("10"),
-    Material.wallpaper_glue: Decimal("10"),
-    Material.laminate: Decimal("7"),
-    Material.underlay: Decimal("5"),
-    Material.linoleum: Decimal("5"),
-    Material.drywall: Decimal("10"),
-    Material.profile: Decimal("10"),
-    Material.fasteners: Decimal("15"),
-    Material.putty: Decimal("15"),
-    Material.plaster: Decimal("15"),
-    Material.screed_mix: Decimal("10"),
-    Material.waterproofing: Decimal("10"),
-    Material.sealant: Decimal("10"),
-    Material.painting_tools: Decimal("0"),
-    Material.cable: Decimal("15"),
-    Material.socket: Decimal("0"),
-    Material.switch: Decimal("0"),
-    Material.plumbing: Decimal("0"),
-    Material.demolition_tools: Decimal("0"),
-    Material.other: Decimal("10"),
+    Material.tile: Decimal(10),
+    Material.tile_adhesive: Decimal(10),
+    Material.grout: Decimal(10),
+    Material.primer: Decimal(10),
+    Material.paint: Decimal(10),
+    Material.wallpaper: Decimal(10),
+    Material.wallpaper_glue: Decimal(10),
+    Material.laminate: Decimal(7),
+    Material.underlay: Decimal(5),
+    Material.linoleum: Decimal(5),
+    Material.drywall: Decimal(10),
+    Material.profile: Decimal(10),
+    Material.fasteners: Decimal(15),
+    Material.putty: Decimal(15),
+    Material.plaster: Decimal(15),
+    Material.screed_mix: Decimal(10),
+    Material.waterproofing: Decimal(10),
+    Material.sealant: Decimal(10),
+    Material.painting_tools: Decimal(0),
+    Material.cable: Decimal(15),
+    Material.socket: Decimal(0),
+    Material.switch: Decimal(0),
+    Material.demolition_tools: Decimal(0),
+    Material.other: Decimal(10),
 }
 
-# Материалы, требующие обязательного флага moisture_resistant при повышенной влажности
+# Материалы, для которых в мокрых зонах требуется флаг moisture_resistant
 NEEDS_MOISTURE = {
     Material.drywall,
     Material.paint,
@@ -92,185 +90,27 @@ SURFACE_HINTS: dict[Surface, str] = {
     Surface.wall: r"настенн|для стен",
 }
 
-WET_ROOMS = {RoomType.bathroom, RoomType.toilet}
-DRY_ROOMS = {RoomType.living, RoomType.bedroom, RoomType.kids, RoomType.hallway}
 
-# ---------------------------------------------------------------------------
-# Доменные правила по помещениям
-# ---------------------------------------------------------------------------
-ROOM_RULES: dict[RoomType, dict[str, Any]] = {
-    RoomType.bathroom: {
-        "title": "Санузел",
-        "required_works": [WorkType.waterproofing],
-        "forbidden_materials": {Material.wallpaper, Material.laminate, Material.linoleum},
-        "must_moisture_resistant": True,
-        "description": "Мокрая зона (СП 29.13330): обязательна гидроизоляция пола и стен; запрещены невлагостойкие материалы (обои, ламинат).",
-    },
-    RoomType.toilet: {
-        "title": "Туалет",
-        "required_works": [WorkType.waterproofing],
-        "forbidden_materials": {Material.wallpaper, Material.laminate},
-        "must_moisture_resistant": True,
-        "description": "Мокрая зона: обязательна гидроизоляция пола, рекомендована плитка или влагостойкая покраска.",
-    },
-    RoomType.kitchen: {
-        "title": "Кухня",
-        "required_works": [],
-        "forbidden_materials": set(),
-        "must_moisture_resistant": False,
-        "description": "Зона повышенной нагрузки: рекомендуются моющиеся покрытия (плитка, износостойкая краска).",
-    },
-    RoomType.kids: {
-        "title": "Детская",
-        "required_works": [],
-        "forbidden_materials": set(),
-        "must_moisture_resistant": False,
-        "description": "Детская: рекомендуются экологичные покрытия с минимальной эмиссией (бумажные/флизелиновые обои, вододисперсионная краска).",
-    },
-    RoomType.balcony: {
-        "title": "Балкон",
-        "required_works": [],
-        "forbidden_materials": {Material.wallpaper},
-        "must_moisture_resistant": True,
-        "description": "Зона с перепадами температур и влажности: запрещены обои, требуются влагостойкие и морозостойкие составы.",
-    },
-    RoomType.living: {
-        "title": "Гостиная",
-        "required_works": [],
-        "forbidden_materials": set(),
-        "must_moisture_resistant": False,
-        "description": "Жилая зона: чистовая отделка стен, напольные покрытия с подложкой.",
-    },
-    RoomType.bedroom: {
-        "title": "Спальня",
-        "required_works": [],
-        "forbidden_materials": set(),
-        "must_moisture_resistant": False,
-        "description": "Зона отдыха: рекомендуются дышащие обои и ламинат с шумоизоляционной подложкой.",
-    },
-    RoomType.hallway: {
-        "title": "Коридор",
-        "required_works": [],
-        "forbidden_materials": set(),
-        "must_moisture_resistant": False,
-        "description": "Зона высокой проходимости: износостойкие напольные покрытия (класс 32+), моющиеся стены.",
-    },
-}
-
-# ---------------------------------------------------------------------------
-# Шаблоны планов ремонта (PLANS)
-# Ключ: (renovation_type_group, room_group)
-# ---------------------------------------------------------------------------
-W = WorkType
-F, WL = Surface.floor, Surface.wall
-
-PLANS: dict[tuple[str, str], list[tuple[WorkType, Surface | None]]] = {
-    # Косметический ремонт: освежение финишных покрытий
-    ("cosmetic", "wet"): [(W.priming, WL), (W.wall_painting, WL)],
-    ("cosmetic", "kitchen"): [(W.priming, WL), (W.wall_painting, WL)],
-    ("cosmetic", "dry"): [(W.priming, WL), (W.wallpapering, WL)],
-    ("cosmetic", "balcony"): [(W.wall_painting, WL)],
-
-    # Ремонт под сдачу: бюджетный, практичный, быстрый
-    ("rental", "wet"): [(W.wall_painting, WL)],
-    ("rental", "kitchen"): [(W.wall_painting, WL), (W.linoleum_laying, F)],
-    ("rental", "dry"): [(W.wall_painting, WL), (W.linoleum_laying, F)],
-    ("rental", "balcony"): [(W.wall_painting, WL)],
-
-    # Капитальный ремонт: полный цикл от демонтажа до финиша
-    ("capital", "wet"): [
-        (W.demolition, None),
-        (W.electrical_wiring, None),
-        (W.waterproofing, F),
-        (W.drywall_install, WL),
-        (W.priming, WL),
-        (W.tiling, F),
-        (W.tiling, WL),
-        (W.electrical_fittings, None),
-        (W.plumbing_install, None),
-    ],
-    ("capital", "kitchen"): [
-        (W.demolition, None),
-        (W.electrical_wiring, None),
-        (W.wall_putty, WL),
-        (W.priming, WL),
-        (W.tiling, F),
-        (W.wall_painting, WL),
-        (W.electrical_fittings, None),
-    ],
-    ("capital", "dry"): [
-        (W.demolition, None),
-        (W.electrical_wiring, None),
-        (W.wall_putty, WL),
-        (W.priming, WL),
-        (W.wallpapering, WL),
-        (W.laminate_laying, F),
-        (W.electrical_fittings, None),
-    ],
-    ("capital", "balcony"): [(W.wall_putty, WL), (W.wall_painting, WL)],
-
-    # Евроремонт (дизайнерский): улучшенная подготовка, высококачественные покрытия
-    ("euro", "wet"): [
-        (W.demolition, None),
-        (W.electrical_wiring, None),
-        (W.plumbing_rough, None),
-        (W.waterproofing, F),
-        (W.drywall_install, WL),
-        (W.priming, WL),
-        (W.tiling, F),
-        (W.tiling, WL),
-        (W.electrical_fittings, None),
-        (W.plumbing_install, None),
-    ],
-    ("euro", "kitchen"): [
-        (W.demolition, None),
-        (W.electrical_wiring, None),
-        (W.plumbing_rough, None),
-        (W.wall_plastering, WL),
-        (W.wall_putty, WL),
-        (W.priming, WL),
-        (W.tiling, F),
-        (W.wall_painting, WL),
-        (W.electrical_fittings, None),
-    ],
-    ("euro", "dry"): [
-        (W.demolition, None),
-        (W.electrical_wiring, None),
-        (W.wall_plastering, WL),
-        (W.wall_putty, WL),
-        (W.priming, WL),
-        (W.wallpapering, WL),
-        (W.laminate_laying, F),
-        (W.electrical_fittings, None),
-    ],
-    ("euro", "balcony"): [
-        (W.wall_plastering, WL),
-        (W.wall_putty, WL),
-        (W.priming, WL),
-        (W.wall_painting, WL),
-    ],
-}
+Step = tuple[WorkType, Surface | None, tuple[Material, ...]]
 
 
-def _group(room: RoomType) -> str:
-    """Группировка помещений по характеру отделки."""
-    if room in WET_ROOMS:
-        return "wet"
-    if room in DRY_ROOMS:
-        return "dry"
-    return room.value
-
-
-def _plan(room: RoomInput, renovation: RenovationType) -> list[tuple[WorkType, Surface | None]]:
-    """Получение перечня работ для помещения и типа ремонта."""
+def _plan(room: RoomInput, renovation: RenovationType) -> list[Step]:
+    """Получение перечня технологических шагов для помещения."""
     if room.works:
-        return [(w, None) for w in room.works]
-    group_name = _group(room.room_type)
-    # Если точный ключ есть в PLANS, используем его, иначе маппим euro -> capital
-    if (renovation.value, group_name) in PLANS:
-        return PLANS[(renovation.value, group_name)]
-    kind = "capital" if renovation in (RenovationType.capital, RenovationType.euro) else renovation.value
-    return PLANS.get((kind, group_name), PLANS[("capital", "dry")])
+        return [
+            (
+                c.work_type,
+                c.surface or WORK_SURFACE.get(c.work_type),
+                work_materials(c.work_type, c.materials),
+            )
+            for c in room.works
+        ]
+    options = works_for_room(room.room_type, room.renovation_type or renovation)
+    return [
+        (o.work, o.surface, work_materials(o.work, o.materials))
+        for o, default in options
+        if default
+    ]
 
 
 def _ceil(x: Decimal) -> int:
@@ -319,7 +159,7 @@ def packages_for_area(
     if length and width and length > 0 and width > 0:
         rapport = _spec(p, "rapport_m")
         if rapport and rapport > 0:
-            # Расчёт обоев с раппортом: при высоте потолка 2.7 м отходы на подгонку рисунка
+            # Учёт раппорта обоев: отходы на подгонку рисунка при стандартной высоте стены 2.7 м
             wall_h = Decimal("2.7")
             cut_length = wall_h + rapport
             strips_per_roll = max(int(length / cut_length), 1)
@@ -364,26 +204,55 @@ def packages_for_area(
 
 def _piece_need(material: Material, room: RoomInput, area: Decimal) -> tuple[Decimal, str] | None:
     """Поштучный или метражный расчёт потребности для инженерных и монтажных позиций."""
+    floor, perimeter = room.floor_area, room.perimeter
     if material == Material.cable:
-        # Периметр комнаты × 2 + спуски к розеткам и выключателям (ПУЭ)
-        return room.perimeter * 2, "м"
+        # Периметр комнаты × 2 + спуски к электроточкам (ПУЭ)
+        return perimeter * 2, "м"
+    if hasattr(Material, "cable_channel") and material == Material.cable_channel:
+        return perimeter, "м"
     if material == Material.socket:
-        # СП 256.1325800.2016: не менее 1 розетки на 6 м², для кухни от 4-5
+        # СП 256.1325800.2016: на кухне повышенное количество электроточек
         if room.room_type == RoomType.kitchen:
-            return Decimal(max(5, _ceil(room.floor_area / 3))), "шт"
-        return Decimal(max(2, _ceil(room.floor_area / 4))), "шт"
-    if material == Material.switch:
-        return Decimal(1), "шт"
-    if material in (Material.painting_tools, Material.demolition_tools, Material.plumbing):
-        return Decimal(1), "шт"
-    if material == Material.sealant:
-        return Decimal(1), "шт"
-    if material == Material.profile:
-        # Профиль для каркаса ГКЛ: ~2.0 м.п. на 1 м² облицовки, шаг стоек 60 см
+            return Decimal(max(5, _ceil(floor / 3))), "шт"
+        return Decimal(max(2, _ceil(floor / 4))), "шт"
+    if hasattr(Material, "electrical_boxes") and material == Material.electrical_boxes:
+        return Decimal(max(3, _ceil(floor / 4) + 1)), "шт"
+    if (hasattr(Material, "lighting") and material == Material.lighting) or (
+        hasattr(Material, "lamps") and material == Material.lamps
+    ):
+        return Decimal(max(1, _ceil(floor / 8))), "шт"
+    if hasattr(Material, "heating") and material == Material.heating:
+        return Decimal(max(1, _ceil(floor / 10))), "шт"
+    if material == Material.profile or (hasattr(Material, "beacons") and material == Material.beacons):
         return Decimal(_ceil(area / Decimal("1.5"))), "шт"
-    if material == Material.fasteners:
-        # Саморезы для ГКЛ: ~25 шт. на лист (упаковки по 100-200 шт.)
-        return Decimal(_ceil(area / 10)), "упак."
+    if hasattr(Material, "skirting") and material == Material.skirting:
+        return Decimal(_ceil(perimeter / Decimal("2.5"))), "шт"
+    if hasattr(Material, "damper_tape") and material == Material.damper_tape:
+        return Decimal(_ceil(perimeter / 25)), "рул."
+    if material == Material.fasteners or (
+        hasattr(Material, "tile_leveling") and material == Material.tile_leveling
+    ):
+        return Decimal(max(1, _ceil(area / 10))), "упак."
+    if (
+        material
+        in (
+            Material.switch,
+            Material.painting_tools,
+            Material.sealant,
+            Material.plumbing,
+            Material.demolition_tools,
+        )
+        or (hasattr(Material, "doors") and material == Material.doors)
+        or (hasattr(Material, "ventilation") and material == Material.ventilation)
+        or (hasattr(Material, "pipes") and material == Material.pipes)
+        or (hasattr(Material, "circuit_breakers") and material == Material.circuit_breakers)
+        or (hasattr(Material, "reinforcing_mesh") and material == Material.reinforcing_mesh)
+        or (hasattr(Material, "mounting_foam") and material == Material.mounting_foam)
+        or (hasattr(Material, "door_hardware") and material == Material.door_hardware)
+        or (hasattr(Material, "mounting_adhesive") and material == Material.mounting_adhesive)
+        or (hasattr(Material, "decorative") and material == Material.decorative)
+    ):
+        return Decimal(1), "шт"
     return None
 
 
@@ -416,6 +285,7 @@ class BaselineEngine:
             material,
             required_flags=["moisture_resistant"] if wet else [],
             min_confidence=0.8,
+            limit=CANDIDATES_LIMIT,
         )
         ranked = self.ranker.rank(cands, room)
         hint = SURFACE_HINTS.get(surface) if material == Material.tile else None
@@ -508,20 +378,8 @@ class BaselineEngine:
             items: list[EstimateItem] = []
             seen: set[tuple[Material, Surface | None]] = set()
 
-            # Проверка доменных ограничений помещения
-            rule = ROOM_RULES.get(room.room_type)
-            if rule:
-                forbidden = rule.get("forbidden_materials", set())
-                for work, surface in _plan(room, req.renovation_type):
-                    for mat in WORKS[work].materials:
-                        if mat in forbidden:
-                            warnings.append(
-                                f"{room.name or ROOM_TITLES[room.room_type]}: "
-                                f"материал «{MATERIAL_TITLES[mat]}» не рекомендуется для {rule['title'].lower()} ({rule['description']})"
-                            )
-
-            for work, surface in _plan(room, req.renovation_type):
-                for material in WORKS[work].materials:
+            for work, surface, materials in _plan(room, req.renovation_type):
+                for material in materials:
                     if (material, surface) in seen:
                         continue
                     seen.add((material, surface))
@@ -589,7 +447,6 @@ class BaselineEngine:
         if not req.explain:
             return resp
 
-        # Сбор используемых материалов и видов работ
         used_materials: set[str] = set()
         used_works: set[str] = set()
         high_humidity_rooms: list[str] = []
@@ -604,9 +461,9 @@ class BaselineEngine:
                     used_materials.add(it.material.value)
                     used_works.add(it.work_type.value)
 
-        # Извлечение сниппетов из RAG_KNOWLEDGE_BASE с помощью FAISS векторного хранилища
         try:
             from app.engine.rag_store import get_rag_store
+
             store = get_rag_store()
             matched_docs = store.search_by_materials_and_works(
                 materials=used_materials,
@@ -617,19 +474,17 @@ class BaselineEngine:
         except Exception as e:
             log.warning("Ошибка FAISS RAG хранилища, fallback на статический перебор: %s", e)
             matched_docs = [
-                d for d in RAG_KNOWLEDGE_BASE
+                d
+                for d in RAG_KNOWLEDGE_BASE
                 if d.get("material") in used_materials or d.get("work_type") in used_works
             ][:8]
 
         sources_set: set[str] = {d["source"] for d in matched_docs if d.get("source")}
-
-        # Базовые нормативные документы
         sources_set.add("СНиП 3.04.01-87 «Изоляционные и отделочные покрытия»")
         sources_set.add("СП 29.13330.2011 «Полы»")
         sources_set.add("СП 256.1325800.2016 «Электроустановки жилых и общественных зданий»")
         resp.sources = sorted(sources_set)
 
-        # Попытка генерации через LLM
         try:
             from app.llm.client import get_llm
 
@@ -639,7 +494,9 @@ class BaselineEngine:
                 f"{r.room.name or ROOM_TITLES[r.room.room_type]} ({r.floor_area_m2:.1f} м²)"
                 for r in resp.rooms
             )
-            context_text = "\n".join(f"- {d['text']} (Источник: {d['source']})" for d in matched_docs[:8])
+            context_text = "\n".join(
+                f"- {d['text']} (Источник: {d['source']})" for d in matched_docs[:8]
+            )
 
             prompt = (
                 f"Ты — профессиональный инженер-сметчик. Дай краткое экспертное обоснование сметы "
@@ -663,14 +520,13 @@ class BaselineEngine:
         except Exception as e:
             log.info("LLM недоступен для explain, используется детерминированный RAG: %s", e)
 
-        # Детерминированный fallback на основе нормативной базы
         paragraphs: list[str] = []
         renov_title = RENOVATION_TITLES.get(req.renovation_type, req.renovation_type.value)
 
         paragraphs.append(
             f"Смета составлена для формата «{renov_title}» в соответствии с технологическими "
             f"регламентами СНиП 3.04.01-87 и СП 71.13330.2017. Последовательность работ структурирована "
-            f"по 5 технологическим стадиям: от подготовки и демонтажа до чистового монтажа сантехники и электрики."
+            f"по технологическим стадиям: от подготовки и демонтажа до чистового монтажа сантехники и электрики."
         )
 
         if high_humidity_rooms:

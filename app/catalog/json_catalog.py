@@ -90,7 +90,7 @@ def product_rows(
         "in_stock": item.get("in_stock"),
         "categories": categories,
         "categories_tree": paths.get(first) or ([{"id": int(first), "name": categories[first]}] if first else []),
-        "specs": nz.extract_specs(characteristics, pack_area, qty_in_pack),
+        "specs": nz.extract_specs(characteristics, pack_area, qty_in_pack, item.get("name")),
         "raw": item,
     }
     links = [{"product_id": pid, "category_id": int(c)} for c in categories]

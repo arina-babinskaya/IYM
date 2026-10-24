@@ -1,0 +1,78 @@
+{
+  "previous_rows": 88790,
+  "previous_work_status": {
+    "verified_empty_candidate": 61148,
+    "proposed": 15252,
+    "unknown_needs_review": 12390
+  },
+  "taxonomy_v1": {
+    "rows": 88790,
+    "split_sizes": {
+      "train": 62081,
+      "validation": 13392,
+      "test": 13317
+    },
+    "domain": {
+      "renovation": 46065,
+      "unknown_needs_review": 24643,
+      "non_renovation": 18082
+    },
+    "product_category": {
+      "not_applicable_or_unknown": 42725,
+      "other_renovation_material": 21040,
+      "lighting": 5048,
+      "plumbing": 2826,
+      "fasteners": 2663,
+      "electrical_goods": 2587,
+      "doors_windows": 1953,
+      "tile": 1809,
+      "tools": 1661,
+      "paint": 1336,
+      "floor_covering": 1040,
+      "decorative_materials": 806,
+      "adhesive": 637,
+      "installation_accessories": 482,
+      "lumber_sheet_material": 444,
+      "decorative_panels": 411,
+      "protective_equipment": 359,
+      "sealant": 216,
+      "insulation": 194,
+      "construction_mix": 181,
+      "drywall": 146,
+      "putty": 81,
+      "primer": 80,
+      "waterproofing_material": 38,
+      "plaster": 27
+    },
+    "work_types": {
+      "lighting_install": 4396,
+      "plumbing_fixture_install": 2341,
+      "floor_covering_install": 1933,
+      "tiling": 1846,
+      "plumbing_rough": 1510,
+      "wallpapering": 1341,
+      "electrical_fittings": 1272,
+      "electrical_wiring": 1146,
+      "decorative_finish_install": 1145,
+      "wall_painting": 892,
+      "door_window_install": 884,
+      "drywall_install": 166,
+      "wall_putty": 81,
+      "priming": 80,
+      "waterproofing": 41,
+      "floor_screed": 36,
+      "demolition": 23,
+      "wall_plastering": 22
+    },
+    "stages": {
+      "final_stage": 8978,
+      "finish_work": 7909,
+      "rough_work": 2770,
+      "white_finish": 161,
+      "preparation_demolition": 22
+    },
+    "multi_label_rows": 126,
+    "conflicting_rows": 261
+  },
+  "warning": "Рост покрытия не означает рост точности; обе версии являются эвристической разметкой."
+}

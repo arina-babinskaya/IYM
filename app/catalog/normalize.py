@@ -127,6 +127,7 @@ _SPEC_RULES: list[tuple[str, str, str]] = [
     ("ширин", "width_m", "m"),
     ("высот", "height_m", "m"),
     ("объем", "volume_l", "l"),
+    ("литраж", "volume_l", "l"),
     ("объём", "volume_l", "l"),
     ("расход", "consumption", "*"),
     ("площадь", "area_m2", "m2"),
@@ -139,12 +140,57 @@ _SPEC_RULES: list[tuple[str, str, str]] = [
 ]
 
 
+_NAME_VOLUME = re.compile(rf"{_NUM}\s*л(?![а-яa-z])", re.IGNORECASE)
+_NAME_WEIGHT = re.compile(rf"{_NUM}\s*(кг|г)(?![а-яa-z])", re.IGNORECASE)
+_NAME_PACK_LENGTH = re.compile(rf"(?<![\dх×x*]){_NUM}\s*м(?:етр\w*)?(?![а-яa-z2²\d])", re.IGNORECASE)
+_NAME_ROLL = re.compile(rf"{_NUM}{_DIM_SEP}{_NUM}\s*м(?![а-яa-z2²])", re.IGNORECASE)
+
+
+def _guess(specs: dict[str, Any], key: str, value: Decimal) -> None:
+    specs[key] = str(value)
+    specs.setdefault("guessed", []).append(key)
+
+
+def _from_name(specs: dict[str, Any], name: str) -> None:
+    if "volume_l" not in specs and (m := _NAME_VOLUME.search(name)):
+        _guess(specs, "volume_l", to_decimal(m.group(1)))
+    if "weight_kg" not in specs and (m := _NAME_WEIGHT.search(name)):
+        w = to_decimal(m.group(1))
+        _guess(specs, "weight_kg", w if m.group(2).lower() == "кг" else w / 1000)
+    if "pack_length_m" not in specs and not _NAME_ROLL.search(name) and (m := _NAME_PACK_LENGTH.search(name)):
+        length = to_decimal(m.group(1))
+        if length and length >= 1:
+            _guess(specs, "pack_length_m", length)
+    if not ("length_m" in specs and "width_m" in specs) and (m := _NAME_ROLL.search(name)):
+        a, b = to_decimal(m.group(1)), to_decimal(m.group(2))
+        if a and b and max(a, b) < 50:
+            specs.pop("length_m", None)
+            specs.pop("width_m", None)
+            _guess(specs, "length_m", max(a, b))
+            _guess(specs, "width_m", min(a, b))
+
+
+def _consumption(specs: dict[str, Any], raw: Decimal) -> None:
+    volume, weight = to_decimal(specs.get("volume_l")), to_decimal(specs.get("weight_kg"))
+    if volume and raw < 1:
+        specs["consumption"] = {"value": str(raw), "unit": "l/m2"}
+    elif weight and raw <= 40:
+        specs["consumption"] = {"value": str(raw), "unit": "kg/m2"}
+    elif raw >= 50 and (weight or volume):
+        specs["consumption"] = {"value": str(raw / 1000), "unit": "kg/m2" if weight else "l/m2"}
+    else:
+        return
+    specs.setdefault("guessed", []).append("consumption")
+
+
 def extract_specs(
     characteristics: list[dict[str, Any]] | None,
     package_area: Any = None,
     quantity_in_package: Any = None,
+    product_name: str | None = None,
 ) -> dict[str, Any]:
     specs: dict[str, Any] = {}
+    raw_consumption: Decimal | None = None
     for ch in characteristics or []:
         name = (ch.get("name") or "").lower()
         value = ch.get("value")
@@ -160,6 +206,12 @@ def extract_specs(
                 specs["dims_m"] = [str(d) for d in dims]
                 specs.setdefault("guessed", []).append("dims_m")
                 continue
+        if "метраж" in name and "pack_length_m" not in specs:
+            if norm["unit"] == "m" and norm["value_num"]:
+                specs["pack_length_m"] = str(norm["value_num"])
+            elif norm["unit"] is None and norm["value_num"]:
+                _guess(specs, "pack_length_m", norm["value_num"])
+            continue
         for keyword, key, unit in _SPEC_RULES:
             if keyword not in name or key in specs:
                 continue
@@ -171,15 +223,24 @@ def extract_specs(
                 specs["pack_area_m2" if "упаков" in name else "area_m2"] = str(norm["value_num"])
             elif unit == "*" and norm["unit"]:
                 specs[key] = {"value": str(norm["value_num"]), "unit": norm["unit"]}
+            elif unit == "*" and norm["value_num"] is not None:
+                raw_consumption = norm["value_num"]
             elif norm["unit"] == unit and norm["value_num"] is not None:
                 specs[key] = str(norm["value_num"])
             elif unit == "m" and norm["unit"] is None and norm["value_num"] is not None and (
                 key == "thickness_m" or norm["value_num"] >= 100
             ):
-                specs[key] = str(norm["value_num"] / 1000)
-                specs.setdefault("guessed", []).append(key)
+                _guess(specs, key, norm["value_num"] / 1000)
+            elif unit == "m" and norm["unit"] is None and norm["value_num"] is not None and 0 < norm["value_num"] < 20:
+                _guess(specs, key, norm["value_num"])
+            elif unit in ("l", "kg") and norm["unit"] is None and norm["value_num"] is not None and norm["value_num"] > 0:
+                _guess(specs, key, norm["value_num"])
             break
 
+    if product_name:
+        _from_name(specs, product_name)
+    if "consumption" not in specs and raw_consumption:
+        _consumption(specs, raw_consumption)
     pa = to_decimal(package_area)
     if pa and pa > 0:
         specs["pack_area_m2"] = str(pa)

@@ -1,0 +1,20 @@
+{
+  "demolition": 0.5,
+  "electrical_wiring": 0.25,
+  "plumbing_rough": 0.3,
+  "waterproofing": 0.39999999999999997,
+  "floor_screed": 0.25,
+  "wall_plastering": 0.49999999999999994,
+  "drywall_install": 0.39999999999999997,
+  "wall_putty": 0.39999999999999997,
+  "priming": 0.39999999999999997,
+  "wall_painting": 0.5999999999999999,
+  "wallpapering": 0.2,
+  "tiling": 0.3,
+  "floor_covering_install": 0.39999999999999997,
+  "door_window_install": 0.3,
+  "electrical_fittings": 0.2,
+  "plumbing_fixture_install": 0.25,
+  "lighting_install": 0.2,
+  "decorative_finish_install": 0.35
+}

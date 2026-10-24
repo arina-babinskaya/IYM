@@ -44,13 +44,16 @@ docker compose down                          # остановить (данны�
 
 | Метод | Путь | Что делает |
 |---|---|---|
-| POST | `/api/v1/estimate` | Смета: объект, вид ремонта, комнаты (длина × ширина) → позиции по этапам |
+| POST | `/api/v1/estimate` | Смета: комнаты (длина × ширина, вид ремонта, выбранные работы) → позиции по этапам |
+| GET | `/api/v1/works?room_type=&renovation_type=` | Шаг «Работы»: какие работы можно выбрать для помещения и вида ремонта (по этапам, с отметкой «по умолчанию») |
 | GET | `/api/v1/taxonomy` | Справочник: этапы, виды ремонта, виды работ, материалы |
 | POST | `/api/v1/product/{id}/calc` | Расчёт в карточке: размеры → упаковки и цена |
 | GET | `/api/v1/products?q=`, `/api/v1/products/{id}` | Поиск и карточка товара |
-| GET | `/api/v1/admin/products` | Товары с ML-подсказкой: материал и виды работ |
+| GET | `/api/v1/admin/products?status=unbound\|ml\|confirmed\|all&q=` | Товары с ML-подсказкой по статусу привязки |
+| POST | `/api/v1/admin/products` | Добавить товар вручную (не удаляется при загрузке каталога) |
+| DELETE | `/api/v1/admin/products/{id}` | Удалить товар, добавленный вручную |
 | PUT | `/api/v1/admin/products/{id}/binding` | Подтвердить или исправить привязку |
-| POST | `/api/v1/admin/autobind` | Автопривязка уверенных предсказаний |
+| POST | `/api/v1/admin/autobind` | Автопривязка предсказаний с уверенностью от `RC_AUTOBIND_MIN_CONFIDENCE` (по умолчанию 0.8) |
 | GET | `/api/v1/admin/stats` | Доля автопривязанных товаров |
 | GET | `/health` | БД и нейросеть |
 | POST | `/internal/llm/chat`, `/internal/llm/embed` | Нейросеть и эмбеддинги для команды |
@@ -61,7 +64,7 @@ docker compose down                          # остановить (данны�
 
 | Путь | Что | Кто меняет |
 |---|---|---|
-| `app/taxonomy.py` | этапы, виды ремонта, виды работ, материалы, связь работа → материалы | 2 и 3 вместе |
+| `app/taxonomy.py` | этапы, виды ремонта, 20 видов работ по taxonomy v2, материалы, связь работа → материалы | 2 и 3 вместе |
 | `app/schemas.py` | формат запросов и ответов API | 1, по согласованию с 4 |
 | `app/models.py`, `app/db.py` | таблицы БД | 1 |
 | `app/catalog/loader.py` | загрузка каталога в БД | 1 |
@@ -70,8 +73,11 @@ docker compose down                          # остановить (данны�
 | `app/catalog/repository.py` | запросы к каталогу | 1 |
 | `app/llm/client.py` | обёртка над Ollama | 1 |
 | `app/api/` | адреса API | 1 |
+| `app/work_materials.py` | какие позиции из справочника участника 2 (`ml_workspace/taxonomy/work_type_materials_v2.py`) каким категориям каталога соответствуют; тест `tests/test_work_materials.py` проверяет, что `app/taxonomy.py` совпадает со справочником | 1 |
+| `app/plans.py` | какие работы доступны для помещения и вида ремонта, какие отмечены по умолчанию | 1 |
 | `app/engine/baseline.py` | заглушка движка расчёта | 2 заменяет своим |
-| `app/ml/baseline.py` | заглушка классификатора и ранжирования | 3 заменяет своим |
+| `app/ml/baseline.py` | заглушка классификатора и запасной ранжировщик `RatingRanker` | 3 заменяет своим |
+| `app/ml/ranker.py` | ранжирование `ContextRanker` (включено в `run_local.py` и `docker-compose.yml`): веса характеристик по материалу, комнате и влажности, таблица `RULES` | 1 |
 | `app/static/index.html` | простой демо-фронт | 4 заменяет своим |
 | `mock_catalog/` | пример каталога и эталонной разметки | все |
 | `tests/` | автотесты: `pytest` | все |
