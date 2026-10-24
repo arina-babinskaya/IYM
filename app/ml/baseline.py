@@ -4,11 +4,22 @@ from app.models import Product, ProductBinding
 from app.schemas import RoomInput, RoomType, Suggestion
 from app.taxonomy import Material, WorkType, works_for_material
 
-WET = [RoomType.bathroom, RoomType.toilet, RoomType.kitchen]
-DRY = [RoomType.living, RoomType.bedroom, RoomType.kids, RoomType.hallway]
+WET = [RoomType.bathroom, RoomType.kitchen, RoomType.utility_room]
+DRY = [RoomType.living_room, RoomType.bedroom, RoomType.dining_room, RoomType.home_office, RoomType.hallway,
+       RoomType.general_indoor]
 ALL = WET + DRY + [RoomType.balcony]
 
 RULES: list[tuple[str, Material]] = [
+    (r"автоматическ\w* выключател|\bузо\b|дифавтомат|щит(ок|ки)? \w*(распредел|электр)|щит\w* для автомат", Material.circuit_breakers),
+    (r"кабель-канал|кабель канал|гофротруб|гофрированн\w* труб", Material.cable_channel),
+    (r"подрозетник|распаечн\w* короб|распределительн\w* короб|установочн\w* короб", Material.electrical_boxes),
+    (r"жидк\w* гвозд|монтажн\w* клей", Material.mounting_adhesive),
+    (r"монтажн\w* пен|пена монтажн", Material.mounting_foam),
+    (r"\bсвп\b|выравнивани\w* плитк", Material.tile_leveling),
+    (r"демпферн", Material.damper_tape),
+    (r"маяк", Material.beacons),
+    (r"серпянк|армирующ\w* сетк|стеклосетк|сетк\w* штукатур", Material.reinforcing_mesh),
+    (r"дверн\w* (петл|ручк|фурнитур|замок)|петл\w* дверн|ручк\w* дверн", Material.door_hardware),
     (r"клей.{0,20}плит|плиточн\w* клей", Material.tile_adhesive),
     (r"клей.{0,20}обо|обойн\w* клей", Material.wallpaper_glue),
     (r"затирк", Material.grout),
@@ -21,6 +32,15 @@ RULES: list[tuple[str, Material]] = [
     (r"профил\w*.{0,30}(гипсокартон|гкл)|профил\w* (пп|пн|cd|ud)\b", Material.profile),
     (r"саморез|дюбел|шуруп", Material.fasteners),
     (r"подложк", Material.underlay),
+    (r"(?<!потолочный )плинтус(?! потолоч)|порожек|порог\b", Material.skirting),
+    (r"воздуховод|вентиляц|вытяжн\w* вентилятор|вентилятор\w* вытяжн", Material.ventilation),
+    (r"радиатор|т[её]пл\w* пол|кот[её]л|полотенцесушител|конвектор", Material.heating),
+    (r"межкомнатн\w* двер|двер\w* полотн|дверн\w* короб|входн\w* двер|наличник", Material.doors),
+    (r"светильник|люстр|\bспот|бра\b|прожектор", Material.lighting),
+    (r"\bламп[аы]\b|светодиодн\w* ламп", Material.lamps),
+    (r"молдинг|стенов\w* панел|панел\w* пвх|потолочн\w* плинтус|плинтус потолоч|карниз|розетк\w* потолочн", Material.decorative),
+    (r"водорозетк|\bтруб[аыу]?\b|фитинг|канализац|муфт|тройник", Material.pipes),
+    (r"\bspc\b|\blvt\b|кварцвинил|кварц-винил|винилов\w* плитк|плитк\w* пвх|пвх[- ]плитк", Material.laminate),
     (r"керамогранит|плитк|кафел", Material.tile),
     (r"ламинат", Material.laminate),
     (r"линолеум", Material.linoleum),

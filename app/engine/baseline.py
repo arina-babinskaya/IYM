@@ -6,6 +6,7 @@ from app.catalog.repository import CatalogRepo, to_brief
 from app.engine.interface import CalcError
 from app.ml.interface import Ranker
 from app.models import Product
+from app.plans import WORK_SURFACE, works_for_room, work_materials
 from app.schemas import (
     EstimateItem,
     EstimateRequest,
@@ -16,12 +17,12 @@ from app.schemas import (
     ROOM_TITLES,
     RoomEstimate,
     RoomInput,
-    RoomType,
     Surface,
 )
 from app.taxonomy import MATERIAL_TITLES, STAGE_ORDER, WORKS, Material, RenovationType, WorkType
 
 CENT = Decimal("0.01")
+CANDIDATES_LIMIT = 20000
 RESERVE: dict[Material, Decimal] = {
     Material.tile: Decimal(10), Material.laminate: Decimal(7), Material.wallpaper: Decimal(10),
     Material.linoleum: Decimal(5), Material.drywall: Decimal(10),
@@ -29,49 +30,17 @@ RESERVE: dict[Material, Decimal] = {
 NEEDS_MOISTURE = {Material.drywall, Material.paint, Material.putty, Material.plaster, Material.laminate,
                   Material.wallpaper}
 SURFACE_HINTS: dict[Surface, str] = {Surface.floor: r"напольн|керамогранит|для пола", Surface.wall: r"настенн|для стен"}
-WET_ROOMS = {RoomType.bathroom, RoomType.toilet}
-DRY_ROOMS = {RoomType.living, RoomType.bedroom, RoomType.kids, RoomType.hallway}
-
-W = WorkType
-F, WL = Surface.floor, Surface.wall
-PLANS: dict[tuple[str, str], list[tuple[WorkType, Surface | None]]] = {
-    ("cosmetic", "wet"): [(W.priming, WL), (W.wall_painting, WL)],
-    ("cosmetic", "kitchen"): [(W.priming, WL), (W.wall_painting, WL)],
-    ("cosmetic", "dry"): [(W.priming, WL), (W.wallpapering, WL)],
-    ("cosmetic", "balcony"): [(W.wall_painting, WL)],
-    ("rental", "wet"): [(W.wall_painting, WL)],
-    ("rental", "kitchen"): [(W.wall_painting, WL), (W.linoleum_laying, F)],
-    ("rental", "dry"): [(W.wall_painting, WL), (W.linoleum_laying, F)],
-    ("rental", "balcony"): [(W.wall_painting, WL)],
-    ("capital", "wet"): [
-        (W.demolition, None), (W.electrical_wiring, None), (W.waterproofing, F), (W.drywall_install, WL),
-        (W.priming, WL), (W.tiling, F), (W.tiling, WL), (W.electrical_fittings, None), (W.plumbing_install, None),
-    ],
-    ("capital", "kitchen"): [
-        (W.demolition, None), (W.electrical_wiring, None), (W.wall_putty, WL), (W.priming, WL), (W.tiling, F),
-        (W.wall_painting, WL), (W.electrical_fittings, None),
-    ],
-    ("capital", "dry"): [
-        (W.demolition, None), (W.electrical_wiring, None), (W.wall_putty, WL), (W.priming, WL),
-        (W.wallpapering, WL), (W.laminate_laying, F), (W.electrical_fittings, None),
-    ],
-    ("capital", "balcony"): [(W.wall_putty, WL), (W.wall_painting, WL)],
-}
 
 
-def _group(room: RoomType) -> str:
-    if room in WET_ROOMS:
-        return "wet"
-    if room in DRY_ROOMS:
-        return "dry"
-    return room.value
+Step = tuple[WorkType, Surface | None, tuple[Material, ...]]
 
 
-def _plan(room: RoomInput, renovation: RenovationType) -> list[tuple[WorkType, Surface | None]]:
+def _plan(room: RoomInput, renovation: RenovationType) -> list[Step]:
     if room.works:
-        return [(w, None) for w in room.works]
-    kind = "capital" if renovation in (RenovationType.capital, RenovationType.euro) else renovation.value
-    return PLANS[(kind, _group(room.room_type))]
+        return [(c.work_type, c.surface or WORK_SURFACE.get(c.work_type), work_materials(c.work_type, c.materials))
+                for c in room.works]
+    options = works_for_room(room.room_type, room.renovation_type or renovation)
+    return [(o.work, o.surface, work_materials(o.work, o.materials)) for o, default in options if default]
 
 
 def _ceil(x: Decimal) -> int:
@@ -118,16 +87,32 @@ def packages_for_area(p: Product, area: Decimal, reserve_pct: Decimal, layers: i
 
 
 def _piece_need(material: Material, room: RoomInput, area: Decimal) -> tuple[Decimal, str] | None:
+    floor, perimeter = room.floor_area, room.perimeter
     if material == Material.cable:
-        return room.perimeter * 2, "м"
+        return perimeter * 2, "м"
+    if material == Material.cable_channel:
+        return perimeter, "м"
     if material == Material.socket:
-        return Decimal(max(2, _ceil(room.floor_area / 4))), "шт"
-    if material in (Material.switch, Material.painting_tools, Material.sealant):
-        return Decimal(1), "шт"
-    if material == Material.profile:
+        return Decimal(max(2, _ceil(floor / 4))), "шт"
+    if material == Material.electrical_boxes:
+        return Decimal(max(3, _ceil(floor / 4) + 1)), "шт"
+    if material in (Material.lighting, Material.lamps):
+        return Decimal(max(1, _ceil(floor / 8))), "шт"
+    if material == Material.heating:
+        return Decimal(max(1, _ceil(floor / 10))), "шт"
+    if material in (Material.profile, Material.beacons):
         return Decimal(_ceil(area / Decimal("1.5"))), "шт"
-    if material == Material.fasteners:
-        return Decimal(_ceil(area / 10)), "упак."
+    if material == Material.skirting:
+        return Decimal(_ceil(perimeter / Decimal("2.5"))), "шт"
+    if material == Material.damper_tape:
+        return Decimal(_ceil(perimeter / 25)), "рул."
+    if material in (Material.fasteners, Material.tile_leveling):
+        return Decimal(max(1, _ceil(area / 10))), "упак."
+    if material in (Material.switch, Material.painting_tools, Material.sealant, Material.doors, Material.ventilation,
+                    Material.pipes, Material.plumbing, Material.demolition_tools, Material.circuit_breakers,
+                    Material.reinforcing_mesh, Material.mounting_foam, Material.door_hardware,
+                    Material.mounting_adhesive):
+        return Decimal(1), "шт"
     return None
 
 
@@ -140,7 +125,8 @@ class BaselineEngine:
         info = WORKS[work]
         area = walls if surface == Surface.wall else floor
         wet = room.effective_humidity == Level.high and material in NEEDS_MOISTURE
-        cands = repo.candidates(material, required_flags=["moisture_resistant"] if wet else [], min_confidence=0.8)
+        cands = repo.candidates(material, required_flags=["moisture_resistant"] if wet else [], min_confidence=0.8,
+                                limit=CANDIDATES_LIMIT)
         ranked = self.ranker.rank(cands, room)
         hint = SURFACE_HINTS.get(surface) if material == Material.tile else None
         if hint:
@@ -176,8 +162,8 @@ class BaselineEngine:
             floor = room.floor_area
             walls = max(room.perimeter * room.height_m - room.openings_area_m2, Decimal(0))
             items, seen = [], set()
-            for work, surface in _plan(room, req.renovation_type):
-                for material in WORKS[work].materials:
+            for work, surface, materials in _plan(room, req.renovation_type):
+                for material in materials:
                     if (material, surface) in seen:
                         continue
                     seen.add((material, surface))

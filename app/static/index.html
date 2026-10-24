@@ -34,7 +34,22 @@ button.primary, button.secondary { font: inherit; font-weight: 600; border-radiu
 button.primary { background: var(--accent); color: var(--accent-ink); border: 0; }
 button.secondary { background: var(--surface); color: var(--ink); border: 1px solid var(--line); }
 button.small { padding: 5px 10px; font-size: 13px; }
-.room { border: 1px dashed var(--line); border-radius: 10px; padding: 12px; }
+.progress { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; counter-reset: st; }
+.progress li { font-size: 13px; color: var(--muted); padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); counter-increment: st; }
+.progress li::before { content: counter(st) ". "; }
+.progress li.done { color: var(--ok); border-color: var(--ok); }
+.progress li.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.choices { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.choices button { font: inherit; text-align: left; padding: 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); cursor: pointer; }
+.choices button:hover, .choices button.on { border-color: var(--accent); }
+.choices button b { display: block; }
+.question { font-size: 17px; font-weight: 600; margin: 0; }
+.nav { display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between; }
+.summary-room { display: flex; flex-wrap: wrap; gap: 8px 16px; justify-content: space-between; align-items: center; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+.works { display: grid; gap: 10px; }
+.works fieldset { border: 0; margin: 0; padding: 0; display: grid; gap: 4px; }
+.works legend { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; padding: 0 0 2px; }
+.works label { display: flex; gap: 8px; align-items: baseline; font-size: 14px; color: var(--ink); cursor: pointer; }
 table { width: 100%; border-collapse: collapse; font-size: 14px; font-variant-numeric: tabular-nums; }
 th { text-align: left; font-size: 12px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; padding: 6px 8px 6px 0; border-bottom: 1px solid var(--line); }
 td { padding: 7px 8px 7px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
@@ -69,18 +84,14 @@ select[multiple] { min-width: 220px; min-height: 110px; }
 
 <main>
   <section data-panel="calc" class="card">
-    <h2>Калькулятор ремонта</h2>
-    <div class="row">
+    <div class="row" style="justify-content:space-between;align-items:center">
+      <h2>Калькулятор ремонта</h2>
       <label>Объект
         <select id="object"><option value="apartment">Квартира</option><option value="house">Дом</option><option value="studio">Студия</option></select>
       </label>
-      <label>Вид ремонта <select id="renovation"></select></label>
     </div>
-    <div id="rooms" style="display:grid;gap:10px"></div>
-    <div class="row">
-      <button class="secondary" id="add-room">+ Добавить комнату</button>
-      <button class="primary" id="run-estimate">Рассчитать</button>
-    </div>
+    <ol class="progress" id="progress"></ol>
+    <div id="wizard"></div>
   </section>
   <section data-panel="calc" class="card" id="estimate-result" hidden></section>
 
@@ -114,7 +125,7 @@ select[multiple] { min-width: 220px; min-height: 110px; }
 </main>
 
 <script>
-const ROOMS = { bathroom: "Санузел / ванная", toilet: "Туалет", kitchen: "Кухня", living: "Гостиная", bedroom: "Спальня", kids: "Детская", hallway: "Коридор", balcony: "Балкон" };
+const ROOMS = {};
 const T = { stages: {}, works: {}, materials: {}, renovation: {} };
 const rub = v => v == null ? "—" : Number(v).toLocaleString("ru-RU", { maximumFractionDigits: 2 }) + " ₽";
 const num = v => Number(v).toLocaleString("ru-RU", { maximumFractionDigits: 2 });
@@ -143,47 +154,153 @@ api("/health").then(h => {
   document.getElementById("status").innerHTML = `База: <b class="${h.db.ok ? "ok" : "bad"}">${h.db.ok ? "ок" : "ошибка"}</b> · Нейросеть: ${llm}`;
 }).catch(() => document.getElementById("status").textContent = "сервер не отвечает");
 
-let roomSeq = 0;
-function addRoom(r = {}) {
-  const div = document.createElement("div");
-  div.className = "room";
-  div.dataset.id = ++roomSeq;
-  div.innerHTML = `<div class="row">
-    <label>Комната<select data-f="room_type">${opts(ROOMS, r.room_type || "living")}</select></label>
-    <label>Длина, м<input type="number" data-f="length_m" value="${r.length_m ?? ""}" step="0.1" min="0"></label>
-    <label>Ширина, м<input type="number" data-f="width_m" value="${r.width_m ?? ""}" step="0.1" min="0"></label>
-    <label>Высота, м<input type="number" data-f="height_m" value="${r.height_m ?? 2.7}" step="0.1" min="0"></label>
-    <label>Влажность<select data-f="humidity"><option value="">по типу комнаты</option><option value="low">низкая</option><option value="normal">обычная</option><option value="high" ${r.humidity === "high" ? "selected" : ""}>высокая</option></select></label>
-    <button class="secondary small" title="Удалить">✕</button></div>`;
-  div.querySelector("button").onclick = () => div.remove();
-  document.getElementById("rooms").append(div);
-}
-document.getElementById("add-room").onclick = () => addRoom();
+const STEPS = ["Помещение", "Размеры", "Вид ремонта", "Работы", "Смета"];
+const RENO_HINTS = {
+  cosmetic: "обновить отделку: стены, пол",
+  capital: "с демонтажом, черновыми и чистовыми работами",
+  euro: "капитальный под ключ, дорогие материалы",
+  rental: "быстро и недорого для арендаторов",
+};
+const W = { step: 0, room: {}, rooms: [], editing: null, options: null };
+const wizard = document.getElementById("wizard");
 
-function readRooms() {
-  return [...document.querySelectorAll("#rooms .room")].map(div => {
-    const room = {};
-    div.querySelectorAll("[data-f]").forEach(el => {
-      if (el.value !== "") room[el.dataset.f] = el.type === "number" ? Number(el.value) : el.value;
-    });
-    return room;
+function showStep(n) {
+  W.step = n;
+  document.getElementById("progress").innerHTML = STEPS.map((t, i) =>
+    `<li class="${i === n ? "on" : i < n ? "done" : ""}">${t}</li>`).join("");
+  [stepRoom, stepSize, stepRenovation, stepWorks, stepSummary][n]();
+}
+
+function nav(back, next, nextLabel = "Далее") {
+  return `<div class="nav">${back ? `<button class="secondary" data-back>← Назад</button>` : "<span></span>"}
+    ${next ? `<button class="primary" data-next>${nextLabel}</button>` : ""}</div>`;
+}
+function bindNav(onNext) {
+  wizard.querySelector("[data-back]")?.addEventListener("click", () => showStep(W.step - 1));
+  wizard.querySelector("[data-next]")?.addEventListener("click", onNext);
+}
+
+function stepRoom() {
+  wizard.innerHTML = `<p class="question">Какое помещение ремонтируем?</p>
+    <div class="choices">${Object.entries(ROOMS).map(([k, v]) =>
+      `<button data-room="${k}" class="${W.room.room_type === k ? "on" : ""}"><b>${esc(v)}</b></button>`).join("")}</div>
+    ${W.rooms.length ? nav(false, true, "К списку помещений") : ""}`;
+  wizard.querySelectorAll("[data-room]").forEach(b => b.onclick = () => {
+    if (W.room.room_type !== b.dataset.room) W.room.works = null;
+    W.room.room_type = b.dataset.room;
+    showStep(1);
+  });
+  bindNav(() => { W.room = {}; W.editing = null; showStep(4); });
+}
+
+function stepSize() {
+  const r = W.room;
+  wizard.innerHTML = `<p class="question">Размеры: ${esc(ROOMS[r.room_type])}</p>
+    <div class="row">
+      <label>Длина, м<input type="number" id="w-len" value="${r.length_m ?? ""}" step="0.1" min="0"></label>
+      <label>Ширина, м<input type="number" id="w-wid" value="${r.width_m ?? ""}" step="0.1" min="0"></label>
+      <label>Высота потолка, м<input type="number" id="w-hei" value="${r.height_m ?? 2.7}" step="0.1" min="0"></label>
+      <label>Окна и двери, м²<input type="number" id="w-open" value="${r.openings_area_m2 ?? 0}" step="0.1" min="0"></label>
+      <label>Влажность<select id="w-hum"><option value="">по типу комнаты</option>${opts({ low: "низкая", normal: "обычная", high: "высокая" }, r.humidity || "")}</select></label>
+    </div>
+    <p class="muted" id="w-area"></p>
+    ${nav(true, true)}`;
+  const v = id => Number(document.getElementById(id).value);
+  const area = () => {
+    const ok = v("w-len") > 0 && v("w-wid") > 0 && v("w-hei") > 0;
+    document.getElementById("w-area").textContent = ok
+      ? `Пол ${num(v("w-len") * v("w-wid"))} м² · стены ${num(Math.max(2 * (v("w-len") + v("w-wid")) * v("w-hei") - v("w-open"), 0))} м²`
+      : "Укажите длину, ширину и высоту";
+    wizard.querySelector("[data-next]").disabled = !ok;
+  };
+  wizard.querySelectorAll("input").forEach(el => el.oninput = area);
+  area();
+  bindNav(() => {
+    Object.assign(r, { length_m: v("w-len"), width_m: v("w-wid"), height_m: v("w-hei"), openings_area_m2: v("w-open") });
+    const hum = document.getElementById("w-hum").value;
+    if (hum) r.humidity = hum; else delete r.humidity;
+    showStep(2);
   });
 }
 
-document.getElementById("run-estimate").onclick = async () => {
+
+function stepRenovation() {
+  const r = W.room;
+  wizard.innerHTML = `<p class="question">Какой ремонт: ${esc(ROOMS[r.room_type])}, ${num(r.length_m * r.width_m)} м²?</p>
+    <div class="choices">${Object.entries(T.renovation).map(([k, v]) =>
+      `<button data-reno="${k}" class="${r.renovation_type === k ? "on" : ""}"><b>${esc(v)}</b><span class="muted">${esc(RENO_HINTS[k] || "")}</span></button>`).join("")}</div>
+    ${nav(true, false)}`;
+  wizard.querySelectorAll("[data-reno]").forEach(b => b.onclick = () => {
+    if (r.renovation_type !== b.dataset.reno) r.works = null;
+    r.renovation_type = b.dataset.reno;
+    showStep(3);
+  });
+  bindNav();
+}
+
+async function stepWorks() {
+  const r = W.room;
+  wizard.innerHTML = `<p class="muted">Загружаю список работ…</p>`;
+  const o = await api(`/api/v1/works?room_type=${r.room_type}&renovation_type=${r.renovation_type}`);
+  const key = w => [w.work_type, w.surface || "", (w.materials || []).join(",")].join("|");
+  const chosen = r.works && new Set(r.works.map(key));
+  wizard.innerHTML = `<p class="question">Какие работы нужны? ${esc(o.room_title)} · ${esc(o.renovation_title)}</p>
+    <p class="muted">Отметили типичные для этого ремонта, можно изменить.</p>
+    <div class="works">${o.stages.map(st => `<fieldset><legend>${esc(st.title)}</legend>${
+      st.works.map(w => {
+        const on = chosen ? chosen.has(key(w)) : w.default;
+        return `<label><input type="checkbox" data-work="${w.work_type}" data-surface="${w.surface || ""}" data-materials="${w.materials.join(",")}" ${on ? "checked" : ""}>
+          <span>${esc(w.title)} <span class="muted">${esc(w.material_titles.join(", "))}</span></span></label>`;
+      }).join("")}</fieldset>`).join("")}</div>
+    ${nav(true, true, "Готово")}`;
+  const boxes = [...wizard.querySelectorAll("[data-work]")];
+  const check = () => wizard.querySelector("[data-next]").disabled = !boxes.some(c => c.checked);
+  boxes.forEach(c => c.onchange = check);
+  check();
+  bindNav(() => {
+    r.works = boxes.filter(c => c.checked).map(c => ({
+      work_type: c.dataset.work, surface: c.dataset.surface || null, materials: c.dataset.materials.split(",").filter(Boolean),
+    }));
+    if (W.editing === null) W.rooms.push(r); else W.rooms[W.editing] = r;
+    W.room = {}; W.editing = null;
+    showStep(4);
+  });
+}
+
+function stepSummary() {
+  wizard.innerHTML = `<p class="question">Помещения</p>
+    ${W.rooms.map((r, i) => `<div class="summary-room">
+      <span><b>${esc(ROOMS[r.room_type])}</b> · ${num(r.length_m)} × ${num(r.width_m)} м · ${esc(T.renovation[r.renovation_type])}
+        <span class="muted"> · работ: ${r.works.length}</span></span>
+      <span class="row"><button class="secondary small" data-edit="${i}">Изменить</button><button class="secondary small" data-del="${i}">✕</button></span>
+    </div>`).join("") || `<p class="muted">Пока нет помещений.</p>`}
+    <div class="nav"><button class="secondary" data-add>+ Добавить помещение</button>
+      <button class="primary" data-calc ${W.rooms.length ? "" : "disabled"}>Рассчитать смету</button></div>`;
+  wizard.querySelector("[data-add]").onclick = () => { W.room = {}; W.editing = null; showStep(0); };
+  wizard.querySelectorAll("[data-edit]").forEach(b => b.onclick = () => {
+    W.editing = Number(b.dataset.edit);
+    W.room = structuredClone(W.rooms[W.editing]);
+    showStep(0);
+  });
+  wizard.querySelectorAll("[data-del]").forEach(b => b.onclick = () => { W.rooms.splice(Number(b.dataset.del), 1); showStep(4); });
+  wizard.querySelector("[data-calc]").onclick = runEstimate;
+}
+
+async function runEstimate() {
   const out = document.getElementById("estimate-result");
   out.hidden = false; out.dataset.filled = "1";
   out.innerHTML = `<p class="muted">Считаю…</p>`;
   try {
     const r = await api("/api/v1/estimate", { method: "POST", body: JSON.stringify({
       object_type: document.getElementById("object").value,
-      renovation_type: document.getElementById("renovation").value,
-      rooms: readRooms(),
+      renovation_type: W.rooms[0].renovation_type,
+      rooms: W.rooms,
     }) });
     out.innerHTML = renderEstimate(r);
     document.getElementById("copy-list").onclick = () => copyList(r);
+    out.scrollIntoView({ behavior: "smooth" });
   } catch (e) { out.innerHTML = `<div class="warn">${esc(e.message)}</div>`; }
-};
+}
 
 function renderEstimate(r) {
   const rooms = r.rooms.map(room => {
@@ -191,7 +308,7 @@ function renderEstimate(r) {
     const rows = room.items.map(i => {
       const head = i.stage !== stage ? `<tr class="stage"><td colspan="6">${esc(T.stages[i.stage])}</td></tr>` : "";
       stage = i.stage;
-      const work = `${esc(i.title)}<div class="muted">${esc(T.works[i.work_type])}${i.surface === "floor" ? " · пол" : i.surface === "wall" ? " · стены" : ""}</div>`;
+      const work = `${esc(i.title)}<div class="muted">${esc(T.works[i.work_type])}${({ floor: " · пол", wall: " · стены", ceiling: " · потолок" })[i.surface] || ""}</div>`;
       if (i.packages === 0) return head + `<tr class="empty"><td>${work}</td><td colspan="5">${esc(i.reason)}</td></tr>`;
       return head + `<tr><td>${work}${i.reason ? `<div class="muted">${esc(i.reason)}</div>` : ""}</td>
         <td>${esc(i.product?.name)}</td>
@@ -200,7 +317,7 @@ function renderEstimate(r) {
         <td class="num">${rub(i.unit_price)}</td>
         <td class="num"><b>${rub(i.cost)}</b></td></tr>`;
     }).join("");
-    return `<h3>${ROOMS[room.room.room_type]} · пол ${num(room.floor_area_m2)} м², стены ${num(room.wall_area_m2)} м²</h3>
+    return `<h3>${esc(room.room.name || ROOMS[room.room.room_type])} · ${esc(T.renovation[room.room.renovation_type || r.renovation_type])} · пол ${num(room.floor_area_m2)} м², стены ${num(room.wall_area_m2)} м²</h3>
       <div class="scroll"><table>
         <tr><th>Материал / работа</th><th>Товар</th><th style="text-align:right">Нужно</th><th style="text-align:right">Купить</th><th style="text-align:right">Цена</th><th style="text-align:right">Сумма</th></tr>
         ${rows}
@@ -208,7 +325,7 @@ function renderEstimate(r) {
       </table></div>`;
   }).join("");
   const warns = r.warnings.length ? `<div class="warn">${r.warnings.map(esc).join("<br>")}</div>` : "";
-  return `<h2>Смета · ${esc(T.renovation[r.renovation_type])}</h2>${rooms}${warns}
+  return `<h2>Смета</h2>${rooms}${warns}
     <div class="row" style="justify-content:space-between;align-items:center">
       <span class="total">Итого: ${rub(r.total)}</span>
       <span class="row"><button class="secondary" id="copy-list">Скопировать список для прораба</button><button class="primary" onclick="alert('Демо: корзину подключит магазин')">В корзину</button></span>
@@ -310,8 +427,8 @@ api("/api/v1/taxonomy").then(t => {
   t.works.forEach(w => T.works[w.id] = w.title);
   t.materials.forEach(m => T.materials[m.id] = m.title);
   t.renovation_types.forEach(r => T.renovation[r.id] = r.title);
-  document.getElementById("renovation").innerHTML = opts(T.renovation, "capital");
-  addRoom({ room_type: "bathroom", length_m: 2, width_m: 3, height_m: 2.5, humidity: "high" });
+  t.room_types.forEach(r => ROOMS[r.id] = r.title);
+  showStep(0);
   searchProducts();
 });
 </script>

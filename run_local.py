@@ -6,6 +6,7 @@ from pathlib import Path
 
 os.environ.setdefault("RC_DATABASE_URL", "sqlite:///./repaircalc_local.sqlite")
 os.environ.setdefault("RC_LLM_MODEL", "qwen2.5:3b")
+os.environ.setdefault("RC_RANKER_IMPL", "app.ml.ranker:ContextRanker")
 
 import uvicorn
 from sqlalchemy import func, select

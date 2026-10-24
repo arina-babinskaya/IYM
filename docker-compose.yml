@@ -4,6 +4,7 @@ x-app-env: &app-env
   RC_LLM_MODEL: ${RC_LLM_MODEL:-qwen2.5:3b}
   RC_EMBED_MODEL: ${RC_EMBED_MODEL:-bge-m3}
   RC_CATALOG_PATH: data/catalog.json
+  RC_RANKER_IMPL: ${RC_RANKER_IMPL:-app.ml.ranker:ContextRanker}
 
 services:
   api:
