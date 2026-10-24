@@ -1,0 +1,133 @@
+{
+  "micro_f1": 0.9929848381986874,
+  "macro_f1": 0.9708732984626433,
+  "micro_precision": 0.9918625678119349,
+  "micro_recall": 0.9941096511101042,
+  "per_class": {
+    "demolition": {
+      "support": 12,
+      "precision": 1.0,
+      "recall": 0.9166666666666666,
+      "f1": 0.9565217391304348,
+      "threshold": 0.2
+    },
+    "door_install": {
+      "support": 65,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "threshold": 0.25
+    },
+    "drywall_install": {
+      "support": 21,
+      "precision": 0.875,
+      "recall": 1.0,
+      "f1": 0.9333333333333333,
+      "threshold": 0.2
+    },
+    "electrical_fittings": {
+      "support": 124,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "threshold": 0.7499999999999998
+    },
+    "electrical_wiring": {
+      "support": 129,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "threshold": 0.44999999999999996
+    },
+    "floor_covering_install": {
+      "support": 274,
+      "precision": 1.0,
+      "recall": 0.9854014598540146,
+      "f1": 0.9926470588235294,
+      "threshold": 0.35
+    },
+    "floor_screed": {
+      "support": 5,
+      "precision": 1.0,
+      "recall": 0.8,
+      "f1": 0.8888888888888888,
+      "threshold": 0.7499999999999998
+    },
+    "lighting_install": {
+      "support": 511,
+      "precision": 0.9980430528375733,
+      "recall": 0.9980430528375733,
+      "f1": 0.9980430528375733,
+      "threshold": 0.2
+    },
+    "plumbing_install": {
+      "support": 252,
+      "precision": 0.9764705882352941,
+      "recall": 0.9880952380952381,
+      "f1": 0.9822485207100592,
+      "threshold": 0.49999999999999994
+    },
+    "plumbing_rough": {
+      "support": 239,
+      "precision": 0.991701244813278,
+      "recall": 1.0,
+      "f1": 0.9958333333333333,
+      "threshold": 0.49999999999999994
+    },
+    "priming": {
+      "support": 8,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "threshold": 0.5499999999999999
+    },
+    "tiling": {
+      "support": 253,
+      "precision": 1.0,
+      "recall": 0.9960474308300395,
+      "f1": 0.998019801980198,
+      "threshold": 0.3
+    },
+    "wall_painting": {
+      "support": 71,
+      "precision": 0.9594594594594594,
+      "recall": 1.0,
+      "f1": 0.9793103448275862,
+      "threshold": 0.39999999999999997
+    },
+    "wall_plastering": {
+      "support": 12,
+      "precision": 0.8461538461538461,
+      "recall": 0.9166666666666666,
+      "f1": 0.88,
+      "threshold": 0.49999999999999994
+    },
+    "wall_putty": {
+      "support": 10,
+      "precision": 0.9,
+      "recall": 0.9,
+      "f1": 0.9,
+      "threshold": 0.5499999999999999
+    },
+    "wallpapering": {
+      "support": 208,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "threshold": 0.2
+    },
+    "waterproofing": {
+      "support": 13,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "threshold": 0.6499999999999999
+    }
+  },
+  "label_source": "weak_unverified",
+  "agreement_not_ground_truth": true,
+  "train_size": 10761,
+  "validation_size": 2290,
+  "test_size": 2201,
+  "elapsed_seconds": 7.409035502999359
+}

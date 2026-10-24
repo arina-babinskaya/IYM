@@ -1,0 +1,11 @@
+room_type_id,multi_label
+kitchen,True
+dining_room,True
+living_room,True
+bedroom,True
+bathroom,True
+hallway,True
+home_office,True
+utility_room,True
+balcony,True
+general_indoor,True

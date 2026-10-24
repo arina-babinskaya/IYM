@@ -1,10 +1,13 @@
 *.pyc
 *.sqlite
 .env
+.venv-sandbox
 .pytest_cache/
 .venv/
 __pycache__/
 data/
+ml_workspace/artifacts/models/
 repaircalc.zip
 repaircalc_local.sqlite
 .DS_Store
+/requirments/products_final.json
