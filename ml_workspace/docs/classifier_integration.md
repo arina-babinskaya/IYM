@@ -2,8 +2,8 @@
 
 ## Status and artifact
 
-The downloaded artifact is at `ml_workspace/artifacts/models/tfidf_logreg_v2/` (not directly at
-`ml_workspace/artifacts/tfidf_logreg_v2/`). It contains:
+The selected `splits_v3` artifact is at
+`ml_workspace/data/experiments_v3/tfidf_logreg/model/`. It contains:
 
 - `estimators.joblib`: estimators for domain, activity, product category, work type, and room type;
 - `preprocessor.joblib`: fitted TF-IDF vectorizer;
@@ -43,7 +43,7 @@ inference**.
 from pathlib import Path
 from ml_workspace.ml_api import ProductInput, load_model, predict
 
-model = load_model(Path("ml_workspace/artifacts/models/tfidf_logreg_v2"),
+model = load_model(Path("ml_workspace/data/experiments_v3/tfidf_logreg/model"),
                    "taxonomy_v2", trusted=True)
 result = predict(model, [ProductInput(product_id=1, name="Кабель ВВГнг 3x2.5")])
 ```
@@ -58,13 +58,14 @@ The public `Suggestion` response contract is unchanged. `get_classifier()` is ca
 loads once per process. Default remains the keyword baseline.
 
 ```bash
-export RC_ML_CLASSIFIER_BACKEND=tfidf
-export RC_ML_CLASSIFIER_ARTIFACT_PATH=ml_workspace/artifacts/models/tfidf_logreg_v2
+export RC_ML_CLASSIFIER_BACKEND=trained
+export RC_ML_CLASSIFIER_ARTIFACT_PATH=ml_workspace/data/experiments_v3/tfidf_logreg/model
 python run_local.py
 ```
 
-Set `RC_ML_CLASSIFIER_BACKEND=baseline` (or omit it) for `KeywordClassifier`. The older
-`RC_CLASSIFIER_IMPL` extension point still applies to baseline/custom implementations.
+Set `RC_ML_CLASSIFIER_BACKEND=baseline` (or omit it) for `KeywordClassifier`. The legacy `tfidf`
+backend value remains an alias for `trained`, and the older `RC_CLASSIFIER_IMPL` extension point
+still applies to baseline/custom implementations.
 
 Taxonomy-v2 and backend enums differ. Exact work IDs are preserved. `plumbing_fixture_install` maps
 to `plumbing_install`. `floor_covering_install` maps to `laminate_laying` or `linoleum_laying` only

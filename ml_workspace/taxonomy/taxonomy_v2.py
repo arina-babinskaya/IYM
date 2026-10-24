@@ -1,6 +1,13 @@
-"""Исполняемая taxonomy_v2; production backend enums не изменяются."""
+"""Canonical executable taxonomy_v2; production backend enums are unchanged."""
 from __future__ import annotations
-from ml_workspace.taxonomy.taxonomy_v1 import STAGES
+
+STAGES = [
+ {"id":"preparation_demolition","ru_name":"Подготовительный этап (демонтаж)","description":"Обследование, защита зоны, отключение и удаление старых покрытий/конструкций."},
+ {"id":"rough_work","ru_name":"Черновые работы","description":"Скрытые инженерные сети, основания и конструкции до подготовки под декоративное покрытие."},
+ {"id":"white_finish","ru_name":"Белая отделка","description":"Подготовка ровного, сухого и загрунтованного основания: базовое/финишное шпатлевание, шлифование и грунтование. Это уже не конструктивные черновые работы, но ещё не видимое финишное покрытие."},
+ {"id":"finish_work","ru_name":"Чистовая отделка","description":"Монтаж видимых покрытий стен, пола и потолка, плитки, дверей и декоративных материалов."},
+ {"id":"final_stage","ru_name":"Финальный этап","description":"Установка видимых приборов, электроустановочных изделий, освещения, сантехники и завершающего декора."},
+]
 
 TAXONOMY_VERSION="taxonomy_v2"
 ACTIVITIES=[

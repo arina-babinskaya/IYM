@@ -1,0 +1,22 @@
+{
+  "selected_experiment": "tfidf_logreg",
+  "dataset_version": "dataset_v3",
+  "split_version": "splits_v3",
+  "labeling_rule_version": "weak_rules_v3",
+  "taxonomy_version": "taxonomy_v2",
+  "artifact_format_version": 2,
+  "artifact_bytes": 51729661,
+  "expected_local_path": "ml_workspace/data/experiments_v3/tfidf_logreg/model",
+  "artifact_committed": false,
+  "dataset_master_sha256": "11555a4d50d53947810a36da53f348d6cee3234ccfb6ff726afa000f5bb63e83",
+  "split_manifest_sha256": "24dbe51b6b510435e6c978c74775a6752416367589f06ae9fb5bc1c79b9c0640",
+  "training_id_set_sha256": "fe05c7150796d6d4d9de67ab968f4f8c41c52f57838d31626fc52a26faae0227",
+  "runtime": {
+    "python": "3.13.16",
+    "numpy": "2.1.3",
+    "pandas": "2.2.3",
+    "scikit-learn": "1.6.1",
+    "joblib": "1.6.0"
+  },
+  "warning": "Metrics measure agreement with automatic weak labels, not independently verified real-world accuracy."
+}

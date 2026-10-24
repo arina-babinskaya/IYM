@@ -23,7 +23,7 @@ def get_ranker() -> Any:
 @lru_cache
 def get_classifier() -> Any:
     settings = get_settings()
-    if settings.ml_classifier_backend == "tfidf":
+    if settings.ml_classifier_backend in {"trained", "tfidf"}:
         classifier = load("app.ml.tfidf:TfidfClassifier")
         return classifier(settings.ml_classifier_artifact_path)
     return load(settings.classifier_impl)()
