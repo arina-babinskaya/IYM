@@ -4,7 +4,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import text
 
 from app.api.deps import get_classifier, get_estimate_engine, get_repo
-from app.catalog.repository import CatalogRepo, to_brief
+from app.catalog.repository import MANUAL_ID_START, AdminStatus, CatalogRepo, to_brief
+from app.config import get_settings
 from app.engine.interface import CalcError
 from app.llm.client import LLMError, get_llm
 from app.schemas import (
@@ -17,6 +18,7 @@ from app.schemas import (
     ProductBrief,
     ProductCalcRequest,
     ProductCalcResponse,
+    ProductCreate,
     ProductOut,
     Suggestion,
     ROOM_TITLES,
@@ -117,15 +119,7 @@ def product_calc(product_id: int, req: ProductCalcRequest, repo: CatalogRepo = D
         raise HTTPException(422, str(e)) from e
 
 
-@router.get("/admin/products", response_model=list[AdminProductRow], tags=["admin"])
-def admin_products(
-    only_unbound: bool = True,
-    q: str | None = None,
-    limit: int = Query(50, le=500),
-    offset: int = 0,
-    repo: CatalogRepo = Depends(get_repo),
-) -> list[AdminProductRow]:
-    products = repo.unbound(limit) if only_unbound and not q else repo.search(q, None, limit, offset)
+def _admin_rows(products: list, repo: CatalogRepo) -> list[AdminProductRow]:
     suggestions = get_classifier().predict(products) if products else []
     rows = []
     for p, s in zip(products, suggestions, strict=True):
@@ -134,11 +128,37 @@ def admin_products(
             AdminProductRow(
                 product=to_brief(p),
                 category=next(iter((p.categories or {}).values()), None),
+                manual=p.id >= MANUAL_ID_START,
                 binding=BindingOut.model_validate(b) if b else None,
                 suggestion=s,
             )
         )
     return rows
+
+
+@router.get("/admin/products", response_model=list[AdminProductRow], tags=["admin"])
+def admin_products(
+    status: AdminStatus | None = None,
+    only_unbound: bool = True,
+    q: str | None = None,
+    limit: int = Query(50, le=500),
+    offset: int = 0,
+    repo: CatalogRepo = Depends(get_repo),
+) -> list[AdminProductRow]:
+    if status is None:
+        status = "unbound" if only_unbound and not q else "all"
+    return _admin_rows(repo.admin_list(status, q, limit, offset), repo)
+
+
+@router.post("/admin/products", response_model=AdminProductRow, status_code=201, tags=["admin"])
+def admin_create_product(data: ProductCreate, repo: CatalogRepo = Depends(get_repo)) -> AdminProductRow:
+    return _admin_rows([repo.create_manual(data)], repo)[0]
+
+
+@router.delete("/admin/products/{product_id}", status_code=204, tags=["admin"])
+def admin_delete_product(product_id: int, repo: CatalogRepo = Depends(get_repo)) -> None:
+    if not repo.delete_manual(product_id):
+        raise HTTPException(404, "ручной товар не найден (товары из каталога удалять нельзя)")
 
 
 @router.get("/admin/products/{product_id}/suggest", response_model=Suggestion, tags=["admin"])
@@ -158,10 +178,12 @@ def admin_bind(product_id: int, data: BindingIn, repo: CatalogRepo = Depends(get
 
 @router.post("/admin/autobind", response_model=AdminStats, tags=["admin"])
 def admin_autobind(
-    min_confidence: float = Query(0.8, ge=0, le=1),
+    min_confidence: float | None = Query(None, ge=0, le=1),
     batch: int = Query(1000, le=5000),
     repo: CatalogRepo = Depends(get_repo),
 ) -> AdminStats:
+    if min_confidence is None:
+        min_confidence = get_settings().autobind_min_confidence
     clf = get_classifier()
     after_id = -1
     while products := repo.unbound(batch, after_id):

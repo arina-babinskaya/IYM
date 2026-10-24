@@ -226,9 +226,27 @@ class BindingOut(BindingIn):
     confirmed: bool
 
 
+class CharacteristicIn(BaseModel):
+    name: str = Field(min_length=1)
+    value: str = Field(min_length=1)
+
+
+class ProductCreate(BaseModel):
+    name: str = Field(min_length=2, max_length=1024)
+    price: Money = Field(gt=0)
+    unit: str | None = None
+    category: str | None = None
+    brand: str | None = None
+    description: str | None = None
+    package_area: Amount | None = Field(None, gt=0)
+    quantity_in_package: Amount | None = Field(None, gt=0)
+    characteristics: list[CharacteristicIn] = Field(default_factory=list)
+
+
 class AdminProductRow(BaseModel):
     product: ProductBrief
     category: str | None = None
+    manual: bool = False
     binding: BindingOut | None = None
     suggestion: Suggestion | None = None
 

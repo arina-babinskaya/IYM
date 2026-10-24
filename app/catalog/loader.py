@@ -9,6 +9,7 @@ from sqlalchemy import delete, update
 from sqlalchemy.orm import Session
 
 from app.catalog import json_catalog, yml
+from app.catalog.repository import MANUAL_ID_START
 from app.db import upsert
 from app.models import Category, IngestRun, Product, ProductCategory, ProductCharacteristic
 
@@ -162,6 +163,7 @@ def load_catalog(
             res = session.execute(
                 update(Product)
                 .where(Product.status.is_(True))
+                .where(Product.id < MANUAL_ID_START)
                 .where((Product.last_seen_run.is_(None)) | (Product.last_seen_run != run_id))
                 .values(status=False)
             )

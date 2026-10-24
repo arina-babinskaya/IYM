@@ -1,12 +1,18 @@
 from collections.abc import Sequence
 
-from sqlalchemy import func, or_, select
+from typing import Literal
+
+from sqlalchemy import delete, func, or_, select
 from sqlalchemy.orm import Session
 
+from app.catalog import normalize as nz
 from app.db import upsert
 from app.models import Product, ProductBinding, ProductCategory, ProductCharacteristic
-from app.schemas import BindingIn, BindingOut, Characteristic, ProductBrief, ProductOut, Suggestion
+from app.schemas import BindingIn, BindingOut, Characteristic, ProductBrief, ProductCreate, ProductOut, Suggestion
 from app.taxonomy import Material, WorkType
+
+MANUAL_ID_START = 9_000_000_000_000
+AdminStatus = Literal["unbound", "ml", "confirmed", "all"]
 
 
 def to_brief(p: Product) -> ProductBrief:
@@ -116,6 +122,53 @@ class CatalogRepo:
         ]
         upsert(self.session, ProductBinding, rows, ["product_id"])
         self.session.commit()
+
+    def admin_list(self, status: AdminStatus = "unbound", q: str | None = None, limit: int = 50,
+                   offset: int = 0) -> list[Product]:
+        stmt = (
+            select(Product)
+            .outerjoin(ProductBinding, ProductBinding.product_id == Product.id)
+            .where(Product.status.isnot(False))
+        )
+        if status == "unbound":
+            stmt = stmt.where(ProductBinding.product_id.is_(None))
+        elif status == "ml":
+            stmt = stmt.where(ProductBinding.confirmed.is_(False))
+        elif status == "confirmed":
+            stmt = stmt.where(ProductBinding.confirmed.is_(True))
+        if q:
+            stmt = stmt.where(or_(func.lower(Product.name).like(f"%{q.lower()}%"), Product.sku == q, Product.cod_good == q))
+        return list(self.session.scalars(stmt.order_by(Product.id.desc()).limit(limit).offset(offset)))
+
+    def create_manual(self, data: ProductCreate) -> Product:
+        last = self.session.scalar(select(func.max(Product.id)).where(Product.id >= MANUAL_ID_START))
+        pid = (last or MANUAL_ID_START - 1) + 1
+        chars = [{"name": c.name, "value": c.value} for c in data.characteristics]
+        categories = {"0": data.category} if data.category else {}
+        p = Product(
+            id=pid, name=data.name, description=data.description, brand_name=data.brand, status=True,
+            currency="RUB", price=data.price, result_price=data.price, unit=data.unit, in_stock=True,
+            package_area=data.package_area, quantity_in_package=data.quantity_in_package, categories=categories,
+            categories_tree=[{"id": 0, "name": data.category}] if data.category else [],
+            specs=nz.extract_specs(chars, data.package_area, data.quantity_in_package, data.name),
+            raw={"source": "manual", "name": data.name, "characteristics": chars},
+        )
+        self.session.add(p)
+        self.session.flush()
+        rows = nz.characteristic_rows(pid, chars)
+        if rows:
+            upsert(self.session, ProductCharacteristic, rows, ["product_id", "code"])
+        self.session.commit()
+        return p
+
+    def delete_manual(self, product_id: int) -> bool:
+        if product_id < MANUAL_ID_START or self.get(product_id) is None:
+            return False
+        for model in (ProductBinding, ProductCharacteristic, ProductCategory):
+            self.session.execute(delete(model).where(model.product_id == product_id))
+        self.session.execute(delete(Product).where(Product.id == product_id))
+        self.session.commit()
+        return True
 
     def unbound(self, limit: int = 100, after_id: int = -1) -> list[Product]:
         stmt = (

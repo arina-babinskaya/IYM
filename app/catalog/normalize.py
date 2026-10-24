@@ -142,6 +142,7 @@ _SPEC_RULES: list[tuple[str, str, str]] = [
 
 _NAME_VOLUME = re.compile(rf"{_NUM}\s*л(?![а-яa-z])", re.IGNORECASE)
 _NAME_WEIGHT = re.compile(rf"{_NUM}\s*(кг|г)(?![а-яa-z])", re.IGNORECASE)
+_NAME_PACK_LENGTH = re.compile(rf"(?<![\dх×x*]){_NUM}\s*м(?:етр\w*)?(?![а-яa-z2²\d])", re.IGNORECASE)
 _NAME_ROLL = re.compile(rf"{_NUM}{_DIM_SEP}{_NUM}\s*м(?![а-яa-z2²])", re.IGNORECASE)
 
 
@@ -156,6 +157,10 @@ def _from_name(specs: dict[str, Any], name: str) -> None:
     if "weight_kg" not in specs and (m := _NAME_WEIGHT.search(name)):
         w = to_decimal(m.group(1))
         _guess(specs, "weight_kg", w if m.group(2).lower() == "кг" else w / 1000)
+    if "pack_length_m" not in specs and not _NAME_ROLL.search(name) and (m := _NAME_PACK_LENGTH.search(name)):
+        length = to_decimal(m.group(1))
+        if length and length >= 1:
+            _guess(specs, "pack_length_m", length)
     if not ("length_m" in specs and "width_m" in specs) and (m := _NAME_ROLL.search(name)):
         a, b = to_decimal(m.group(1)), to_decimal(m.group(2))
         if a and b and max(a, b) < 50:
@@ -201,6 +206,12 @@ def extract_specs(
                 specs["dims_m"] = [str(d) for d in dims]
                 specs.setdefault("guessed", []).append("dims_m")
                 continue
+        if "метраж" in name and "pack_length_m" not in specs:
+            if norm["unit"] == "m" and norm["value_num"]:
+                specs["pack_length_m"] = str(norm["value_num"])
+            elif norm["unit"] is None and norm["value_num"]:
+                _guess(specs, "pack_length_m", norm["value_num"])
+            continue
         for keyword, key, unit in _SPEC_RULES:
             if keyword not in name or key in specs:
                 continue

@@ -52,7 +52,7 @@ def main() -> None:
             stats = load_catalog(session, path, max_offers=args.limit,
                                  category_ids=set(args.categories) if args.categories else None)
             if not args.no_autobind:
-                bound = admin_autobind(min_confidence=0.8, batch=1000, repo=CatalogRepo(session))
+                bound = admin_autobind(min_confidence=get_settings().autobind_min_confidence, batch=1000, repo=CatalogRepo(session))
                 log.info("привязано автоматически: %d из %d", bound.bound_ml, bound.products_total)
         log.info("готово за %.0f с: %s", time.time() - t0, json.dumps(stats.__dict__, ensure_ascii=False))
         if not args.every:

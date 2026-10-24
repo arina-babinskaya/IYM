@@ -34,7 +34,7 @@ def seed() -> None:
         stats = load_catalog(session, source, max_offers=limit)
         print(f"Товаров: {stats.offers}, категорий: {stats.categories}")
         print("Привязываю товары к видам работ…")
-        result = admin_autobind(min_confidence=0.8, batch=1000, repo=CatalogRepo(session))
+        result = admin_autobind(min_confidence=get_settings().autobind_min_confidence, batch=1000, repo=CatalogRepo(session))
         print(f"Привязано автоматически: {result.bound_ml} из {result.products_total}")
 
 
