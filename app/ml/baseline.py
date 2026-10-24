@@ -4,8 +4,9 @@ from app.models import Product, ProductBinding
 from app.schemas import RoomInput, RoomType, Suggestion
 from app.taxonomy import Material, WorkType, works_for_material
 
-WET = [RoomType.bathroom, RoomType.toilet, RoomType.kitchen]
-DRY = [RoomType.living, RoomType.bedroom, RoomType.kids, RoomType.hallway]
+WET = [RoomType.bathroom, RoomType.kitchen, RoomType.utility_room]
+DRY = [RoomType.living_room, RoomType.bedroom, RoomType.dining_room, RoomType.home_office, RoomType.hallway,
+       RoomType.general_indoor]
 ALL = WET + DRY + [RoomType.balcony]
 
 RULES: list[tuple[str, Material]] = [
@@ -21,6 +22,12 @@ RULES: list[tuple[str, Material]] = [
     (r"профил\w*.{0,30}(гипсокартон|гкл)|профил\w* (пп|пн|cd|ud)\b", Material.profile),
     (r"саморез|дюбел|шуруп", Material.fasteners),
     (r"подложк", Material.underlay),
+    (r"воздуховод|вентиляц|вытяжн\w* вентилятор|вентилятор\w* вытяжн", Material.ventilation),
+    (r"радиатор|т[её]пл\w* пол|кот[её]л|полотенцесушител|конвектор", Material.heating),
+    (r"межкомнатн\w* двер|двер\w* полотн|дверн\w* короб|входн\w* двер|наличник", Material.doors),
+    (r"светильник|люстр|\bспот|бра\b|прожектор", Material.lighting),
+    (r"молдинг|стенов\w* панел|панел\w* пвх|потолочн\w* плинтус|карниз|розетк\w* потолочн", Material.decorative),
+    (r"водорозетк|\bтруб[аыу]?\b|фитинг|канализац|муфт|тройник", Material.pipes),
     (r"керамогранит|плитк|кафел", Material.tile),
     (r"ламинат", Material.laminate),
     (r"линолеум", Material.linoleum),

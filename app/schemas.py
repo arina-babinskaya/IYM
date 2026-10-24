@@ -2,7 +2,7 @@ from decimal import Decimal
 from enum import StrEnum
 from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, PlainSerializer
+from pydantic import BaseModel, ConfigDict, Field, PlainSerializer, field_validator
 
 from app.taxonomy import Material, RenovationType, Stage, WorkType
 
@@ -17,14 +17,17 @@ class ObjectType(StrEnum):
 
 
 class RoomType(StrEnum):
-    bathroom = "bathroom"
-    toilet = "toilet"
     kitchen = "kitchen"
-    living = "living"
+    dining_room = "dining_room"
+    living_room = "living_room"
     bedroom = "bedroom"
-    kids = "kids"
+    bathroom = "bathroom"
     hallway = "hallway"
+    home_office = "home_office"
+    utility_room = "utility_room"
     balcony = "balcony"
+    general_indoor = "general_indoor"
+    living = "living_room"
 
 
 class Level(StrEnum):
@@ -40,14 +43,22 @@ class Surface(StrEnum):
 
 
 ROOM_TITLES: dict[RoomType, str] = {
-    RoomType.bathroom: "Санузел", RoomType.toilet: "Туалет", RoomType.kitchen: "Кухня", RoomType.living: "Гостиная",
-    RoomType.bedroom: "Спальня", RoomType.kids: "Детская", RoomType.hallway: "Коридор", RoomType.balcony: "Балкон",
+    RoomType.kitchen: "Кухня",
+    RoomType.dining_room: "Столовая",
+    RoomType.living_room: "Гостиная",
+    RoomType.bedroom: "Спальня",
+    RoomType.bathroom: "Ванная / санузел",
+    RoomType.hallway: "Прихожая / коридор",
+    RoomType.home_office: "Кабинет",
+    RoomType.utility_room: "Постирочная / кладовая",
+    RoomType.balcony: "Балкон / лоджия",
+    RoomType.general_indoor: "Другое помещение",
 }
 
 ROOM_DEFAULT_HUMIDITY: dict[RoomType, Level] = {
     RoomType.bathroom: Level.high,
-    RoomType.toilet: Level.high,
     RoomType.kitchen: Level.normal,
+    RoomType.utility_room: Level.high,
     RoomType.balcony: Level.high,
 }
 
@@ -86,15 +97,27 @@ class ProductOut(ProductBrief):
     binding: "BindingOut | None" = None
 
 
+class WorkChoice(BaseModel):
+    work_type: WorkType
+    surface: Surface | None = None
+    materials: list[Material] | None = None
+
+
 class RoomInput(BaseModel):
     name: str | None = None
     room_type: RoomType
+    renovation_type: RenovationType | None = None
     length_m: Amount = Field(gt=0)
     width_m: Amount = Field(gt=0)
     height_m: Amount = Field(Decimal("2.7"), gt=0)
     openings_area_m2: Amount = Field(Decimal("0"), ge=0)
     humidity: Level | None = None
-    works: list[WorkType] | None = None
+    works: list[WorkChoice] | None = None
+
+    @field_validator("works", mode="before")
+    @classmethod
+    def _works(cls, v: Any) -> Any:
+        return [{"work_type": w} if isinstance(w, str) else w for w in v] if isinstance(v, list) else v
 
     @property
     def floor_area(self) -> Decimal:
@@ -218,8 +241,32 @@ class AdminStats(BaseModel):
     auto_bound_share: float
 
 
+class WorkOption(BaseModel):
+    work_type: WorkType
+    surface: Surface | None = None
+    title: str
+    materials: list[Material]
+    material_titles: list[str]
+    default: bool
+
+
+class StageOptions(BaseModel):
+    stage: Stage
+    title: str
+    works: list[WorkOption]
+
+
+class WorkOptionsOut(BaseModel):
+    room_type: RoomType
+    room_title: str
+    renovation_type: RenovationType
+    renovation_title: str
+    stages: list[StageOptions]
+
+
 class TaxonomyOut(BaseModel):
     stages: list[dict[str, str]]
+    room_types: list[dict[str, str]] = Field(default_factory=list)
     renovation_types: list[dict[str, str]]
     works: list[dict[str, Any]]
     materials: list[dict[str, str]]

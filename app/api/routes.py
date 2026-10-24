@@ -19,9 +19,15 @@ from app.schemas import (
     ProductCalcResponse,
     ProductOut,
     Suggestion,
+    ROOM_TITLES,
+    RoomType,
+    StageOptions,
     TaxonomyOut,
+    WorkOption,
+    WorkOptionsOut,
 )
-from app.taxonomy import MATERIAL_TITLES, RENOVATION_TITLES, STAGE_TITLES, WORKS, Material
+from app.plans import RENOVATION_STAGES, available_works, default_works, work_materials
+from app.taxonomy import MATERIAL_TITLES, RENOVATION_TITLES, STAGE_ORDER, STAGE_TITLES, WORKS, Material, RenovationType
 
 router = APIRouter(prefix="/api/v1")
 
@@ -44,11 +50,41 @@ async def estimate(req: EstimateRequest, repo: CatalogRepo = Depends(get_repo)) 
 def taxonomy() -> TaxonomyOut:
     return TaxonomyOut(
         stages=[{"id": k.value, "title": v} for k, v in STAGE_TITLES.items()],
+        room_types=[{"id": k.value, "title": v} for k, v in ROOM_TITLES.items()],
         renovation_types=[{"id": k.value, "title": v} for k, v in RENOVATION_TITLES.items()],
-        works=[{"id": k.value, "title": v.title, "stage": v.stage.value, "materials": [m.value for m in v.materials]}
+        works=[{"id": k.value, "title": v.title, "stage": v.stage.value, "stages": [s.value for s in v.stages],
+                "materials": [m.value for m in v.materials]}
                for k, v in WORKS.items()],
         materials=[{"id": k.value, "title": v} for k, v in MATERIAL_TITLES.items()],
     )
+
+
+SURFACE_TITLES = {"floor": "пол", "wall": "стены", "ceiling": "потолок"}
+
+
+@router.get("/works", response_model=WorkOptionsOut, tags=["calculator"])
+def work_options(room_type: RoomType, renovation_type: RenovationType) -> WorkOptionsOut:
+    defaults = {o.key for o in default_works(room_type, renovation_type)}
+    options = available_works(room_type, renovation_type)
+    repeated = {o.work for o in options if sum(1 for x in options if x.work == o.work) > 1}
+    allowed = RENOVATION_STAGES[renovation_type]
+    stages = []
+    for stage in STAGE_ORDER:
+        works = []
+        for o in options:
+            if next(s for s in WORKS[o.work].stages if s in allowed) != stage:
+                continue
+            suffix = o.variant or (SURFACE_TITLES[o.surface.value] if o.work in repeated and o.surface else None)
+            materials = work_materials(o.work, o.materials)
+            works.append(WorkOption(
+                work_type=o.work, surface=o.surface, title=WORKS[o.work].title + (f" — {suffix}" if suffix else ""),
+                materials=list(materials), material_titles=[MATERIAL_TITLES[m] for m in materials],
+                default=o.key in defaults,
+            ))
+        if works:
+            stages.append(StageOptions(stage=stage, title=STAGE_TITLES[stage], works=works))
+    return WorkOptionsOut(room_type=room_type, room_title=ROOM_TITLES[room_type], renovation_type=renovation_type,
+                          renovation_title=RENOVATION_TITLES[renovation_type], stages=stages)
 
 
 @router.get("/products", response_model=list[ProductBrief], tags=["products"])

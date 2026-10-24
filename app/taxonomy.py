@@ -3,19 +3,19 @@ from enum import StrEnum
 
 
 class Stage(StrEnum):
-    preparation = "preparation"
-    rough = "rough"
-    white = "white"
-    finishing = "finishing"
-    final = "final"
+    preparation_demolition = "preparation_demolition"
+    rough_work = "rough_work"
+    white_finish = "white_finish"
+    finish_work = "finish_work"
+    final_stage = "final_stage"
 
 
 STAGE_TITLES: dict[Stage, str] = {
-    Stage.preparation: "Подготовительный этап (демонтаж)",
-    Stage.rough: "Черновые работы",
-    Stage.white: "Белая отделка",
-    Stage.finishing: "Чистовая отделка",
-    Stage.final: "Финальный этап",
+    Stage.preparation_demolition: "Подготовительный этап (демонтаж)",
+    Stage.rough_work: "Черновые работы",
+    Stage.white_finish: "Белая отделка",
+    Stage.finish_work: "Чистовая отделка",
+    Stage.final_stage: "Финальный этап",
 }
 
 STAGE_ORDER = list(Stage)
@@ -59,7 +59,13 @@ class Material(StrEnum):
     cable = "cable"
     socket = "socket"
     switch = "switch"
+    pipes = "pipes"
     plumbing = "plumbing"
+    ventilation = "ventilation"
+    heating = "heating"
+    doors = "doors"
+    lighting = "lighting"
+    decorative = "decorative"
     demolition_tools = "demolition_tools"
     other = "other"
 
@@ -87,7 +93,13 @@ MATERIAL_TITLES: dict[Material, str] = {
     Material.cable: "Кабель",
     Material.socket: "Розетки",
     Material.switch: "Выключатели",
-    Material.plumbing: "Сантехника",
+    Material.pipes: "Трубы и фитинги",
+    Material.plumbing: "Сантехнические приборы",
+    Material.ventilation: "Вентиляция",
+    Material.heating: "Отопление",
+    Material.doors: "Двери и окна",
+    Material.lighting: "Светильники",
+    Material.decorative: "Декоративные панели и молдинги",
     Material.demolition_tools: "Инструмент для демонтажа",
     Material.other: "Другое",
 }
@@ -97,57 +109,75 @@ class WorkType(StrEnum):
     demolition = "demolition"
     electrical_wiring = "electrical_wiring"
     plumbing_rough = "plumbing_rough"
+    ventilation_install = "ventilation_install"
+    heating_climate_install = "heating_climate_install"
     waterproofing = "waterproofing"
     floor_screed = "floor_screed"
     wall_plastering = "wall_plastering"
     drywall_install = "drywall_install"
     wall_putty = "wall_putty"
     priming = "priming"
-    tiling = "tiling"
     wall_painting = "wall_painting"
     wallpapering = "wallpapering"
-    laminate_laying = "laminate_laying"
-    linoleum_laying = "linoleum_laying"
+    tiling = "tiling"
+    floor_covering_install = "floor_covering_install"
+    door_window_install = "door_window_install"
     electrical_fittings = "electrical_fittings"
-    plumbing_install = "plumbing_install"
+    plumbing_fixture_install = "plumbing_fixture_install"
+    lighting_install = "lighting_install"
+    decorative_finish_install = "decorative_finish_install"
+    laminate_laying = "floor_covering_install"
+    linoleum_laying = "floor_covering_install"
+    plumbing_install = "plumbing_fixture_install"
 
 
 @dataclass(frozen=True)
 class WorkInfo:
     title: str
-    stage: Stage
+    stages: tuple[Stage, ...]
     materials: tuple[Material, ...]
 
+    @property
+    def stage(self) -> Stage:
+        return self.stages[0]
 
+
+S, M = Stage, Material
 WORKS: dict[WorkType, WorkInfo] = {
-    WorkType.demolition: WorkInfo("Демонтаж", Stage.preparation, (Material.demolition_tools,)),
-    WorkType.electrical_wiring: WorkInfo("Прокладка электропроводки", Stage.rough, (Material.cable,)),
-    WorkType.plumbing_rough: WorkInfo("Разводка труб", Stage.rough, (Material.plumbing,)),
-    WorkType.waterproofing: WorkInfo("Гидроизоляция", Stage.rough, (Material.waterproofing, Material.primer)),
-    WorkType.floor_screed: WorkInfo("Стяжка пола", Stage.rough, (Material.screed_mix, Material.primer)),
-    WorkType.wall_plastering: WorkInfo("Штукатурка стен", Stage.rough, (Material.plaster, Material.primer)),
+    WorkType.demolition: WorkInfo("Демонтаж", (S.preparation_demolition,), (M.demolition_tools,)),
+    WorkType.electrical_wiring: WorkInfo("Электромонтаж и прокладка проводки", (S.rough_work,), (M.cable,)),
+    WorkType.plumbing_rough: WorkInfo("Черновая сантехника", (S.rough_work,), (M.pipes,)),
+    WorkType.ventilation_install: WorkInfo(
+        "Монтаж вентиляции и воздуховодов", (S.rough_work, S.final_stage), (M.ventilation,)
+    ),
+    WorkType.heating_climate_install: WorkInfo(
+        "Монтаж отопления и климатических систем", (S.rough_work, S.final_stage), (M.heating,)
+    ),
+    WorkType.waterproofing: WorkInfo("Гидроизоляция", (S.rough_work,), (M.waterproofing, M.primer)),
+    WorkType.floor_screed: WorkInfo("Стяжка и выравнивание пола", (S.rough_work,), (M.screed_mix, M.primer)),
+    WorkType.wall_plastering: WorkInfo("Оштукатуривание", (S.rough_work,), (M.plaster, M.primer)),
     WorkType.drywall_install: WorkInfo(
-        "Монтаж гипсокартона", Stage.rough, (Material.drywall, Material.profile, Material.fasteners, Material.putty)
+        "Монтаж гипсокартона", (S.rough_work,), (M.drywall, M.profile, M.fasteners, M.putty)
     ),
-    WorkType.wall_putty: WorkInfo("Шпаклёвка стен", Stage.white, (Material.putty, Material.primer)),
-    WorkType.priming: WorkInfo("Грунтование поверхностей", Stage.white, (Material.primer,)),
-    WorkType.tiling: WorkInfo(
-        "Укладка керамической плитки",
-        Stage.finishing,
-        (Material.tile, Material.tile_adhesive, Material.grout, Material.primer),
-    ),
+    WorkType.wall_putty: WorkInfo("Шпатлевание", (S.white_finish,), (M.putty, M.primer)),
+    WorkType.priming: WorkInfo("Грунтование", (S.white_finish,), (M.primer,)),
     WorkType.wall_painting: WorkInfo(
-        "Покраска стен", Stage.finishing, (Material.paint, Material.primer, Material.painting_tools)
+        "Окраска стен и потолков", (S.finish_work,), (M.paint, M.primer, M.painting_tools)
     ),
-    WorkType.wallpapering: WorkInfo(
-        "Поклейка обоев", Stage.finishing, (Material.wallpaper, Material.wallpaper_glue, Material.primer)
+    WorkType.wallpapering: WorkInfo("Оклейка обоями", (S.finish_work,), (M.wallpaper, M.wallpaper_glue, M.primer)),
+    WorkType.tiling: WorkInfo("Облицовка плиткой", (S.finish_work,), (M.tile, M.tile_adhesive, M.grout, M.primer)),
+    WorkType.floor_covering_install: WorkInfo(
+        "Укладка напольных покрытий", (S.finish_work,), (M.laminate, M.underlay, M.linoleum)
     ),
-    WorkType.laminate_laying: WorkInfo("Укладка ламината", Stage.finishing, (Material.laminate, Material.underlay)),
-    WorkType.linoleum_laying: WorkInfo("Укладка линолеума", Stage.finishing, (Material.linoleum,)),
-    WorkType.electrical_fittings: WorkInfo(
-        "Установка розеток и выключателей", Stage.final, (Material.socket, Material.switch)
+    WorkType.door_window_install: WorkInfo("Монтаж дверей и окон", (S.finish_work,), (M.doors,)),
+    WorkType.electrical_fittings: WorkInfo("Установка розеток и выключателей", (S.final_stage,), (M.socket, M.switch)),
+    WorkType.plumbing_fixture_install: WorkInfo(
+        "Установка сантехнических приборов", (S.final_stage,), (M.plumbing, M.sealant)
     ),
-    WorkType.plumbing_install: WorkInfo("Установка сантехники", Stage.final, (Material.plumbing, Material.sealant)),
+    WorkType.lighting_install: WorkInfo("Установка освещения", (S.final_stage,), (M.lighting,)),
+    WorkType.decorative_finish_install: WorkInfo(
+        "Декоративная отделка и монтаж", (S.finish_work, S.final_stage), (M.decorative,)
+    ),
 }
 
 
