@@ -59,6 +59,18 @@ class Material(StrEnum):
     cable = "cable"
     socket = "socket"
     switch = "switch"
+    circuit_breakers = "circuit_breakers"
+    cable_channel = "cable_channel"
+    electrical_boxes = "electrical_boxes"
+    beacons = "beacons"
+    reinforcing_mesh = "reinforcing_mesh"
+    damper_tape = "damper_tape"
+    tile_leveling = "tile_leveling"
+    skirting = "skirting"
+    mounting_foam = "mounting_foam"
+    door_hardware = "door_hardware"
+    lamps = "lamps"
+    mounting_adhesive = "mounting_adhesive"
     pipes = "pipes"
     plumbing = "plumbing"
     ventilation = "ventilation"
@@ -93,7 +105,19 @@ MATERIAL_TITLES: dict[Material, str] = {
     Material.cable: "Кабель",
     Material.socket: "Розетки",
     Material.switch: "Выключатели",
-    Material.pipes: "Трубы и фитинги",
+    Material.circuit_breakers: "Автоматы, УЗО, щитки",
+    Material.cable_channel: "Кабель-каналы и гофротруба",
+    Material.electrical_boxes: "Распаечные коробки и подрозетники",
+    Material.beacons: "Маяки",
+    Material.reinforcing_mesh: "Серпянка, армирующая сетка",
+    Material.damper_tape: "Демпферная лента",
+    Material.tile_leveling: "Система выравнивания плитки (СВП)",
+    Material.skirting: "Плинтусы и порожки",
+    Material.mounting_foam: "Монтажная пена",
+    Material.door_hardware: "Дверная фурнитура",
+    Material.lamps: "Лампы",
+    Material.mounting_adhesive: "Монтажный клей, жидкие гвозди",
+    Material.pipes: "Трубы, фитинги, запорная арматура",
     Material.plumbing: "Сантехнические приборы",
     Material.ventilation: "Вентиляция",
     Material.heating: "Отопление",
@@ -144,42 +168,54 @@ class WorkInfo:
 
 S, M = Stage, Material
 WORKS: dict[WorkType, WorkInfo] = {
-    WorkType.demolition: WorkInfo("Демонтаж", (S.preparation_demolition,), (M.demolition_tools,)),
-    WorkType.electrical_wiring: WorkInfo("Электромонтаж и прокладка проводки", (S.rough_work,), (M.cable,)),
-    WorkType.plumbing_rough: WorkInfo("Черновая сантехника", (S.rough_work,), (M.pipes,)),
+    WorkType.demolition: WorkInfo("Демонтаж", (S.preparation_demolition,), ()),
+    WorkType.electrical_wiring: WorkInfo(
+        "Электромонтаж и прокладка проводки", (S.rough_work,),
+        (M.cable, M.cable_channel, M.electrical_boxes, M.circuit_breakers, M.fasteners),
+    ),
+    WorkType.plumbing_rough: WorkInfo("Черновая сантехника", (S.rough_work,), (M.pipes, M.fasteners)),
     WorkType.ventilation_install: WorkInfo(
-        "Монтаж вентиляции и воздуховодов", (S.rough_work, S.final_stage), (M.ventilation,)
+        "Монтаж вентиляции и воздуховодов", (S.rough_work, S.final_stage), (M.ventilation, M.fasteners)
     ),
     WorkType.heating_climate_install: WorkInfo(
-        "Монтаж отопления и климатических систем", (S.rough_work, S.final_stage), (M.heating,)
+        "Монтаж отопления и климатических систем", (S.rough_work, S.final_stage), (M.heating, M.fasteners)
     ),
     WorkType.waterproofing: WorkInfo("Гидроизоляция", (S.rough_work,), (M.waterproofing, M.primer)),
-    WorkType.floor_screed: WorkInfo("Стяжка и выравнивание пола", (S.rough_work,), (M.screed_mix, M.primer)),
-    WorkType.wall_plastering: WorkInfo("Оштукатуривание", (S.rough_work,), (M.plaster, M.primer)),
+    WorkType.floor_screed: WorkInfo(
+        "Стяжка и выравнивание пола", (S.rough_work,), (M.screed_mix, M.primer, M.damper_tape, M.beacons)
+    ),
+    WorkType.wall_plastering: WorkInfo(
+        "Оштукатуривание", (S.rough_work,), (M.plaster, M.primer, M.beacons, M.reinforcing_mesh)
+    ),
     WorkType.drywall_install: WorkInfo(
-        "Монтаж гипсокартона", (S.rough_work,), (M.drywall, M.profile, M.fasteners, M.putty)
+        "Монтаж гипсокартона", (S.rough_work,), (M.drywall, M.profile, M.fasteners, M.reinforcing_mesh, M.putty)
     ),
-    WorkType.wall_putty: WorkInfo("Шпатлевание", (S.white_finish,), (M.putty, M.primer)),
+    WorkType.wall_putty: WorkInfo("Шпатлевание", (S.white_finish,), (M.putty, M.primer, M.reinforcing_mesh)),
     WorkType.priming: WorkInfo("Грунтование", (S.white_finish,), (M.primer,)),
-    WorkType.wall_painting: WorkInfo(
-        "Окраска стен и потолков", (S.finish_work,), (M.paint, M.primer, M.painting_tools)
-    ),
+    WorkType.wall_painting: WorkInfo("Окраска стен и потолков", (S.finish_work,), (M.paint, M.primer)),
     WorkType.wallpapering: WorkInfo("Оклейка обоями", (S.finish_work,), (M.wallpaper, M.wallpaper_glue, M.primer)),
-    WorkType.tiling: WorkInfo("Облицовка плиткой", (S.finish_work,), (M.tile, M.tile_adhesive, M.grout, M.primer)),
+    WorkType.tiling: WorkInfo(
+        "Облицовка плиткой", (S.finish_work,), (M.tile, M.tile_adhesive, M.grout, M.primer, M.tile_leveling)
+    ),
     WorkType.floor_covering_install: WorkInfo(
-        "Укладка напольных покрытий", (S.finish_work,), (M.laminate, M.underlay, M.linoleum)
+        "Укладка напольных покрытий", (S.finish_work,), (M.laminate, M.linoleum, M.underlay, M.skirting, M.fasteners)
     ),
-    WorkType.door_window_install: WorkInfo("Монтаж дверей и окон", (S.finish_work,), (M.doors,)),
-    WorkType.electrical_fittings: WorkInfo("Установка розеток и выключателей", (S.final_stage,), (M.socket, M.switch)),
+    WorkType.door_window_install: WorkInfo(
+        "Монтаж дверей и окон", (S.finish_work,), (M.doors, M.mounting_foam, M.door_hardware, M.fasteners)
+    ),
+    WorkType.electrical_fittings: WorkInfo(
+        "Установка розеток и выключателей", (S.final_stage,), (M.socket, M.switch, M.electrical_boxes)
+    ),
     WorkType.plumbing_fixture_install: WorkInfo(
-        "Установка сантехнических приборов", (S.final_stage,), (M.plumbing, M.sealant)
+        "Установка сантехнических приборов", (S.final_stage,), (M.plumbing, M.pipes, M.fasteners)
     ),
-    WorkType.lighting_install: WorkInfo("Установка освещения", (S.final_stage,), (M.lighting,)),
+    WorkType.lighting_install: WorkInfo(
+        "Установка освещения", (S.final_stage,), (M.lighting, M.lamps, M.electrical_boxes, M.fasteners)
+    ),
     WorkType.decorative_finish_install: WorkInfo(
-        "Декоративная отделка и монтаж", (S.finish_work, S.final_stage), (M.decorative,)
+        "Декоративная отделка и монтаж", (S.finish_work, S.final_stage), (M.decorative, M.mounting_adhesive, M.fasteners)
     ),
 }
-
 
 def works_for_material(material: Material) -> list[WorkType]:
     return [w for w, info in WORKS.items() if material in info.materials]

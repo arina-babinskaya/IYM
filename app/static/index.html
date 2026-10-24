@@ -223,6 +223,7 @@ function stepSize() {
   });
 }
 
+
 function stepRenovation() {
   const r = W.room;
   wizard.innerHTML = `<p class="question">Какой ремонт: ${esc(ROOMS[r.room_type])}, ${num(r.length_m * r.width_m)} м²?</p>
@@ -258,7 +259,7 @@ async function stepWorks() {
   check();
   bindNav(() => {
     r.works = boxes.filter(c => c.checked).map(c => ({
-      work_type: c.dataset.work, surface: c.dataset.surface || null, materials: c.dataset.materials.split(","),
+      work_type: c.dataset.work, surface: c.dataset.surface || null, materials: c.dataset.materials.split(",").filter(Boolean),
     }));
     if (W.editing === null) W.rooms.push(r); else W.rooms[W.editing] = r;
     W.room = {}; W.editing = null;

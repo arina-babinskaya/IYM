@@ -26,7 +26,7 @@ from app.schemas import (
     WorkOption,
     WorkOptionsOut,
 )
-from app.plans import RENOVATION_STAGES, available_works, default_works, work_materials
+from app.plans import RENOVATION_STAGES, work_materials, works_for_room
 from app.taxonomy import MATERIAL_TITLES, RENOVATION_TITLES, STAGE_ORDER, STAGE_TITLES, WORKS, Material, RenovationType
 
 router = APIRouter(prefix="/api/v1")
@@ -64,22 +64,22 @@ SURFACE_TITLES = {"floor": "пол", "wall": "стены", "ceiling": "пото�
 
 @router.get("/works", response_model=WorkOptionsOut, tags=["calculator"])
 def work_options(room_type: RoomType, renovation_type: RenovationType) -> WorkOptionsOut:
-    defaults = {o.key for o in default_works(room_type, renovation_type)}
-    options = available_works(room_type, renovation_type)
-    repeated = {o.work for o in options if sum(1 for x in options if x.work == o.work) > 1}
+    options = works_for_room(room_type, renovation_type)
+    repeated = {o.work for o, _ in options if sum(1 for x, _ in options if x.work == o.work) > 1}
     allowed = RENOVATION_STAGES[renovation_type]
     stages = []
     for stage in STAGE_ORDER:
         works = []
-        for o in options:
-            if next(s for s in WORKS[o.work].stages if s in allowed) != stage:
+        for o, default in options:
+            info = WORKS[o.work]
+            if next((s for s in info.stages if s in allowed), info.stage) != stage:
                 continue
             suffix = o.variant or (SURFACE_TITLES[o.surface.value] if o.work in repeated and o.surface else None)
             materials = work_materials(o.work, o.materials)
             works.append(WorkOption(
-                work_type=o.work, surface=o.surface, title=WORKS[o.work].title + (f" — {suffix}" if suffix else ""),
+                work_type=o.work, surface=o.surface, title=info.title + (f" — {suffix}" if suffix else ""),
                 materials=list(materials), material_titles=[MATERIAL_TITLES[m] for m in materials],
-                default=o.key in defaults,
+                default=default,
             ))
         if works:
             stages.append(StageOptions(stage=stage, title=STAGE_TITLES[stage], works=works))

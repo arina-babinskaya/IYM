@@ -25,8 +25,8 @@ WORK_SURFACE: dict[WorkType, Surface | None] = {
     W.decorative_finish_install: WL,
 }
 
-LAMINATE = Option(W.floor_covering_install, F, (M.laminate, M.underlay), "ламинат")
-LINOLEUM = Option(W.floor_covering_install, F, (M.linoleum,), "линолеум")
+LAMINATE = Option(W.floor_covering_install, F, (M.laminate, M.underlay, M.skirting, M.fasteners), "ламинат")
+LINOLEUM = Option(W.floor_covering_install, F, (M.linoleum, M.skirting, M.fasteners), "линолеум")
 
 DEMOLITION = Option(W.demolition)
 WIRING = Option(W.electrical_wiring)
@@ -131,3 +131,9 @@ DEFAULT_MATERIALS: dict[WorkType, tuple[Material, ...]] = {W.floor_covering_inst
 
 def work_materials(work: WorkType, materials: list[Material] | tuple[Material, ...] | None = None) -> tuple[Material, ...]:
     return tuple(materials or DEFAULT_MATERIALS.get(work) or WORKS[work].materials)
+
+
+
+def works_for_room(room: RoomType, renovation: RenovationType) -> list[tuple[Option, bool]]:
+    defaults = {o.key for o in default_works(room, renovation)}
+    return [(o, o.key in defaults) for o in available_works(room, renovation)]

@@ -192,3 +192,16 @@ def test_step_by_step(ingested):
         assert {i["work_type"] for i in items} == {"wall_painting", "floor_covering_install", "lighting_install"}
         mats = {(i["material"], i["surface"]) for i in items}
         assert ("paint", "ceiling") in mats and ("linoleum", "floor") in mats and ("laminate", "floor") not in mats
+
+        plain = client.post("/api/v1/estimate", json={"rooms": [{
+            "room_type": "bedroom", "renovation_type": "cosmetic", "length_m": 4, "width_m": 3,
+            "works": ["floor_covering_install"]}]}).json()["rooms"][0]["items"]
+        assert {i["material"] for i in plain} == {"laminate", "underlay", "skirting", "fasteners"}
+
+        demo = client.post("/api/v1/estimate", json={"rooms": [{
+            "room_type": "kitchen", "renovation_type": "capital", "length_m": 3, "width_m": 3,
+            "works": [{"work_type": "demolition", "materials": []}, "electrical_wiring"]}]})
+        assert demo.status_code == 200
+        assert {i["work_type"] for i in demo.json()["rooms"][0]["items"]} == {"electrical_wiring"}
+
+

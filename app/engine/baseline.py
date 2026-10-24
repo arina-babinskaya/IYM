@@ -6,7 +6,7 @@ from app.catalog.repository import CatalogRepo, to_brief
 from app.engine.interface import CalcError
 from app.ml.interface import Ranker
 from app.models import Product
-from app.plans import WORK_SURFACE, default_works, work_materials
+from app.plans import WORK_SURFACE, works_for_room, work_materials
 from app.schemas import (
     EstimateItem,
     EstimateRequest,
@@ -38,8 +38,8 @@ def _plan(room: RoomInput, renovation: RenovationType) -> list[Step]:
     if room.works:
         return [(c.work_type, c.surface or WORK_SURFACE.get(c.work_type), work_materials(c.work_type, c.materials))
                 for c in room.works]
-    return [(o.work, o.surface, work_materials(o.work, o.materials))
-            for o in default_works(room.room_type, room.renovation_type or renovation)]
+    options = works_for_room(room.room_type, room.renovation_type or renovation)
+    return [(o.work, o.surface, work_materials(o.work, o.materials)) for o, default in options if default]
 
 
 def _ceil(x: Decimal) -> int:
@@ -86,21 +86,32 @@ def packages_for_area(p: Product, area: Decimal, reserve_pct: Decimal, layers: i
 
 
 def _piece_need(material: Material, room: RoomInput, area: Decimal) -> tuple[Decimal, str] | None:
+    floor, perimeter = room.floor_area, room.perimeter
     if material == Material.cable:
-        return room.perimeter * 2, "м"
+        return perimeter * 2, "м"
+    if material == Material.cable_channel:
+        return perimeter, "м"
     if material == Material.socket:
-        return Decimal(max(2, _ceil(room.floor_area / 4))), "шт"
-    if material in (Material.switch, Material.painting_tools, Material.sealant, Material.doors, Material.ventilation,
-                    Material.pipes, Material.plumbing, Material.demolition_tools):
-        return Decimal(1), "шт"
-    if material == Material.lighting:
-        return Decimal(max(1, _ceil(room.floor_area / 8))), "шт"
+        return Decimal(max(2, _ceil(floor / 4))), "шт"
+    if material == Material.electrical_boxes:
+        return Decimal(max(3, _ceil(floor / 4) + 1)), "шт"
+    if material in (Material.lighting, Material.lamps):
+        return Decimal(max(1, _ceil(floor / 8))), "шт"
     if material == Material.heating:
-        return Decimal(max(1, _ceil(room.floor_area / 10))), "шт"
-    if material == Material.profile:
+        return Decimal(max(1, _ceil(floor / 10))), "шт"
+    if material in (Material.profile, Material.beacons):
         return Decimal(_ceil(area / Decimal("1.5"))), "шт"
-    if material == Material.fasteners:
-        return Decimal(_ceil(area / 10)), "упак."
+    if material == Material.skirting:
+        return Decimal(_ceil(perimeter / Decimal("2.5"))), "шт"
+    if material == Material.damper_tape:
+        return Decimal(_ceil(perimeter / 25)), "рул."
+    if material in (Material.fasteners, Material.tile_leveling):
+        return Decimal(max(1, _ceil(area / 10))), "упак."
+    if material in (Material.switch, Material.painting_tools, Material.sealant, Material.doors, Material.ventilation,
+                    Material.pipes, Material.plumbing, Material.demolition_tools, Material.circuit_breakers,
+                    Material.reinforcing_mesh, Material.mounting_foam, Material.door_hardware,
+                    Material.mounting_adhesive):
+        return Decimal(1), "шт"
     return None
 
 
