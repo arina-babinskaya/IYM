@@ -293,7 +293,7 @@ function stepSize() {
       <label class="text-sm font-semibold text-gray-600">Дверей, шт<input type="number" id="w-door" value="${r.doors ?? (ROOM_OPENINGS[r.room_type] || [1, 1])[1]}" step="1" min="0" max="30" class="${inputCls}"></label>
     </div>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center bg-gray-50 p-4 rounded-xl">
-      <label class="text-sm font-semibold text-gray-600">Влажность<select id="w-hum" class="mt-1 w-full bg-white border border-gray-300 rounded-lg p-2.5 outline-none focus:border-brand-blue">${opts({ low: "Низкая", normal: "Обычная", high: "Высокая" }, r.humidity || "")}</select></label>
+      <label class="text-sm font-semibold text-gray-600">Влажность<select id="w-hum" class="mt-1 w-full bg-white border border-gray-300 rounded-lg p-2.5 outline-none focus:border-brand-blue"><option value="">По типу комнаты</option>${opts({ low: "Низкая", normal: "Обычная", high: "Высокая" }, r.humidity || "")}</select></label>
       <p class="text-sm text-gray-500 font-medium" id="w-area">Укажите габариты</p>
     </div>
     ${nav(true, true)}`;
@@ -654,7 +654,6 @@ async function showProduct(id) {
     <h3 class="text-xl font-bold mb-2 leading-tight">${esc(p.name)}</h3>
     <div class="text-3xl font-extrabold text-brand-red mb-4">${rub(p.result_price)} <span class="text-sm font-medium text-gray-500">/ ${esc(p.unit || "шт")}</span></div>
     <div class="mb-4">${chars || '<span class="text-gray-400 italic text-sm">Характеристик нет</span>'}</div>
-    <div class="text-xs bg-white p-3 rounded-lg border border-gray-100 mb-2"><span class="text-gray-400 font-semibold uppercase tracking-wider">Спецификация</span><br>${Object.keys(p.specs).length ? esc(JSON.stringify(p.specs)) : "Размеров не найдено"}</div>
     <div class="text-xs bg-white p-3 rounded-lg border border-gray-100"><span class="text-gray-400 font-semibold uppercase tracking-wider">Привязка</span><br>${binding}</div>`;
     
   document.getElementById("calc-form").hidden = false;
@@ -682,7 +681,9 @@ document.getElementById("run-calc").onclick = async () => {
 // --- Админка ---
 let adminStatus = "unbound", adminRows = [];
 const flagTitles = { moisture_resistant: "влагостойкий", washable: "моющийся" };
-const describe = x => `<b class="text-gray-900">${esc(T.materials[x.material])}</b><div class="text-xs text-gray-500 mt-0.5">${x.work_types.map(w => esc(T.works[w])).join(", ") || "работы не указаны"}</div>`;
+const describe = x => x.material === "other" && !x.work_types.length
+  ? `<b class="text-gray-400">Не распознан</b><div class="text-xs text-gray-400 mt-0.5">не похож на товар для ремонта — при необходимости «Изменить»</div>`
+  : `<b class="text-gray-900">${esc(T.materials[x.material])}</b><div class="text-xs text-gray-500 mt-0.5">${x.work_types.map(w => esc(T.works[w])).join(", ") || "работы не указаны"}</div>`;
 
 async function loadAdmin() {
   const q = document.getElementById("admin-q").value.trim();
@@ -705,8 +706,8 @@ async function loadAdmin() {
       const bound = !b ? '<span class="text-gray-400 italic">нет</span>'
         : `<span class="pill ${b.confirmed ? "ok" : ""}">${b.confirmed ? "✓ подтверждено" : "ML"}</span>${describe(b)}`;
       return `<tr data-id="${r.product.id}" class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-        <td class="px-4 py-4"><div class="font-medium text-gray-900 whitespace-normal max-w-xs">${esc(r.product.name)}</div><div class="text-xs text-gray-500 mt-1">${[esc(r.category || ""), r.manual ? '<span class="text-brand-yellow font-bold">Ручной</span>' : ""].filter(Boolean).join(" · ")}</div></td>
-        <td class="px-4 py-4">${describe(s)}<div class="text-xs font-semibold ${s.confidence > 0.8 ? 'text-green-600' : 'text-brand-yellow'} mt-1">Уверенность: ${Math.round(s.confidence * 100)}%</div><div class="mt-1">${flags}</div></td>
+        <td class="px-4 py-4 whitespace-normal"><div class="font-medium text-gray-900 max-w-xs [overflow-wrap:anywhere]">${esc(r.product.name)}</div><div class="text-xs text-gray-500 mt-1">${[esc(r.category || ""), r.manual ? '<span class="text-brand-yellow font-bold">Ручной</span>' : ""].filter(Boolean).join(" · ")}</div></td>
+        <td class="px-4 py-4 whitespace-normal">${describe(s)}<div class="text-xs font-semibold ${s.confidence > 0.8 ? 'text-green-600' : 'text-brand-yellow'} mt-1">Уверенность: ${Math.round(s.confidence * 100)}%</div><div class="mt-1">${flags}</div></td>
         <td class="px-4 py-4">${bound}</td>
         <td class="px-4 py-4" data-cell>${actionButtons(r)}</td></tr>`;
     }).join("")}</tbody>` : `<tbody><tr><td class="p-8 text-center text-gray-500 italic" colspan="4">Здесь пусто. Добавьте товары или нажмите ML-привязку.</td></tr></tbody>`;
@@ -715,7 +716,8 @@ async function loadAdmin() {
 
 function actionButtons(r) {
   const confirmed = r.binding && r.binding.confirmed;
-  return `<div class="flex gap-2">${confirmed ? "" : '<button class="bg-brand-red hover:bg-red-900 text-white text-xs font-semibold py-1.5 px-3 rounded-lg transition-colors shadow-sm" data-confirm>✓ Подтвердить</button>'}
+  const nothing = !r.binding && r.suggestion.material === "other";
+  return `<div class="flex gap-2">${confirmed || nothing ? "" : '<button class="bg-brand-red hover:bg-red-900 text-white text-xs font-semibold py-1.5 px-3 rounded-lg transition-colors shadow-sm" data-confirm>✓ Подтвердить</button>'}
     <button class="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 text-xs font-semibold py-1.5 px-3 rounded-lg transition-colors" data-edit>Изменить</button>
     ${r.manual ? '<button class="text-red-500 hover:text-red-700 text-xs font-semibold py-1.5 px-2 transition-colors" data-delete title="Удалить">Удалить</button>' : ""}</div>`;
 }
