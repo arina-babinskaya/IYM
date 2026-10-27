@@ -218,3 +218,75 @@ def test_rag_explain_sources_and_content(api_client):
     # Должна присутствовать ссылка на нормативный СНиП или СП
     sources_text = " ".join(resp["sources"])
     assert "СНиП" in sources_text or "СП" in sources_text
+
+
+def test_tool_deduplication_multi_room_and_single_room(api_client):
+    """
+    Проверка дедупликации инструментов и расходников:
+    1. Для многокомнатных проектов многоразовый инструмент (малярный валик, миксер)
+       не дублируется по комнатам, а объединяется в блок «Инструменты и расходники на весь объект».
+    2. Для однокомнатных смет инструмент остаётся в комнате, виртуальная комната не создаётся.
+    3. При ремонте без инструмента отдельный блок не создаётся.
+    4. Точность сумм: сумма по комнатам + блок инструмента == total.
+    """
+    # 1. 3 комнаты с покраской стен
+    req = {
+        "object_type": "apartment",
+        "renovation_type": "rental",
+        "rooms": [
+            {"name": "Гостиная", "room_type": "living_room", "length_m": 4.0, "width_m": 5.0, "height_m": 2.7},
+            {"name": "Спальня", "room_type": "bedroom", "length_m": 3.0, "width_m": 4.0, "height_m": 2.7},
+            {"name": "Кухня", "room_type": "kitchen", "length_m": 2.5, "width_m": 3.0, "height_m": 2.7},
+        ],
+        "explain": False,
+    }
+    resp = api_client.post("/api/v1/estimate", json=req).json()
+    assert len(resp["rooms"]) == 4, "Ожидалось 3 комнаты + сводный блок инструмента"
+
+    # В комнатах 0, 1, 2 нет дубликатов малярного инструмента
+    for i in range(3):
+        mats = {it["material"] for it in resp["rooms"][i]["items"]}
+        assert "painting_tools" not in mats, f"В комнате {i} не должно быть малярного инструмента"
+        assert "paint" in mats, f"В комнате {i} должна быть краска"
+
+    # Блок инструментов
+    shared = resp["rooms"][3]
+    assert shared["room"]["name"] == "Инструменты и расходники на весь объект"
+    assert len(shared["items"]) == 1
+    tool_item = shared["items"][0]
+    assert tool_item["material"] == "painting_tools"
+    assert tool_item["packages"] == 1
+    assert Decimal(str(tool_item["cost"])) == Decimal("350.00")
+    assert "дедупликация" in tool_item["reason"]
+
+    # Финансовая целостность
+    subtotals = sum(Decimal(str(r["subtotal"])) for r in resp["rooms"])
+    total = Decimal(str(resp["total"]))
+    assert subtotals == total, f"Несовпадение сумм: {subtotals} != {total}"
+
+    # 2. Однокомнатная смета
+    single_req = {
+        "object_type": "apartment",
+        "renovation_type": "rental",
+        "rooms": [
+            {"name": "Студия", "room_type": "living_room", "length_m": 4.0, "width_m": 5.0, "height_m": 2.7},
+        ],
+        "explain": False,
+    }
+    single_resp = api_client.post("/api/v1/estimate", json=single_req).json()
+    assert len(single_resp["rooms"]) == 1, "Для одной комнаты не должна создаваться виртуальная комната"
+    assert "painting_tools" in {it["material"] for it in single_resp["rooms"][0]["items"]}
+
+    # 3. Многокомнатная смета без инструмента
+    no_tools_req = {
+        "object_type": "apartment",
+        "renovation_type": "cosmetic",
+        "rooms": [
+            {"name": "Спальня 1", "room_type": "bedroom", "length_m": 3.0, "width_m": 4.0, "height_m": 2.7},
+            {"name": "Спальня 2", "room_type": "bedroom", "length_m": 3.5, "width_m": 4.0, "height_m": 2.7},
+        ],
+        "explain": False,
+    }
+    no_tools_resp = api_client.post("/api/v1/estimate", json=no_tools_req).json()
+    assert len(no_tools_resp["rooms"]) == 2, "При отсутствии инструмента блок не добавляется"
+

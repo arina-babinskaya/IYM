@@ -75,6 +75,33 @@ RESERVE: dict[Material, Decimal] = {
     Material.other: Decimal(10),
 }
 
+# Инструменты и оборудование, обобщаемые на весь проект (дедупликация между комнатами)
+SHARED_PROJECT_MATERIALS: set[Material] = {
+    Material.painting_tools,
+    Material.demolition_tools,
+}
+
+
+def _is_shared_tool(item: EstimateItem) -> bool:
+    """Определяет, относится ли позиция сметы к общему многоразовому инструменту/инвентарю."""
+    if item.material in SHARED_PROJECT_MATERIALS:
+        return True
+    if item.product and item.product.name:
+        name_lower = item.product.name.lower()
+        if any(
+            w in name_lower
+            for w in (
+                "миксер строительный",
+                "насадка для миксера",
+                "шпатель зубчатый",
+                "правило штукатурное",
+                "уровень строительный",
+                "ёмкость для замеса",
+            )
+        ):
+            return True
+    return False
+
 # Материалы, для которых в мокрых зонах требуется флаг moisture_resistant
 NEEDS_MOISTURE = {
     Material.drywall,
@@ -97,20 +124,31 @@ Step = tuple[WorkType, Surface | None, tuple[Material, ...]]
 def _plan(room: RoomInput, renovation: RenovationType) -> list[Step]:
     """Получение перечня технологических шагов для помещения."""
     if room.works:
-        return [
-            (
-                c.work_type,
-                c.surface or WORK_SURFACE.get(c.work_type),
-                work_materials(c.work_type, c.materials),
+        steps = []
+        for c in room.works:
+            mats = work_materials(c.work_type, c.materials)
+            if c.materials is None and c.work_type == WorkType.wall_painting:
+                if Material.painting_tools not in mats:
+                    mats = mats + (Material.painting_tools,)
+            steps.append(
+                (
+                    c.work_type,
+                    c.surface or WORK_SURFACE.get(c.work_type),
+                    mats,
+                )
             )
-            for c in room.works
-        ]
+        return steps
+
     options = works_for_room(room.room_type, room.renovation_type or renovation)
-    return [
-        (o.work, o.surface, work_materials(o.work, o.materials))
-        for o, default in options
-        if default
-    ]
+    steps = []
+    for o, default in options:
+        if default:
+            mats = work_materials(o.work, o.materials)
+            if o.materials is None and o.work == WorkType.wall_painting:
+                if Material.painting_tools not in mats:
+                    mats = mats + (Material.painting_tools,)
+            steps.append((o.work, o.surface, mats))
+    return steps
 
 
 def _ceil(x: Decimal) -> int:
@@ -371,6 +409,9 @@ class BaselineEngine:
     def estimate(self, req: EstimateRequest, repo: CatalogRepo) -> EstimateResponse:
         rooms: list[RoomEstimate] = []
         warnings: list[str] = []
+        is_multi_room = len(req.rooms) > 1
+        shared_tool_items: list[EstimateItem] = []
+        seen_tools: set[tuple[Material, int | None]] = set()
 
         for room in req.rooms:
             floor = room.floor_area
@@ -383,7 +424,20 @@ class BaselineEngine:
                     if (material, surface) in seen:
                         continue
                     seen.add((material, surface))
-                    items.append(self._item(repo, room, work, material, surface, floor, walls))
+                    item = self._item(repo, room, work, material, surface, floor, walls)
+
+                    # Дедупликация инструментов для многокомнатных проектов
+                    if is_multi_room and _is_shared_tool(item):
+                        tool_key = (item.material, item.product.id if item.product else None)
+                        if tool_key not in seen_tools:
+                            seen_tools.add(tool_key)
+                            item_copy = item.model_copy()
+                            item_copy.reason = "многоразовый инструмент на весь объект (дедупликация)"
+                            shared_tool_items.append(item_copy)
+                        # Из сметы конкретной комнаты убираем дубликат
+                        continue
+
+                    items.append(item)
 
             items.sort(key=lambda i: STAGE_ORDER.index(i.stage))
             missing = sorted({i.title for i in items if i.packages == 0})
@@ -402,6 +456,31 @@ class BaselineEngine:
                     subtotal=subtotal,
                 )
             )
+
+        # Добавление сводного блока "Инструменты и расходники на весь объект" при наличии общих позиций
+        if is_multi_room and shared_tool_items:
+            shared_tool_items.sort(key=lambda i: STAGE_ORDER.index(i.stage))
+            missing_tools = sorted({i.title for i in shared_tool_items if i.packages == 0})
+            if missing_tools:
+                warnings.append(
+                    f"Инструменты и расходники на весь объект: не подобраны — {', '.join(missing_tools)}"
+                )
+            shared_subtotal = _money(sum((i.cost for i in shared_tool_items), Decimal(0)))
+            shared_room = RoomEstimate(
+                room=RoomInput(
+                    name="Инструменты и расходники на весь объект",
+                    room_type=RoomType.general_indoor,
+                    length_m=Decimal("1.0"),
+                    width_m=Decimal("1.0"),
+                    height_m=Decimal("2.7"),
+                    openings_area_m2=Decimal("0.0"),
+                ),
+                floor_area_m2=Decimal("0.0"),
+                wall_area_m2=Decimal("0.0"),
+                items=shared_tool_items,
+                subtotal=shared_subtotal,
+            )
+            rooms.append(shared_room)
 
         return EstimateResponse(
             object_type=req.object_type,
@@ -493,6 +572,7 @@ class BaselineEngine:
             rooms_summary = ", ".join(
                 f"{r.room.name or ROOM_TITLES[r.room.room_type]} ({r.floor_area_m2:.1f} м²)"
                 for r in resp.rooms
+                if r.floor_area_m2 > 0
             )
             context_text = "\n".join(
                 f"- {d['text']} (Источник: {d['source']})" for d in matched_docs[:8]
@@ -542,6 +622,12 @@ class BaselineEngine:
             "напольные покрытия (ламинат) — 7 %, листовые и профильные конструкции — 10-15 %, "
             "водно-дисперсионные краски и грунтовки — двухслойное нанесение с запасом 10 % согласно ГОСТ Р 52020-2003."
         )
+
+        if any(r.room.room_type == RoomType.general_indoor for r in resp.rooms):
+            paragraphs.append(
+                "Многоразовый инструмент и вспомогательный инвентарь (малярный инструмент, ёмкости) "
+                "вынесены в сводный блок на весь объект для предотвращения повторной закупки по каждой комнате."
+            )
 
         resp.explanation = "\n\n".join(paragraphs)
         return resp
