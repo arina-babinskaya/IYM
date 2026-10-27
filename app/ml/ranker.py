@@ -37,12 +37,12 @@ ROOM_WORDS: dict[RoomType, re.Pattern[str]] = {r: _rx(p) for r, p in {
 }.items()}
 
 TYPICAL: dict[Material, re.Pattern[str]] = {m: _rx(p) for m, p in {
-    M.cable: r"^(кабель|провод)\b(?!-канал)(?!.*(с вилкой|utp|ftp|hdmi|usb|антенн|акустич|телефон|коаксиал|сетев|удлинит|шнур|нагрев|грею|торшер|для светильник|для ламп))",
+    M.cable: r"^(кабель|провод)\b(?!-канал)(?=.*(ввг|nym|ппг))(?!.*(с вилкой|utp|ftp|hdmi|usb|антенн|акустич|телефон|коаксиал|сетев|удлинит|шнур|нагрев|грею|торшер|для светильник|для ламп))",
     M.cable_channel: r"^(кабель-канал|гофротруб|труба гофрир)",
     M.electrical_boxes: r"^(подрозетник|коробка|распределительн\w* коробк|распаечн)",
     M.circuit_breakers: r"^(автомат|выключатель автомат|узо|дифавтомат|щит)",
-    M.socket: r"^розетк(?!.*(переносн|удлинит|колодк|таймер))",
-    M.switch: r"^выключател(?!\w* автомат)",
+    M.socket: r"^розетк(?!.*(переносн|удлинит|колодк|таймер|без заземлен|б/з))",
+    M.switch: r"^выключател(?!\w* автомат)(?!.*(на шнур|шнуров|проходн\w* для|кнопк|для ламп|для светильн))",
     M.lighting: r"^(светильник|люстр|бра\b|спот|торшер)",
     M.lamps: r"^(лампа|лампочк)(?!.*(настольн|напольн|растени|аквариум|автомоб|\b12\s?в\b|h[1-9]\b|ультрафиолет|бактерицид|холодильн|швейн|духов|печ))",
     M.pipes: r"^труб(?!.*(газ|гофр|гоф\b|дренаж|кабел|вентиляц|рейлинг|алюмин|квадрат|профильн|карниз|штанг|мебел))",
@@ -130,7 +130,7 @@ RULES: list[Rule] = [
          rooms=LIVING),
 ]
 
-BASE_WEIGHTS = {"in_stock": 3.0, "calculable": 2.0, "confirmed": 1.0, "recsys": 1.5, "rating": 1.0, "room_match": 3.0,
+BASE_WEIGHTS = {"in_stock": 1.0, "calculable": 2.0, "confirmed": 1.0, "recsys": 1.5, "rating": 1.0, "room_match": 3.0,
                 "price": 2.0}
 SUITABLE_SHARE = 0.8
 BASIS_TITLES = {"m2": "₽/м²", "l": "₽/л", "kg": "₽/кг", "m": "₽/м", "pcs": "₽/шт"}
@@ -199,6 +199,16 @@ def _moisture(chars: dict[str, str], text: str) -> float:
     if kind is not None:
         return kind
     return 1.0 if MOISTURE.search(text) else 0.0
+
+
+def moisture_rejected(p: Product) -> bool:
+    chars = characteristics(p)
+    value = _first(chars, ("влагостойкость", "влагостойкость краски", "водостойкость", "аквастоп"))
+    if value is not None:
+        return _yes(value) == 0
+    if "влагостойкость обоев" in chars:
+        return False
+    return _level(chars.get("тип помещения", ""), ROOM_KIND) == 0.0
 
 
 def _washable(chars: dict[str, str], text: str) -> float:

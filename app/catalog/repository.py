@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.catalog import normalize as nz
 from app.db import upsert
-from app.ml.ranker import signals
+from app.ml.ranker import moisture_rejected, signals
 from app.models import Product, ProductBinding, ProductCategory, ProductCharacteristic
 from app.schemas import BindingIn, BindingOut, Characteristic, ProductBrief, ProductCreate, ProductOut, Suggestion
 from app.taxonomy import Material, WorkType
@@ -26,7 +26,10 @@ def to_brief(p: Product) -> ProductBrief:
 def has_flags(p: Product, b: ProductBinding, required: Sequence[str]) -> bool:
     flags = b.flags or {}
     found = signals(p, b)
-    return all(flags.get(f) or found.get(f, 0) >= 1 for f in required)
+    return all(
+        flags.get(f) or found.get(f, 0) >= 1 or (f == "moisture_resistant" and not moisture_rejected(p))
+        for f in required
+    )
 
 
 class CatalogRepo:

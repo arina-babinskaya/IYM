@@ -50,7 +50,11 @@ WHY = {
 ranker = ContextRanker()
 
 
-def why(s: Scored) -> list[str]:
+def needs_moisture(room: RoomInput, material: Material) -> bool:
+    return room.effective_humidity == Level.high and material in NEEDS_MOISTURE
+
+
+def why(s: Scored, check_moisture: bool = False) -> list[str]:
     out = [text for key, text in WHY.items() if s.parts.get(key, 0) > 0]
     if s.parts.get("room_match", 0) > 0:
         out.insert(1, "предназначен для этой комнаты")
@@ -58,6 +62,8 @@ def why(s: Scored) -> list[str]:
         out.append("одна из лучших цен за единицу")
     if s.parts.get("outdoor", 0) < 0:
         out.append("уличный — для помещения подходит хуже")
+    if check_moisture and not s.parts.get("moisture_resistant"):
+        out.append("влагостойкость не указана — проверьте перед покупкой")
     return out
 
 
@@ -68,7 +74,7 @@ def _area(room: RoomInput, surface: Surface | None) -> Decimal:
 
 
 def _candidates(repo: CatalogRepo, room: RoomInput, material: Material, surface: Surface | None) -> list:
-    wet = room.effective_humidity == Level.high and material in NEEDS_MOISTURE
+    wet = needs_moisture(room, material)
     cands = repo.candidates(material, required_flags=["moisture_resistant"] if wet else [],
                             min_confidence=MIN_CONFIDENCE, limit=CANDIDATES_LIMIT)
     hint = SURFACE_HINTS.get(surface) if material == Material.tile else None
@@ -90,7 +96,7 @@ def _option(s: Scored, best_quality: float, ideal: float, req: OptionsRequest, a
         unit_price=Decimal(str(round(s.unit_price, 2))) if s.unit_price is not None else None,
         unit_price_title=BASIS_TITLES[s.basis],
         features=[FEATURE_TITLES[k] for k, v in sig.items() if v > 0 and k in FEATURE_TITLES],
-        why=why(s),
+        why=why(s, needs_moisture(req.room, req.material)),
     )
     if with_cost and area > 0:
         calc = ProductCalcRequest(length_m=area, width_m=Decimal(1), layers=2 if req.material == Material.paint else 1)
@@ -153,5 +159,5 @@ def add_why(resp: EstimateResponse, repo: CatalogRepo) -> EstimateResponse:
                 continue
             p, b = repo.get(item.product.id), repo.binding(item.product.id)
             if p and b:
-                item.why = why(ranker.score([(p, b)], room)[0])
+                item.why = why(ranker.score([(p, b)], room)[0], needs_moisture(room, item.material))
     return resp

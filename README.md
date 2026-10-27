@@ -79,8 +79,9 @@ docker compose down                          # остановить (данны�
 | `app/work_materials.py` | какие позиции из справочника участника 2 (`ml_workspace/taxonomy/work_type_materials_v2.py`) каким категориям каталога соответствуют; тест `tests/test_work_materials.py` проверяет, что `app/taxonomy.py` совпадает со справочником | 1 |
 | `app/plans.py` | какие работы доступны для помещения и вида ремонта, какие отмечены по умолчанию | 1 |
 | `app/engine/baseline.py` | заглушка движка расчёта | 2 заменяет своим |
-| `app/ml/baseline.py` | заглушка классификатора и запасной ранжировщик `RatingRanker` | 3 заменяет своим |
-| `app/ml/ranker.py` | ранжирование `ContextRanker` (включено в `run_local.py` и `docker-compose.yml`): веса характеристик по материалу, комнате и влажности, таблица `RULES` | 1 |
+| `app/ml/tfidf.py` + `ml_workspace/model/tfidf_logreg/model` | классификатор участника 3 — включён по умолчанию (`RC_ML_CLASSIFIER_BACKEND=trained`) | 3 |
+| `app/ml/baseline.py` | старая заглушка классификатора (`RC_ML_CLASSIFIER_BACKEND=baseline`, нужна только тестам) и запасной ранжировщик `RatingRanker` | 3 |
+| `app/ml/ranker.py` | ранжирование `ContextRanker` (включено по умолчанию): веса характеристик по материалу, комнате и влажности, таблица `RULES` | 1 |
 | `app/static/index.html` | простой демо-фронт | 4 заменяет своим |
 | `mock_catalog/` | пример каталога и эталонной разметки | все |
 | `tests/` | автотесты: `pytest` | все |

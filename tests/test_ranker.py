@@ -83,8 +83,9 @@ def test_weights_depend_on_material_and_room():
 def test_price_is_normalized_and_moderate():
     cheap, expensive = item(1, price=100, **PACK), item(2, price=900, **PACK)
     assert ids(ContextRanker().rank([expensive, cheap], room())) == [1, 2]
-    out_of_stock_cheap = item(3, price=100, in_stock=False, **PACK)
-    assert ids(ContextRanker().rank([out_of_stock_cheap, expensive], room())) == [2, 3]
+    unknown_stock = item(3, price=900, in_stock=None, **PACK)
+    assert ids(ContextRanker().rank([unknown_stock, expensive], room())) == [2, 3]
+    assert ContextRanker().score([expensive], room())[0].parts["in_stock"] == 1
     big_can = item(4, price=900, specs={"volume_l": "9"})
     small_can = item(5, price=150, specs={"volume_l": "0.9"})
     best = ContextRanker().score([small_can, big_can], room())
@@ -184,5 +185,42 @@ def test_moisture_filter_uses_catalog_characteristics():
     assert has_flags(*item(1, chars={"Влагостойкость краски": "да"}), wet)
     assert has_flags(*item(2, name="Гипсокартон влагостойкий ГКЛВ"), wet)
     assert has_flags(*item(3, flags={"moisture_resistant": True}), wet)
-    assert not has_flags(*item(4, chars={"Тип помещения": "с умеренной влажностью"}), wet)
-    assert not has_flags(*item(5, name="Краска интерьерная"), wet)
+    assert has_flags(*item(4, chars={"Тип помещения": "с умеренной влажностью"}), wet)
+    assert has_flags(*item(5, name="Краска интерьерная"), wet)
+    assert not has_flags(*item(6, chars={"Влагостойкость": "нет"}), wet)
+    assert not has_flags(*item(7, chars={"Тип помещения": "сухое"}), wet)
+    assert has_flags(*item(8, chars={"Влагостойкость обоев": "влагостойкие"}), wet)
+
+
+def test_unknown_moisture_ranked_below_resistant_in_bathroom():
+    unknown = item(1, name="Краска интерьерная", rating=5, **PACK)
+    wet = item(2, name="Краска для стен", chars={"Влагостойкость краски": "да"}, **PACK)
+    assert ids(ContextRanker().rank([unknown, wet], room("bathroom"))) == [2, 1]
+
+
+def test_typical_wiring_cable_socket_and_switch():
+    from app.ml.ranker import _typical
+    from app.taxonomy import Material
+
+    def typical(name, material):
+        return _typical(material, name) == 1
+
+    assert typical("кабель ВВГнг-LS 3х2,5 10м", Material.cable)
+    assert typical("кабель NYM 3х1,5", Material.cable)
+    assert not typical("провод ПуГВнг(А) LS 1х4 желто-зеленый", Material.cable)
+    assert not typical("кабель ШВВП ЭРА 2х0,5 50м гибкий плоский", Material.cable)
+    assert typical("розетка 1 пост с заземлением белая", Material.socket)
+    assert not typical("розетка встраиваемая Эконом, без заземления, белая", Material.socket)
+    assert typical("выключатель 1-клавишный IP20 белый", Material.switch)
+    assert not typical("выключатель на шнур TDM с красной кнопкой 6А", Material.switch)
+
+
+def test_why_warns_when_moisture_unknown():
+    from app.api.picker import why
+
+    bath = room("bathroom")
+    unknown = ContextRanker().score([item(1, name="Краска интерьерная", **PACK)], bath)[0]
+    wet = ContextRanker().score([item(2, chars={"Влагостойкость краски": "да"}, **PACK)], bath)[0]
+    assert "влагостойкость не указана — проверьте перед покупкой" in why(unknown, True)
+    assert not any("не указана" in w for w in why(wet, True))
+    assert not any("не указана" in w for w in why(unknown, False))
