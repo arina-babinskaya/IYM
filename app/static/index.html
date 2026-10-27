@@ -1,172 +1,200 @@
 <!doctype html>
 <html lang="ru">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>RepairCalc — демо</title>
-<style>
-:root {
-  --bg: #f4f5f3; --surface: #fff; --ink: #1d2427; --muted: #5f6a6e; --line: #dde1de;
-  --accent: #24505f; --accent-ink: #fff; --ok: #2f7d4f; --warn: #a15c00; --warn-bg: #fff4dc;
-}
-@media (prefers-color-scheme: dark) {
-  :root { --bg: #14191b; --surface: #1d2427; --ink: #e9ecea; --muted: #9aa6aa; --line: #313b3f;
-    --accent: #7fb6c8; --accent-ink: #10181b; --ok: #5fbf86; --warn: #f2b51c; --warn-bg: #3a2f10; color-scheme: dark; }
-}
-* { box-sizing: border-box; }
-body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
-header { background: var(--surface); border-bottom: 1px solid var(--line); padding: 14px 20px; display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: center; }
-header h1 { margin: 0; font-size: 19px; }
-.status { font-size: 13px; color: var(--muted); }
-.status b.ok { color: var(--ok); } .status b.bad { color: var(--warn); }
-nav { display: flex; gap: 4px; margin-left: auto; flex-wrap: wrap; }
-nav button { font: inherit; font-weight: 600; border: 0; background: none; color: var(--muted); padding: 8px 14px; border-radius: 8px; cursor: pointer; }
-nav button.on { background: var(--accent); color: var(--accent-ink); }
-main { max-width: 1000px; margin: 0 auto; padding: 24px 20px 60px; display: grid; gap: 20px; }
-.card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 18px; display: grid; gap: 14px; }
-h2 { margin: 0; font-size: 18px; }
-h3 { margin: 0; font-size: 16px; }
-.row { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: end; }
-label { display: grid; gap: 4px; font-size: 13px; color: var(--muted); }
-input, select { font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; }
-input[type=number] { width: 100px; }
-button.primary, button.secondary { font: inherit; font-weight: 600; border-radius: 8px; padding: 9px 16px; cursor: pointer; }
-button.primary { background: var(--accent); color: var(--accent-ink); border: 0; }
-button.secondary { background: var(--surface); color: var(--ink); border: 1px solid var(--line); }
-button.small { padding: 5px 10px; font-size: 13px; }
-.progress { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; counter-reset: st; }
-.progress li { font-size: 13px; color: var(--muted); padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); counter-increment: st; }
-.progress li::before { content: counter(st) ". "; }
-.progress li.done { color: var(--ok); border-color: var(--ok); }
-.progress li.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
-.choices { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
-.choices button { font: inherit; text-align: left; padding: 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); cursor: pointer; }
-.choices button:hover, .choices button.on { border-color: var(--accent); }
-.choices button b { display: block; }
-.question { font-size: 17px; font-weight: 600; margin: 0; }
-.nav { display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between; }
-.summary-room { display: flex; flex-wrap: wrap; gap: 8px 16px; justify-content: space-between; align-items: center; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
-.works { display: grid; gap: 10px; }
-.works fieldset { border: 0; margin: 0; padding: 0; display: grid; gap: 4px; }
-.works legend { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; padding: 0 0 2px; }
-.works label { display: flex; gap: 8px; align-items: baseline; font-size: 14px; color: var(--ink); cursor: pointer; }
-table { width: 100%; border-collapse: collapse; font-size: 14px; font-variant-numeric: tabular-nums; }
-th { text-align: left; font-size: 12px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; padding: 6px 8px 6px 0; border-bottom: 1px solid var(--line); }
-td { padding: 7px 8px 7px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
-td.num { text-align: right; white-space: nowrap; }
-.muted { color: var(--muted); font-size: 13px; }
-.empty td { color: var(--muted); }
-.total { font-size: 20px; font-weight: 700; }
-.warn { background: var(--warn-bg); color: var(--warn); border-radius: 8px; padding: 10px 12px; font-size: 14px; }
-.formula { background: var(--bg); border-radius: 8px; padding: 10px 12px; font-family: ui-monospace, Consolas, monospace; font-size: 13px; }
-.big { font-size: 22px; font-weight: 700; }
-.pill { display: inline-block; font-size: 12px; padding: 1px 8px; border-radius: 999px; background: var(--bg); border: 1px solid var(--line); margin: 2px 4px 2px 0; }
-.pill.ok { color: var(--ok); border-color: var(--ok); }
-.scroll { overflow-x: auto; }
-[hidden] { display: none !important; }
-.stage td { background: var(--bg); font-weight: 600; font-size: 13px; color: var(--muted); padding-left: 8px; }
-.results { display: grid; gap: 6px; max-height: 260px; overflow-y: auto; }
-.results button { text-align: left; font: inherit; background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; cursor: pointer; }
-.results button.on { border-color: var(--accent); }
-.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
-.seg button { font: inherit; font-size: 13px; border: 0; background: var(--surface); color: var(--muted); padding: 7px 12px; cursor: pointer; }
-.seg button.on { background: var(--accent); color: var(--accent-ink); }
-.add-form { display: grid; gap: 10px; background: var(--bg); border-radius: 10px; padding: 12px; }
-.add-form input, .add-form textarea { width: 100%; font: inherit; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; }
-.works-pick { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 2px 12px; margin-top: 6px; font-size: 13px; }
-.works-pick label { display: flex; gap: 6px; color: var(--ink); font-size: 13px; }
-.actions { display: flex; gap: 6px; flex-wrap: wrap; }
-.why { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; border: 1px solid var(--accent); color: var(--accent); font-weight: 700; font-size: 12px; cursor: pointer; position: relative; margin-right: 6px; background: none; padding: 0; vertical-align: 1px; }
-.why-pop { position: absolute; z-index: 5; left: -4px; bottom: 26px; width: 260px; background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font-weight: 400; font-size: 13px; text-align: left; box-shadow: 0 6px 20px rgba(0,0,0,.12); }
-.why-pop ul { margin: 4px 0 0; padding-left: 18px; }
-.link { background: none; border: 0; padding: 0; color: var(--accent); font: inherit; font-size: 13px; cursor: pointer; text-decoration: underline; }
-.drawer-bg { position: fixed; inset: 0; background: rgba(0,0,0,.35); z-index: 20; }
-.drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(960px, 100%); background: var(--bg); z-index: 21; overflow-y: auto; padding: 20px; display: grid; gap: 14px; align-content: start; box-shadow: -8px 0 30px rgba(0,0,0,.2); }
-.variants { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; }
-.variant { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px; display: grid; gap: 6px; align-content: start; }
-.variant.on { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
-.variant h4 { margin: 0; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
-.filters { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: end; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
-.filters label.chk { display: flex; gap: 6px; align-items: center; color: var(--ink); font-size: 13px; }
-.filters input[type=number] { width: 90px; }
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>IYM RepairCalc — Умный калькулятор ремонта</title>
+  <link rel="icon" type="image/png" href="/static/logo.png">
+  <!-- Шрифты -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              red: '#740607',
+              blue: '#75A4BE',
+              yellow: '#E2AE13',
+              bg: '#F8F9FA'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  
+  <style>
+    /* Кастомные стили для элементов, которые генерируются в JS */
+    .stage-row td { background-color: #f3f4f6; font-weight: 600; color: #4b5563; font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    .muted { color: #6b7280; font-size: 0.875rem; }
+    .pill { display: inline-flex; align-items: center; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; background-color: #f3f4f6; color: #374151; margin-right: 0.5rem; margin-bottom: 0.5rem; }
+    .pill.ok { background-color: #dcfce7; color: #166534; }
+    .warn { background-color: #fef3c7; color: #92400e; padding: 1rem; border-radius: 0.5rem; font-size: 0.875rem; border: 1px solid #fde68a; }
+    /* Убираем скроллбар в таблицах */
+    .scroll::-webkit-scrollbar { height: 6px; }
+    .scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    /* «!» — почему выбран товар */
+    .why { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid #75A4BE; color: #75A4BE; font-weight: 700; font-size: 12px; cursor: pointer; position: relative; margin-right: 6px; background: #fff; padding: 0; vertical-align: 1px; }
+    .why:hover { background: #75A4BE; color: #fff; }
+    .why-pop { position: absolute; z-index: 30; left: -4px; bottom: 26px; width: 280px; background: #fff; color: #111827; border: 1px solid #e5e7eb; border-radius: 0.75rem; padding: 10px 12px; font-weight: 400; font-size: 13px; text-align: left; box-shadow: 0 10px 25px rgba(0,0,0,.12); white-space: normal; }
+    .why-pop ul { margin: 4px 0 0; padding-left: 18px; list-style: disc; }
+  </style>
 </head>
-<body>
-<header>
-  <h1>RepairCalc</h1>
-  <span class="status" id="status">проверяю сервисы…</span>
-  <nav>
-    <button data-tab="calc" class="on">Калькулятор</button>
-    <button data-tab="card">Карточка товара</button>
-    <button data-tab="admin">Админка</button>
-  </nav>
+<body class="bg-brand-bg text-gray-900 font-sans antialiased min-h-screen flex flex-col">
+
+<!-- Header -->
+<header class="bg-white border-b border-gray-200 sticky top-0 z-50">
+  <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+            <!-- Ссылка на главную при клике на логотип -->
+    <a href="/" class="flex items-center gap-3 group cursor-pointer">
+      
+      <!-- Если картинка логотипа всё еще не грузится (квадратик), просто удали строку ниже: -->
+      <img src="/static/logo.png" alt="IYM" class="h-10 w-auto object-contain transition-transform group-hover:scale-105">
+      
+      <div class="flex flex-col">
+        <h1 class="text-2xl font-extrabold text-brand-red leading-none tracking-tight">IYM</h1>
+        <p class="text-[11px] sm:text-xs text-gray-500 font-medium mt-1 leading-tight max-w-[280px] sm:max-w-[320px]">
+          микросервис умных калькуляторов ремонта и стоимости работ
+        </p>
+      </div>
+    </a>
+    <nav class="hidden md:flex bg-gray-100 p-1 rounded-xl">
+      <button data-tab="calc" class="px-5 py-2 rounded-lg text-sm font-semibold transition-all bg-white text-brand-red shadow-sm">Калькулятор</button>
+      <button data-tab="card" class="px-5 py-2 rounded-lg text-sm font-semibold transition-all text-gray-600 hover:text-gray-900">Карточка товара</button>
+      <button data-tab="admin" class="px-5 py-2 rounded-lg text-sm font-semibold transition-all text-gray-600 hover:text-gray-900">Админка</button>
+    </nav>
+    
+    <div class="text-sm font-medium text-gray-500 bg-white px-3 py-1.5 rounded-lg border border-gray-200" id="status">
+      Проверка сервисов...
+    </div>
+  </div>
 </header>
 
-<main>
-  <section data-panel="calc" class="card">
-    <div class="row" style="justify-content:space-between;align-items:center">
-      <h2>Калькулятор ремонта</h2>
-      <label>Объект
-        <select id="object"><option value="apartment">Квартира</option><option value="house">Дом</option><option value="studio">Студия</option></select>
+<main class="flex-1 max-w-6xl w-full mx-auto p-4 md:p-8 grid gap-6">
+  
+  <!-- Калькулятор -->
+  <section data-panel="calc" class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+    <div class="p-6 md:p-8 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+      <h2 class="text-2xl font-bold">Калькулятор ремонта</h2>
+      <label class="flex items-center gap-2 text-sm font-medium text-gray-700">
+        Объект
+        <select id="object" class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-brand-blue focus:border-brand-blue block p-2.5 outline-none cursor-pointer">
+          <option value="apartment">Квартира</option>
+          <option value="house">Дом</option>
+          <option value="studio">Студия</option>
+        </select>
       </label>
     </div>
-    <ol class="progress" id="progress"></ol>
-    <div id="wizard"></div>
-  </section>
-  <section data-panel="calc" class="card" id="estimate-result" hidden></section>
-
-  <section data-panel="card" class="card" hidden>
-    <h2>Расчёт в карточке товара</h2>
-    <label>Найти товар <input id="product-q" placeholder="например: обои, плитка, ГКЛВ" style="width:100%"></label>
-    <div class="results" id="product-results"></div>
-    <div id="product-info"></div>
-    <div class="row" id="calc-form" hidden>
-      <label>Длина, м<input type="number" id="c-len" value="4" step="0.1" min="0"></label>
-      <label>Высота / ширина, м<input type="number" id="c-wid" value="2.7" step="0.1" min="0"></label>
-      <label>Окна и двери, м²<input type="number" id="c-open" value="0" step="0.1" min="0"></label>
-      <label>Слоёв (для краски)<input type="number" id="c-layers" value="1" min="1" max="5"></label>
-      <button class="primary" id="run-calc">Посчитать</button>
+    
+    <div class="p-6 md:p-8">
+      <!-- Прогресс-бар -->
+      <ol class="flex items-center gap-2 mb-8 overflow-x-auto pb-2" id="progress"></ol>
+      
+      <!-- Контент визарда -->
+      <div id="wizard" class="min-h-[300px]"></div>
     </div>
-    <div id="calc-result"></div>
   </section>
 
-  <section data-panel="admin" class="card" hidden>
-    <div class="row" style="justify-content:space-between;align-items:center">
-      <h2>Привязка товаров к видам работ</h2>
-      <span class="row">
-        <button class="secondary" id="add-toggle">+ Добавить товар</button>
-        <button class="secondary" id="autobind">Привязать автоматически (ML)</button>
-      </span>
+  <!-- Результат сметы -->
+  <section data-panel="calc" id="estimate-result" class="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden" hidden></section>
+
+  <!-- Карточка товара -->
+  <section data-panel="card" class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8" hidden>
+    <h2 class="text-2xl font-bold mb-6">Расчёт в карточке товара</h2>
+    
+    <div class="relative mb-6">
+      <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+        <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+      </div>
+      <input id="product-q" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-xl focus:ring-brand-blue focus:border-brand-blue block w-full pl-10 p-3 outline-none transition-colors" placeholder="Найти товар (например: обои, плитка, ГКЛВ)">
     </div>
-    <form id="add-form" class="add-form" hidden>
-      <div class="row">
-        <label style="flex:2">Название*<input name="name" required minlength="2" placeholder="Краска интерьерная моющаяся белая 2,5 л"></label>
-        <label>Цена, ₽*<input name="price" type="number" min="0.01" step="0.01" required></label>
-        <label>Единица<input name="unit" placeholder="шт"></label>
+    
+    <div class="grid md:grid-cols-2 gap-6">
+      <div class="results flex flex-col gap-2 max-h-[400px] overflow-y-auto pr-2" id="product-results"></div>
+      <div id="product-info" class="bg-gray-50 rounded-xl p-5 border border-gray-100"></div>
+    </div>
+    
+    <div class="mt-6 p-5 bg-gray-50 rounded-xl border border-gray-100 row" id="calc-form" hidden>
+      <h3 class="font-semibold text-lg mb-4 w-full">Параметры поверхности</h3>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 w-full">
+        <label class="text-sm font-medium text-gray-700">Длина, м<input type="number" id="c-len" value="4" step="0.1" min="0" class="mt-1 w-full bg-white border border-gray-300 rounded-lg p-2.5 outline-none focus:border-brand-blue"></label>
+        <label class="text-sm font-medium text-gray-700">Высота/ширина, м<input type="number" id="c-wid" value="2.7" step="0.1" min="0" class="mt-1 w-full bg-white border border-gray-300 rounded-lg p-2.5 outline-none focus:border-brand-blue"></label>
+        <label class="text-sm font-medium text-gray-700">Окна/двери, м²<input type="number" id="c-open" value="0" step="0.1" min="0" class="mt-1 w-full bg-white border border-gray-300 rounded-lg p-2.5 outline-none focus:border-brand-blue"></label>
+        <label class="text-sm font-medium text-gray-700">Слоёв (краска)<input type="number" id="c-layers" value="1" min="1" max="5" class="mt-1 w-full bg-white border border-gray-300 rounded-lg p-2.5 outline-none focus:border-brand-blue"></label>
       </div>
-      <div class="row">
-        <label>Категория<input name="category" placeholder="Краски"></label>
-        <label>Бренд<input name="brand"></label>
-        <label>Площадь в упаковке, м²<input name="package_area" type="number" min="0" step="0.01"></label>
-        <label>Штук в упаковке<input name="quantity_in_package" type="number" min="0" step="1"></label>
+      <div class="w-full mt-4">
+        <button class="bg-brand-red hover:bg-red-900 text-white font-semibold py-2.5 px-6 rounded-xl transition-colors shadow-sm" id="run-calc">Посчитать</button>
       </div>
-      <label>Характеристики, по одной на строку «Название: значение»
-        <textarea name="characteristics" rows="3" placeholder="Влагостойкость краски: да&#10;Расход материала: 0,12&#10;Литраж банки: 2,5"></textarea></label>
-      <div class="row"><button class="primary" type="submit">Добавить</button><button class="secondary" type="button" id="add-cancel">Отмена</button></div>
+    </div>
+    <div id="calc-result" class="mt-6"></div>
+  </section>
+
+  <!-- Админка -->
+  <section data-panel="admin" class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8" hidden>
+    <div class="flex flex-wrap justify-between items-center gap-4 mb-6">
+      <h2 class="text-2xl font-bold">Привязка товаров</h2>
+      <div class="flex gap-2">
+        <button class="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold py-2 px-4 rounded-xl transition-colors" id="add-toggle">+ Добавить товар</button>
+        <button class="bg-brand-blue hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-xl transition-colors shadow-sm flex items-center gap-2" id="autobind">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+          Привязать (ML)
+        </button>
+      </div>
+    </div>
+
+    <!-- Форма добавления (скрыта по умолчанию) -->
+    <form id="add-form" class="bg-gray-50 border border-gray-200 rounded-xl p-5 mb-6 grid gap-4" hidden>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <label class="md:col-span-2 text-sm font-medium text-gray-700">Название*<input name="name" required minlength="2" placeholder="Краска интерьерная..." class="mt-1 w-full bg-white border border-gray-300 rounded-lg p-2.5 outline-none focus:border-brand-blue"></label>
+        <label class="text-sm font-medium text-gray-700">Цена, ₽*<input name="price" type="number" min="0.01" step="0.01" required class="mt-1 w-full bg-white border border-gray-300 rounded-lg p-2.5 outline-none focus:border-brand-blue"></label>
+        <label class="text-sm font-medium text-gray-700">Единица<input name="unit" placeholder="шт" class="mt-1 w-full bg-white border border-gray-300 rounded-lg p-2.5 outline-none focus:border-brand-blue"></label>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <label class="text-sm font-medium text-gray-700">Категория<input name="category" placeholder="Краски" class="mt-1 w-full bg-white border border-gray-300 rounded-lg p-2.5 outline-none focus:border-brand-blue"></label>
+        <label class="text-sm font-medium text-gray-700">Бренд<input name="brand" class="mt-1 w-full bg-white border border-gray-300 rounded-lg p-2.5 outline-none focus:border-brand-blue"></label>
+        <label class="text-sm font-medium text-gray-700">Площадь в упаковке, м²<input name="package_area" type="number" min="0" step="0.01" class="mt-1 w-full bg-white border border-gray-300 rounded-lg p-2.5 outline-none focus:border-brand-blue"></label>
+        <label class="text-sm font-medium text-gray-700">Штук в упаковке<input name="quantity_in_package" type="number" min="0" step="1" class="mt-1 w-full bg-white border border-gray-300 rounded-lg p-2.5 outline-none focus:border-brand-blue"></label>
+      </div>
+      <label class="text-sm font-medium text-gray-700">Характеристики (Название: значение)<textarea name="characteristics" rows="2" placeholder="Влагостойкость краски: да&#10;Расход материала: 0,12" class="mt-1 w-full bg-white border border-gray-300 rounded-lg p-2.5 outline-none focus:border-brand-blue"></textarea></label>
+      <div class="flex gap-2">
+        <button type="submit" class="bg-brand-red hover:bg-red-900 text-white font-semibold py-2 px-5 rounded-lg transition-colors">Добавить</button>
+        <button type="button" id="add-cancel" class="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold py-2 px-5 rounded-lg transition-colors">Отмена</button>
+      </div>
     </form>
-    <div class="row" style="justify-content:space-between">
-      <div class="seg" id="admin-filter">
-        <button data-status="unbound" class="on">Без привязки</button><button data-status="ml">ML</button><button data-status="confirmed">Подтверждённые</button><button data-status="all">Все</button>
+
+      <div class="flex flex-col sm:flex-row justify-between items-center gap-4 mb-4">
+      <div class="flex bg-gray-100 p-1 rounded-lg h-[42px] items-center" id="admin-filter">
+        <button data-status="unbound" class="px-4 py-1.5 rounded-md text-sm font-medium bg-white shadow-sm text-brand-red h-full transition-all">Без привязки</button>
+        <button data-status="ml" class="px-4 py-1.5 rounded-md text-sm font-medium text-gray-600 hover:text-gray-900 h-full transition-all">ML</button>
+        <button data-status="confirmed" class="px-4 py-1.5 rounded-md text-sm font-medium text-gray-600 hover:text-gray-900 h-full transition-all">Подтверждённые</button>
+        <button data-status="all" class="px-4 py-1.5 rounded-md text-sm font-medium text-gray-600 hover:text-gray-900 h-full transition-all">Все</button>
       </div>
-      <span class="row" style="flex:1;justify-content:flex-end"><input id="admin-q" placeholder="поиск товара" style="flex:1;max-width:320px"><button class="secondary" id="admin-search">Найти</button></span>
+      <div class="flex gap-2 h-[42px] w-full sm:w-auto">
+        <input id="admin-q" placeholder="Поиск товара..." class="h-full bg-gray-50 border border-gray-300 rounded-lg px-4 text-sm outline-none focus:border-brand-blue w-full sm:w-64">
+        <button id="admin-search" class="h-full bg-gray-800 hover:bg-gray-900 text-white font-medium px-5 rounded-lg text-sm transition-colors">Найти</button>
+      </div>
     </div>
-    <div id="admin-stats" class="muted"></div>
-    <div id="admin-msg" class="muted"></div>
-    <div class="scroll"><table id="admin-table"></table></div>
+    
+    <div id="admin-stats" class="text-sm text-gray-500 mb-2 font-medium"></div>
+    <div id="admin-msg" class="text-sm text-brand-yellow font-semibold mb-4"></div>
+    
+    <div class="scroll overflow-x-auto border border-gray-200 rounded-xl">
+      <table id="admin-table" class="w-full text-left text-sm whitespace-nowrap"></table>
+    </div>
   </section>
 </main>
 
 <script>
+// --- ТВОЙ СУЩЕСТВУЮЩИЙ JS (С минимальными правками для Tailwind классов) ---
 const ROOMS = {};
 const ROOM_OPENINGS = {};
 const T = { stages: {}, works: {}, materials: {}, renovation: {} };
@@ -185,17 +213,24 @@ async function api(path, options = {}) {
   return body;
 }
 
+// Обновленный переключатель табов
 document.querySelectorAll("nav button").forEach(b => b.onclick = () => {
-  document.querySelectorAll("nav button").forEach(x => x.classList.toggle("on", x === b));
+  document.querySelectorAll("nav button").forEach(x => {
+    x.classList.toggle("bg-white", x === b);
+    x.classList.toggle("text-brand-red", x === b);
+    x.classList.toggle("shadow-sm", x === b);
+    x.classList.toggle("text-gray-600", x !== b);
+  });
   document.querySelectorAll("[data-panel]").forEach(p => p.hidden = p.dataset.panel !== b.dataset.tab
     || (p.id === "estimate-result" && !p.dataset.filled));
   if (b.dataset.tab === "admin") loadAdmin();
 });
 
+// Статус здоровья
 api("/health").then(h => {
-  const llm = h.llm.ok ? `<b class="ok">подключена (${esc(h.llm.llm_model.name)})</b>` : `<b class="bad">не подключена</b>`;
-  document.getElementById("status").innerHTML = `База: <b class="${h.db.ok ? "ok" : "bad"}">${h.db.ok ? "ок" : "ошибка"}</b> · Нейросеть: ${llm}`;
-}).catch(() => document.getElementById("status").textContent = "сервер не отвечает");
+  const llm = h.llm.ok ? `<span class="text-green-600 font-bold">✓</span> LLM (${esc(h.llm.llm_model.name)})` : `<span class="text-red-500 font-bold">✕</span> LLM`;
+  document.getElementById("status").innerHTML = `База: <span class="${h.db.ok ? "text-green-600" : "text-red-500"} font-bold">${h.db.ok ? "ОК" : "ERR"}</span> · ${llm}`;
+}).catch(() => document.getElementById("status").textContent = "Сервер недоступен");
 
 const STEPS = ["Помещение", "Размеры", "Вид ремонта", "Работы", "Смета"];
 const RENO_HINTS = {
@@ -209,24 +244,34 @@ const wizard = document.getElementById("wizard");
 
 function showStep(n) {
   W.step = n;
-  document.getElementById("progress").innerHTML = STEPS.map((t, i) =>
-    `<li class="${i === n ? "on" : i < n ? "done" : ""}">${t}</li>`).join("");
+  document.getElementById("progress").innerHTML = STEPS.map((t, i) => {
+    let cls = "px-4 py-1.5 rounded-full text-sm font-semibold border ";
+    if (i === n) cls += "bg-brand-red text-white border-brand-red shadow-sm";
+    else if (i < n) cls += "bg-green-50 text-green-700 border-green-200";
+    else cls += "bg-gray-50 text-gray-400 border-gray-200";
+    return `<li class="${cls}">${i + 1}. ${t}</li>`;
+  }).join("");
   [stepRoom, stepSize, stepRenovation, stepWorks, stepSummary][n]();
 }
 
 function nav(back, next, nextLabel = "Далее") {
-  return `<div class="nav">${back ? `<button class="secondary" data-back>← Назад</button>` : "<span></span>"}
-    ${next ? `<button class="primary" data-next>${nextLabel}</button>` : ""}</div>`;
+  return `<div class="flex justify-between items-center mt-8 pt-6 border-t border-gray-100">
+    ${back ? `<button class="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold py-2.5 px-6 rounded-xl transition-colors" data-back>← Назад</button>` : "<span></span>"}
+    ${next ? `<button class="bg-brand-red hover:bg-red-900 text-white font-semibold py-2.5 px-8 rounded-xl transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed" data-next>${nextLabel}</button>` : ""}
+  </div>`;
 }
 function bindNav(onNext) {
   wizard.querySelector("[data-back]")?.addEventListener("click", () => showStep(W.step - 1));
   wizard.querySelector("[data-next]")?.addEventListener("click", onNext);
 }
 
+// --- Шаги визарда ---
 function stepRoom() {
-  wizard.innerHTML = `<p class="question">Какое помещение ремонтируем?</p>
-    <div class="choices">${Object.entries(ROOMS).map(([k, v]) =>
-      `<button data-room="${k}" class="${W.room.room_type === k ? "on" : ""}"><b>${esc(v)}</b></button>`).join("")}</div>
+  wizard.innerHTML = `<p class="text-xl font-bold mb-6">Какое помещение ремонтируем?</p>
+    <div class="grid grid-cols-2 md:grid-cols-3 gap-4">${Object.entries(ROOMS).map(([k, v]) =>
+      `<button data-room="${k}" class="p-6 text-left border-2 rounded-xl transition-all ${W.room.room_type === k ? "border-brand-red bg-red-50/30" : "border-gray-100 hover:border-brand-blue bg-white hover:shadow-md"}">
+        <b class="block text-lg mb-1">${esc(v)}</b>
+      </button>`).join("")}</div>
     ${W.rooms.length ? nav(false, true, "К списку помещений") : ""}`;
   wizard.querySelectorAll("[data-room]").forEach(b => b.onclick = () => {
     if (W.room.room_type !== b.dataset.room) W.room.works = null;
@@ -238,23 +283,26 @@ function stepRoom() {
 
 function stepSize() {
   const r = W.room;
-  wizard.innerHTML = `<p class="question">Размеры: ${esc(ROOMS[r.room_type])}</p>
-    <div class="row">
-      <label>Длина, м<input type="number" id="w-len" value="${r.length_m ?? ""}" step="0.1" min="0"></label>
-      <label>Ширина, м<input type="number" id="w-wid" value="${r.width_m ?? ""}" step="0.1" min="0"></label>
-      <label>Высота потолка, м<input type="number" id="w-hei" value="${r.height_m ?? 2.7}" step="0.1" min="0"></label>
-      <label>Окон, шт<input type="number" id="w-win" value="${r.windows ?? (ROOM_OPENINGS[r.room_type] || [1, 1])[0]}" step="1" min="0" max="30"></label>
-      <label>Дверей, шт<input type="number" id="w-door" value="${r.doors ?? (ROOM_OPENINGS[r.room_type] || [1, 1])[1]}" step="1" min="0" max="30"></label>
-      <label>Влажность<select id="w-hum"><option value="">по типу комнаты</option>${opts({ low: "низкая", normal: "обычная", high: "высокая" }, r.humidity || "")}</select></label>
+  const inputCls = "mt-1 w-full bg-white border border-gray-300 rounded-lg p-3 text-lg font-medium outline-none focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/20";
+  wizard.innerHTML = `<p class="text-xl font-bold mb-6">Размеры: ${esc(ROOMS[r.room_type])}</p>
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-4">
+      <label class="text-sm font-semibold text-gray-600">Длина, м<input type="number" id="w-len" value="${r.length_m ?? ""}" step="0.1" min="0" class="${inputCls}"></label>
+      <label class="text-sm font-semibold text-gray-600">Ширина, м<input type="number" id="w-wid" value="${r.width_m ?? ""}" step="0.1" min="0" class="${inputCls}"></label>
+      <label class="text-sm font-semibold text-gray-600">Высота, м<input type="number" id="w-hei" value="${r.height_m ?? 2.7}" step="0.1" min="0" class="${inputCls}"></label>
+      <label class="text-sm font-semibold text-gray-600">Окон, шт<input type="number" id="w-win" value="${r.windows ?? (ROOM_OPENINGS[r.room_type] || [1, 1])[0]}" step="1" min="0" max="30" class="${inputCls}"></label>
+      <label class="text-sm font-semibold text-gray-600">Дверей, шт<input type="number" id="w-door" value="${r.doors ?? (ROOM_OPENINGS[r.room_type] || [1, 1])[1]}" step="1" min="0" max="30" class="${inputCls}"></label>
     </div>
-    <p class="muted" id="w-area"></p>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center bg-gray-50 p-4 rounded-xl">
+      <label class="text-sm font-semibold text-gray-600">Влажность<select id="w-hum" class="mt-1 w-full bg-white border border-gray-300 rounded-lg p-2.5 outline-none focus:border-brand-blue">${opts({ low: "Низкая", normal: "Обычная", high: "Высокая" }, r.humidity || "")}</select></label>
+      <p class="text-sm text-gray-500 font-medium" id="w-area">Укажите габариты</p>
+    </div>
     ${nav(true, true)}`;
   const v = id => Number(document.getElementById(id).value);
   const openings = () => v("w-win") * 2.1 + v("w-door") * 1.6;
   const area = () => {
     const ok = v("w-len") > 0 && v("w-wid") > 0 && v("w-hei") > 0;
-    document.getElementById("w-area").textContent = ok
-      ? `Пол ${num(v("w-len") * v("w-wid"))} м² · стены ${num(Math.max(2 * (v("w-len") + v("w-wid")) * v("w-hei") - openings(), 0))} м² (без окон и дверей; окно считаем 1,5 × 1,4 м, дверь 0,8 × 2 м)`
+    document.getElementById("w-area").innerHTML = ok
+      ? `<b>Пол:</b> ${num(v("w-len") * v("w-wid"))} м²<br><b>Стены:</b> ${num(Math.max(2 * (v("w-len") + v("w-wid")) * v("w-hei") - openings(), 0))} м² <span class="text-xs text-gray-400">(без окон и дверей; окно считаем 1,5 × 1,4 м, дверь 0,8 × 2 м)</span>`
       : "Укажите длину, ширину и высоту";
     wizard.querySelector("[data-next]").disabled = !ok;
   };
@@ -269,12 +317,14 @@ function stepSize() {
   });
 }
 
-
 function stepRenovation() {
   const r = W.room;
-  wizard.innerHTML = `<p class="question">Какой ремонт: ${esc(ROOMS[r.room_type])}, ${num(r.length_m * r.width_m)} м²?</p>
-    <div class="choices">${Object.entries(T.renovation).map(([k, v]) =>
-      `<button data-reno="${k}" class="${r.renovation_type === k ? "on" : ""}"><b>${esc(v)}</b><span class="muted">${esc(RENO_HINTS[k] || "")}</span></button>`).join("")}</div>
+  wizard.innerHTML = `<p class="text-xl font-bold mb-6">Вид ремонта: ${esc(ROOMS[r.room_type])}, ${num(r.length_m * r.width_m)} м²</p>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">${Object.entries(T.renovation).map(([k, v]) =>
+      `<button data-reno="${k}" class="p-5 text-left border-2 rounded-xl transition-all ${r.renovation_type === k ? "border-brand-red bg-red-50/30" : "border-gray-100 hover:border-brand-blue bg-white hover:shadow-md"}">
+        <b class="block text-lg mb-1">${esc(v)}</b>
+        <span class="text-sm text-gray-500">${esc(RENO_HINTS[k] || "")}</span>
+      </button>`).join("")}</div>
     ${nav(true, false)}`;
   wizard.querySelectorAll("[data-reno]").forEach(b => b.onclick = () => {
     if (r.renovation_type !== b.dataset.reno) r.works = null;
@@ -286,19 +336,24 @@ function stepRenovation() {
 
 async function stepWorks() {
   const r = W.room;
-  wizard.innerHTML = `<p class="muted">Загружаю список работ…</p>`;
+  wizard.innerHTML = `<p class="text-gray-500 animate-pulse">Загружаю список работ...</p>`;
   const o = await api(`/api/v1/works?room_type=${r.room_type}&renovation_type=${r.renovation_type}`);
   const key = w => [w.work_type, w.surface || "", (w.materials || []).join(",")].join("|");
   const chosen = r.works && new Set(r.works.map(key));
-  wizard.innerHTML = `<p class="question">Какие работы нужны? ${esc(o.room_title)} · ${esc(o.renovation_title)}</p>
-    <p class="muted">Отметили типичные для этого ремонта, можно изменить.</p>
-    <div class="works">${o.stages.map(st => `<fieldset><legend>${esc(st.title)}</legend>${
-      st.works.map(w => {
+  
+  wizard.innerHTML = `<p class="text-xl font-bold mb-2">Какие работы нужны?</p>
+    <p class="text-sm text-gray-500 mb-6">${esc(o.room_title)} · ${esc(o.renovation_title)}. Отметили типичные, можно изменить.</p>
+    <div class="grid gap-6">${o.stages.map(st => `<div class="bg-gray-50/50 p-4 rounded-xl border border-gray-100">
+      <h4 class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-3">${esc(st.title)}</h4>
+      <div class="grid md:grid-cols-2 gap-2">${st.works.map(w => {
         const on = chosen ? chosen.has(key(w)) : w.default;
-        return `<label><input type="checkbox" data-work="${w.work_type}" data-surface="${w.surface || ""}" data-materials="${w.materials.join(",")}" ${on ? "checked" : ""}>
-          <span>${esc(w.title)} <span class="muted">${esc(w.material_titles.join(", "))}</span></span></label>`;
-      }).join("")}</fieldset>`).join("")}</div>
+        return `<label class="flex items-start gap-3 p-2 hover:bg-white rounded-lg cursor-pointer transition-colors border border-transparent hover:border-gray-200">
+          <input type="checkbox" data-work="${w.work_type}" data-surface="${w.surface || ""}" data-materials="${w.materials.join(",")}" ${on ? "checked" : ""} class="mt-1 w-4 h-4 text-brand-red bg-gray-100 border-gray-300 rounded focus:ring-brand-red focus:ring-2 cursor-pointer">
+          <span class="flex flex-col"><span class="font-semibold text-sm">${esc(w.title)}</span><span class="text-xs text-gray-500">${esc(w.material_titles.join(", "))}</span></span>
+        </label>`;
+      }).join("")}</div></div>`).join("")}</div>
     ${nav(true, true, "Готово")}`;
+    
   const boxes = [...wizard.querySelectorAll("[data-work]")];
   const check = () => wizard.querySelector("[data-next]").disabled = !boxes.some(c => c.checked);
   boxes.forEach(c => c.onchange = check);
@@ -314,14 +369,23 @@ async function stepWorks() {
 }
 
 function stepSummary() {
-  wizard.innerHTML = `<p class="question">Помещения</p>
-    ${W.rooms.map((r, i) => `<div class="summary-room">
-      <span><b>${esc(ROOMS[r.room_type])}</b> · ${num(r.length_m)} × ${num(r.width_m)} м · ${esc(T.renovation[r.renovation_type])}
-        <span class="muted"> · работ: ${r.works.length}</span></span>
-      <span class="row"><button class="secondary small" data-edit="${i}">Изменить</button><button class="secondary small" data-del="${i}">✕</button></span>
-    </div>`).join("") || `<p class="muted">Пока нет помещений.</p>`}
-    <div class="nav"><button class="secondary" data-add>+ Добавить помещение</button>
-      <button class="primary" data-calc ${W.rooms.length ? "" : "disabled"}>Рассчитать смету</button></div>`;
+  wizard.innerHTML = `<p class="text-xl font-bold mb-6">Добавленные помещения</p>
+    <div class="grid gap-3 mb-6">
+    ${W.rooms.map((r, i) => `<div class="flex flex-wrap justify-between items-center bg-white border border-gray-200 p-4 rounded-xl shadow-sm">
+      <div>
+        <b class="text-lg text-brand-red">${esc(ROOMS[r.room_type])}</b>
+        <div class="text-sm text-gray-600 mt-1">${num(r.length_m)} × ${num(r.width_m)} м · ${esc(T.renovation[r.renovation_type])} · <span class="text-brand-blue font-medium">${r.works.length} работ</span></div>
+      </div>
+      <div class="flex gap-2 mt-2 sm:mt-0">
+        <button class="px-3 py-1.5 text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-lg transition-colors" data-edit="${i}">Изменить</button>
+        <button class="px-3 py-1.5 text-sm font-medium bg-red-50 text-red-600 hover:bg-red-100 rounded-lg transition-colors" data-del="${i}">✕ Удалить</button>
+      </div>
+    </div>`).join("") || `<p class="text-gray-500 italic p-4 bg-gray-50 rounded-xl">Пока нет добавленных помещений.</p>`}
+    </div>
+    <div class="flex justify-between items-center mt-8 pt-6 border-t border-gray-100">
+      <button class="bg-white border-2 border-brand-blue text-brand-blue hover:bg-blue-50 font-semibold py-2.5 px-6 rounded-xl transition-colors" data-add>+ Добавить помещение</button>
+      <button class="bg-brand-red hover:bg-red-900 text-white font-bold py-3 px-8 rounded-xl shadow-md transition-transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed" data-calc ${W.rooms.length ? "" : "disabled"}>Рассчитать смету</button>
+    </div>`;
   wizard.querySelector("[data-add]").onclick = () => { W.room = {}; W.editing = null; showStep(0); };
   wizard.querySelectorAll("[data-edit]").forEach(b => b.onclick = () => {
     W.editing = Number(b.dataset.edit);
@@ -332,6 +396,7 @@ function stepSummary() {
   wizard.querySelector("[data-calc]").onclick = () => runEstimate();
 }
 
+// --- Смета ---
 function roomsPayload() {
   return W.rooms.map(r => {
     const { pickMap, ...room } = r;
@@ -342,69 +407,73 @@ function roomsPayload() {
 const pickKey = i => `${i.material}|${i.surface || ""}`;
 
 function productCell(ri, i) {
-  const why = (i.why || []).length
-    ? `<button class="why" data-why title="Почему этот товар">!</button>` : "";
+  const why = (i.why || []).length ? `<button class="why" data-why title="Почему этот товар">!</button>` : "";
   const picked = (W.rooms[ri].pickMap || {})[pickKey(i)] ? ' <span class="pill ok">ваш выбор</span>' : "";
-  return `${why}${esc(i.product.name)}${picked}
-    <div><button class="link" data-change="${ri}|${i.material}|${i.surface || ""}">Изменить</button></div>`;
+  return `<div class="flex items-start"><span class="shrink-0">${why}</span><span>${esc(i.product.name)}${picked}</span></div>
+    <button class="text-xs font-semibold text-brand-blue hover:text-brand-red underline mt-1" data-change="${ri}|${i.material}|${i.surface || ""}">Изменить</button>`;
 }
 
 function bindEstimateButtons(r) {
   const out = document.getElementById("estimate-result");
+  const itemOf = el => {
+    const [ri, material, surface] = el.closest("tr").querySelector("[data-change]").dataset.change.split("|");
+    return [Number(ri), r.rooms[ri].items.find(x => x.material === material && (x.surface || "") === surface)];
+  };
   out.querySelectorAll("[data-why]").forEach(btn => btn.onclick = e => {
     e.stopPropagation();
     const open = btn.querySelector(".why-pop");
     out.querySelectorAll(".why-pop").forEach(x => x.remove());
     if (open) return;
-    const tr = btn.closest("tr");
-    const [ri, material, surface] = tr.querySelector("[data-change]").dataset.change.split("|");
-    const item = r.rooms[ri].items.find(x => x.material === material && (x.surface || "") === surface);
+    const [, item] = itemOf(btn);
     btn.insertAdjacentHTML("beforeend", `<div class="why-pop"><b>Почему выбран этот товар</b><ul>${
       item.why.map(w => `<li>${esc(w)}</li>`).join("")}</ul></div>`);
   });
-  out.querySelectorAll("[data-change]").forEach(btn => btn.onclick = () => {
-    const [ri, material, surface] = btn.dataset.change.split("|");
-    const item = r.rooms[ri].items.find(x => x.material === material && (x.surface || "") === surface);
-    openPicker(Number(ri), item);
-  });
+  out.querySelectorAll("[data-change]").forEach(btn => btn.onclick = () => openPicker(...itemOf(btn)));
 }
 document.addEventListener("click", () => document.querySelectorAll(".why-pop").forEach(x => x.remove()));
 
+// --- Окно выбора товара ---
 const P = { ri: 0, item: null, offset: 0, rows: [] };
 const VARIANT_TITLES = { recommended: "Рекомендуем", quality: "Самый качественный", cheapest: "Самый выгодный из подходящих" };
 const FEATURES = { moisture_resistant: "влагостойкий", washable: "моющийся", wear_class: "износостойкий",
   anti_slip: "противоскользящий", frost_resistant: "морозостойкий", low_emission: "без запаха", ip_protected: "защита от брызг (IP44+)" };
 
+function closePicker() { document.getElementById("picker")?.remove(); document.getElementById("picker-bg")?.remove(); }
+
 function openPicker(ri, item) {
   Object.assign(P, { ri, item, offset: 0, rows: [] });
-  document.body.insertAdjacentHTML("beforeend", `<div class="drawer-bg" id="picker-bg"></div>
-    <aside class="drawer" id="picker">
-      <div class="row" style="justify-content:space-between;align-items:center">
-        <h2>${esc(item.title)}${({ floor: " · пол", wall: " · стены", ceiling: " · потолок" })[item.surface] || ""}
-          <span class="muted">· ${esc(ROOMS[W.rooms[ri].room_type])}</span></h2>
-        <button class="secondary small" id="picker-close">✕ Закрыть</button>
+  const inp = "mt-1 w-full bg-white border border-gray-300 rounded-lg p-2 text-sm outline-none focus:border-brand-blue";
+  document.body.insertAdjacentHTML("beforeend", `<div class="fixed inset-0 bg-black/40 z-[60]" id="picker-bg"></div>
+    <aside class="fixed inset-y-0 right-0 w-full max-w-5xl bg-brand-bg z-[61] overflow-y-auto p-6 md:p-8 grid gap-5 content-start shadow-2xl" id="picker">
+      <div class="flex justify-between items-center gap-4">
+        <h2 class="text-xl font-bold">${esc(item.title)}${({ floor: " · пол", wall: " · стены", ceiling: " · потолок" })[item.surface] || ""}
+          <span class="text-sm font-normal text-gray-500">· ${esc(ROOMS[W.rooms[ri].room_type])}</span></h2>
+        <button class="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold rounded-lg transition-colors py-2 px-4 text-sm" id="picker-close">✕ Закрыть</button>
       </div>
-      <div class="variants" id="picker-variants"><p class="muted">Загружаю…</p></div>
-      <div class="filters">
-        <label>Поиск<input id="pf-q" placeholder="название, бренд"></label>
-        <label>Сортировка<select id="pf-sort">
-          <option value="recommended">рекомендуемые</option><option value="quality">по качеству</option>
-          <option value="price_asc">сначала дешёвые (за ед.)</option><option value="price_desc">сначала дорогие (за ед.)</option>
-          <option value="name">по названию</option></select></label>
-        <label>Цена от<input id="pf-min" type="number" min="0"></label>
-        <label>до<input id="pf-max" type="number" min="0"></label>
-        <label class="chk"><input type="checkbox" id="pf-suitable"> только подходящие</label>
-        ${Object.entries(FEATURES).map(([k, v]) => `<label class="chk"><input type="checkbox" data-feature="${k}"> ${v}</label>`).join("")}
+      <div class="grid md:grid-cols-3 gap-4" id="picker-variants"><p class="text-gray-500 animate-pulse">Загружаю...</p></div>
+      <div class="bg-white border border-gray-200 rounded-xl p-4 grid gap-3">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <label class="text-xs font-semibold text-gray-600 col-span-2 md:col-span-1">Поиск<input id="pf-q" placeholder="название, бренд" class="${inp}"></label>
+          <label class="text-xs font-semibold text-gray-600 col-span-2 md:col-span-1">Сортировка<select id="pf-sort" class="${inp}">
+            <option value="recommended">рекомендуемые</option><option value="quality">по качеству</option>
+            <option value="price_asc">сначала дешёвые (за ед.)</option><option value="price_desc">сначала дорогие (за ед.)</option>
+            <option value="name">по названию</option></select></label>
+          <label class="text-xs font-semibold text-gray-600">Цена от, ₽<input id="pf-min" type="number" min="0" class="${inp}"></label>
+          <label class="text-xs font-semibold text-gray-600">до, ₽<input id="pf-max" type="number" min="0" class="${inp}"></label>
+        </div>
+        <div class="flex flex-wrap gap-x-4 gap-y-2 text-sm">
+          <label class="flex items-center gap-2 cursor-pointer font-semibold"><input type="checkbox" id="pf-suitable" class="rounded text-brand-red"> только подходящие</label>
+          ${Object.entries(FEATURES).map(([k, v]) => `<label class="flex items-center gap-2 cursor-pointer text-gray-700"><input type="checkbox" data-feature="${k}" class="rounded text-brand-blue"> ${v}</label>`).join("")}
+        </div>
       </div>
-      <div class="muted" id="picker-total"></div>
-      <div class="scroll"><table id="picker-table"></table></div>
-      <button class="secondary" id="picker-more" hidden>Показать ещё</button>
+      <div class="text-sm text-gray-500 font-medium" id="picker-total"></div>
+      <div class="scroll overflow-x-auto border border-gray-200 rounded-xl bg-white"><table id="picker-table" class="w-full text-sm text-left"></table></div>
+      <button class="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold rounded-lg transition-colors py-2.5 px-6 justify-self-center" id="picker-more" hidden>Показать ещё</button>
     </aside>`);
-  const close = () => { document.getElementById("picker")?.remove(); document.getElementById("picker-bg")?.remove(); };
-  document.getElementById("picker-close").onclick = close;
-  document.getElementById("picker-bg").onclick = close;
+  document.getElementById("picker-close").onclick = closePicker;
+  document.getElementById("picker-bg").onclick = closePicker;
   let t = null;
-  document.querySelectorAll("#picker .filters input, #picker .filters select").forEach(el =>
+  document.querySelectorAll("#picker input, #picker select").forEach(el =>
     el.addEventListener(el.type === "checkbox" || el.tagName === "SELECT" ? "change" : "input", () => {
       clearTimeout(t); t = setTimeout(() => loadOptions(true), 300);
     }));
@@ -426,40 +495,44 @@ async function loadOptions(reset) {
   P.rows = P.rows.concat(o.products);
   P.offset += o.products.length;
   const current = P.item.product?.id;
-  const costLine = x => x.cost != null ? `${x.packages} упак. · <b>${rub(x.cost)}</b>` : `<span class="muted">количество уточните</span>`;
+  const costLine = x => x.cost != null ? `${x.packages} упак. · <b>${rub(x.cost)}</b>` : `<span class="text-gray-400">количество уточните</span>`;
+  const pills = x => x.features.map(f => `<span class="pill">${esc(f)}</span>`).join("");
   const shown = {};
   if (reset) document.getElementById("picker-variants").innerHTML = Object.entries(o.variants).map(([k, x]) => {
     const same = shown[x.product.id];
     shown[x.product.id] = shown[x.product.id] || VARIANT_TITLES[k];
-    if (same) return `<div class="variant"><h4>${VARIANT_TITLES[k]}</h4>
-      <div class="muted">Совпадает с «${esc(same)}»: ${k === "cheapest" ? "среди подходящих товаров дешевле за единицу нет" : "качественнее товара в подборке нет"}.</div></div>`;
-    return `
-    <div class="variant ${x.product.id === current ? "on" : ""}">
-      <h4>${VARIANT_TITLES[k]}</h4>
-      <div>${esc(x.product.name)}</div>
-      <div class="muted">${rub(x.unit_price)} ${esc(x.unit_price_title.replace("₽", ""))} · качество ${x.quality_pct}%</div>
-      <div>${x.features.map(f => `<span class="pill">${esc(f)}</span>`).join("")}</div>
-      <div>${costLine(x)}</div>
-      ${x.product.id === current ? '<span class="pill ok">сейчас в смете</span>'
-        : `<button class="primary small" data-pick="${x.product.id}">Выбрать</button>`}
+    const head = `<h4 class="text-xs font-bold uppercase tracking-wider text-gray-400">${VARIANT_TITLES[k]}</h4>`;
+    if (same) return `<div class="bg-white border border-gray-200 rounded-xl p-4 grid gap-2 content-start">${head}
+      <p class="text-sm text-gray-500">Совпадает с «${esc(same)}»: ${k === "cheapest" ? "среди подходящих товаров дешевле за единицу нет" : "качественнее товара в подборке нет"}.</p></div>`;
+    const on = x.product.id === current;
+    return `<div class="bg-white rounded-xl p-4 grid gap-2 content-start border-2 ${on ? "border-brand-red" : "border-gray-100"}">${head}
+      <div class="font-semibold text-sm">${esc(x.product.name)}</div>
+      <div class="text-sm text-gray-500">${rub(x.unit_price)} ${esc(x.unit_price_title.replace("₽", ""))} · качество <b class="text-gray-800">${x.quality_pct}%</b></div>
+      <div>${pills(x)}</div>
+      <div class="text-sm">${costLine(x)}</div>
+      ${on ? '<span class="pill ok justify-self-start">сейчас в смете</span>'
+        : `<button class="bg-brand-red hover:bg-red-900 text-white font-semibold rounded-lg transition-colors shadow-sm py-2 px-4 text-sm justify-self-start" data-pick="${x.product.id}">Выбрать</button>`}
     </div>`;
-  }).join("") || '<p class="muted">Нет подходящих товаров.</p>';
+  }).join("") || '<p class="text-gray-500 italic">Нет подходящих товаров.</p>';
   document.getElementById("picker-total").textContent = `Найдено товаров: ${o.total}`;
   document.getElementById("picker-table").innerHTML = `
-    <tr><th>Товар</th><th>Качество</th><th style="text-align:right">Цена за ед.</th><th style="text-align:right">Цена</th><th style="text-align:right">На комнату</th><th></th></tr>
-    ${P.rows.map(x => `<tr>
-      <td>${esc(x.product.name)}<div>${x.features.map(f => `<span class="pill">${esc(f)}</span>`).join("")}${x.suitable ? "" : ' <span class="muted">· подходит хуже</span>'}</div></td>
-      <td>${x.quality_pct}%</td>
-      <td class="num">${rub(x.unit_price)}<div class="muted">${esc(x.unit_price_title.replace("₽", ""))}</div></td>
-      <td class="num">${rub(x.product.result_price)}</td>
-      <td class="num">${costLine(x)}</td>
-      <td>${x.product.id === current ? '<span class="pill ok">в смете</span>' : `<button class="secondary small" data-pick="${x.product.id}">Выбрать</button>`}</td>
-    </tr>`).join("")}`;
+    <thead class="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider"><tr>
+      <th class="px-4 py-3 font-semibold">Товар</th><th class="px-4 py-3 font-semibold">Качество</th>
+      <th class="px-4 py-3 font-semibold text-right">Цена за ед.</th><th class="px-4 py-3 font-semibold text-right">Цена</th>
+      <th class="px-4 py-3 font-semibold text-right">На комнату</th><th class="px-4 py-3"></th></tr></thead>
+    <tbody>${P.rows.map(x => `<tr class="border-b border-gray-100 hover:bg-gray-50">
+      <td class="px-4 py-3"><div class="font-medium">${esc(x.product.name)}</div><div class="mt-1">${pills(x)}${x.suitable ? "" : '<span class="text-xs text-gray-400">подходит хуже</span>'}</div></td>
+      <td class="px-4 py-3 font-semibold">${x.quality_pct}%</td>
+      <td class="px-4 py-3 text-right">${rub(x.unit_price)}<div class="text-xs text-gray-400">${esc(x.unit_price_title.replace("₽", ""))}</div></td>
+      <td class="px-4 py-3 text-right">${rub(x.product.result_price)}</td>
+      <td class="px-4 py-3 text-right whitespace-nowrap">${costLine(x)}</td>
+      <td class="px-4 py-3 text-right">${x.product.id === current ? '<span class="pill ok">в смете</span>' : `<button class="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold rounded-lg transition-colors py-1.5 px-3 text-xs" data-pick="${x.product.id}">Выбрать</button>`}</td>
+    </tr>`).join("")}</tbody>`;
   document.getElementById("picker-more").hidden = P.offset >= o.total;
   document.querySelectorAll("#picker [data-pick]").forEach(b => b.onclick = async () => {
     const room = W.rooms[P.ri];
     room.pickMap = { ...(room.pickMap || {}), [pickKey(P.item)]: Number(b.dataset.pick) };
-    document.getElementById("picker")?.remove(); document.getElementById("picker-bg")?.remove();
+    closePicker();
     await runEstimate(true);
   });
 }
@@ -467,7 +540,7 @@ async function loadOptions(reset) {
 async function runEstimate(keepScroll = false) {
   const out = document.getElementById("estimate-result");
   out.hidden = false; out.dataset.filled = "1";
-  if (!keepScroll) out.innerHTML = `<p class="muted">Считаю…</p>`;
+  if (!keepScroll) out.innerHTML = `<div class="p-10 text-center"><div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-brand-red"></div><p class="mt-4 text-gray-500 font-medium">Считаем смету...</p></div>`;
   try {
     const r = await api("/api/v1/estimate", { method: "POST", body: JSON.stringify({
       object_type: document.getElementById("object").value,
@@ -478,74 +551,112 @@ async function runEstimate(keepScroll = false) {
     document.getElementById("copy-list").onclick = () => copyList(r);
     bindEstimateButtons(r);
     if (!keepScroll) out.scrollIntoView({ behavior: "smooth" });
-  } catch (e) { out.innerHTML = `<div class="warn">${esc(e.message)}</div>`; }
+  } catch (e) { out.innerHTML = `<div class="p-6"><div class="warn">${esc(e.message)}</div></div>`; }
 }
 
 function renderEstimate(r) {
   const rooms = r.rooms.map((room, ri) => {
     let stage = null;
     const rows = room.items.map(i => {
-      const head = i.stage !== stage ? `<tr class="stage"><td colspan="6">${esc(T.stages[i.stage])}</td></tr>` : "";
+      const head = i.stage !== stage ? `<tr class="stage-row"><td colspan="6" class="px-4 py-2">${esc(T.stages[i.stage])}</td></tr>` : "";
       stage = i.stage;
-      const work = `${esc(i.title)}<div class="muted">${esc(T.works[i.work_type])}${({ floor: " · пол", wall: " · стены", ceiling: " · потолок" })[i.surface] || ""}</div>`;
-      if (i.packages === 0 && !i.product) return head + `<tr class="empty"><td>${work}</td><td colspan="5">${esc(i.reason)}</td></tr>`;
-      if (i.packages === 0) return head + `<tr><td>${work}</td><td>${productCell(ri, i)}<div class="muted">${esc(i.reason)}</div></td>
-        <td class="num" colspan="2"><span class="muted">количество уточните</span></td>
-        <td class="num">${rub(i.product.result_price)}</td><td class="num">—</td></tr>`;
-      return head + `<tr><td>${work}${i.reason ? `<div class="muted">${esc(i.reason)}</div>` : ""}</td>
-        <td>${productCell(ri, i)}</td>
-        <td class="num">${num(i.required_amount)} ${esc(i.required_unit)}</td>
-        <td class="num">${i.packages} × ${esc(i.product?.unit || "шт")}</td>
-        <td class="num">${rub(i.unit_price)}</td>
-        <td class="num"><b>${rub(i.cost)}</b></td></tr>`;
+      const work = `<div class="font-semibold">${esc(i.title)}</div><div class="text-xs text-gray-500 mt-0.5">${esc(T.works[i.work_type])}${({ floor: " · пол", wall: " · стены", ceiling: " · потолок" })[i.surface] || ""}</div>`;
+      if (i.packages === 0 && !i.product) return head + `<tr class="border-b border-gray-100"><td class="px-4 py-3">${work}</td><td colspan="5" class="px-4 py-3 text-sm text-gray-400 italic">${esc(i.reason)}</td></tr>`;
+      if (i.packages === 0) return head + `<tr class="border-b border-gray-100 hover:bg-gray-50"><td class="px-4 py-3">${work}</td><td class="px-4 py-3">${productCell(ri, i)}<div class="text-xs text-gray-500">${esc(i.reason)}</div></td>
+        <td class="px-4 py-3 text-right text-sm text-gray-400" colspan="2">уточните кол-во</td>
+        <td class="px-4 py-3 text-right font-medium">${rub(i.product.result_price)}</td><td class="px-4 py-3 text-right text-gray-400">—</td></tr>`;
+      return head + `<tr class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+        <td class="px-4 py-3">${work}${i.reason ? `<div class="text-xs text-brand-yellow font-medium mt-1">${esc(i.reason)}</div>` : ""}</td>
+        <td class="px-4 py-3 font-medium text-gray-900">${productCell(ri, i)}</td>
+        <td class="px-4 py-3 text-right"><span class="text-sm text-gray-500">${num(i.required_amount)}</span> ${esc(i.required_unit)}</td>
+        <td class="px-4 py-3 text-right font-bold text-brand-blue">${i.packages} <span class="text-xs font-normal">× ${esc(i.product?.unit || "шт")}</span></td>
+        <td class="px-4 py-3 text-right text-gray-600">${rub(i.unit_price)}</td>
+        <td class="px-4 py-3 text-right font-bold text-gray-900">${rub(i.cost)}</td></tr>`;
     }).join("");
-    return `<h3>${esc(room.room.name || ROOMS[room.room.room_type])} · ${esc(T.renovation[room.room.renovation_type || r.renovation_type])} · пол ${num(room.floor_area_m2)} м², стены ${num(room.wall_area_m2)} м²</h3>
-      <div class="scroll"><table>
-        <tr><th>Материал / работа</th><th>Товар</th><th style="text-align:right">Нужно</th><th style="text-align:right">Купить</th><th style="text-align:right">Цена</th><th style="text-align:right">Сумма</th></tr>
-        ${rows}
-        <tr><td colspan="5"><b>Итого по комнате</b></td><td class="num"><b>${rub(room.subtotal)}</b></td></tr>
-      </table></div>`;
+    
+    return `<div class="mb-8">
+      <h3 class="text-xl font-bold mb-3 flex items-center gap-2">
+        <span class="w-2 h-6 bg-brand-blue rounded-full"></span>
+        ${esc(room.room.name || ROOMS[room.room.room_type])}
+        <span class="text-sm font-normal text-gray-500 ml-2">${esc(T.renovation[room.room.renovation_type || r.renovation_type])} · S пола: ${num(room.floor_area_m2)} м²</span>
+      </h3>
+      <div class="scroll overflow-x-auto border border-gray-200 rounded-xl">
+        <table class="w-full text-sm text-left">
+          <thead class="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider">
+            <tr><th class="px-4 py-3 font-semibold">Работа</th><th class="px-4 py-3 font-semibold">Товар</th><th class="px-4 py-3 font-semibold text-right">Нужно</th><th class="px-4 py-3 font-semibold text-right">Купить</th><th class="px-4 py-3 font-semibold text-right">Цена</th><th class="px-4 py-3 font-semibold text-right">Сумма</th></tr>
+          </thead>
+          <tbody>${rows}</tbody>
+          <tfoot class="bg-gray-50/50">
+            <tr><td colspan="5" class="px-4 py-3 text-right font-bold text-gray-600">Итого по комнате:</td><td class="px-4 py-3 text-right font-extrabold text-lg text-brand-red">${rub(room.subtotal)}</td></tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>`;
   }).join("");
-  const warns = r.warnings.length ? `<div class="warn">${r.warnings.map(esc).join("<br>")}</div>` : "";
-  return `<h2>Смета</h2>${rooms}${warns}
-    <div class="row" style="justify-content:space-between;align-items:center">
-      <span class="total">Итого: ${rub(r.total)}</span>
-      <span class="row"><button class="secondary" id="copy-list">Скопировать список для прораба</button><button class="primary" onclick="alert('Демо: корзину подключит магазин')">В корзину</button></span>
+  
+  const warns = r.warnings.length ? `<div class="warn mb-6">${r.warnings.map(esc).join("<br>")}</div>` : "";
+  
+  return `<div class="p-6 md:p-8">
+    <h2 class="text-2xl font-bold mb-6">Ваша смета готова</h2>
+    ${warns}
+    ${rooms}
+    
+    <div class="mt-8 p-6 bg-gray-900 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4 shadow-xl">
+      <div>
+        <p class="text-gray-400 text-sm font-medium mb-1">Общая стоимость материалов</p>
+        <p class="text-4xl font-extrabold text-white">${rub(r.total)}</p>
+      </div>
+      <div class="flex gap-3 w-full md:w-auto">
+        <button class="flex-1 md:flex-none bg-gray-800 hover:bg-gray-700 text-white font-semibold py-3 px-6 rounded-xl transition-colors border border-gray-700" id="copy-list">Скопировать</button>
+        <button class="flex-1 md:flex-none bg-brand-yellow hover:bg-yellow-500 text-gray-900 font-bold py-3 px-8 rounded-xl transition-colors shadow-md shadow-brand-yellow/20" onclick="alert('Демо: корзину подключит магазин')">В корзину</button>
+      </div>
     </div>
-    <p class="muted">Рассчитано за ${r.elapsed_ms} мс. Цены ориентировочные.</p>`;
+    <p class="text-center text-xs text-gray-400 mt-4">Рассчитано за ${r.elapsed_ms} мс. Цены ориентировочные.</p>
+  </div>`;
 }
 
 function copyList(r) {
   const lines = r.rooms.flatMap(room => [`${ROOMS[room.room.room_type]}:`, ...room.items.filter(i => i.packages)
     .map(i => `  [${T.stages[i.stage]}] ${i.product.name} — ${i.packages} ${i.product.unit || "шт"}`)]);
   navigator.clipboard.writeText(lines.join("\n")).then(
-    () => document.getElementById("copy-list").textContent = "Скопировано ✓",
+    () => { const btn = document.getElementById("copy-list"); const old = btn.textContent; btn.textContent = "Скопировано ✓"; setTimeout(()=>btn.textContent=old, 2000); },
     () => alert(lines.join("\n")));
 }
 
+// --- Карточка товара ---
 let productId = null, searchTimer = null;
 async function searchProducts() {
   const q = document.getElementById("product-q").value.trim();
   const list = await api(`/api/v1/products?limit=30${q ? `&q=${encodeURIComponent(q)}` : ""}`);
   const box = document.getElementById("product-results");
-  box.innerHTML = list.length ? list.map(p => `<button data-id="${p.id}" class="${p.id === productId ? "on" : ""}">${esc(p.name)} — ${rub(p.result_price)}</button>`).join("")
-    : `<span class="muted">ничего не найдено</span>`;
+  box.innerHTML = list.length ? list.map(p => `<button data-id="${p.id}" class="text-left w-full p-3 rounded-xl border transition-all ${p.id === productId ? "border-brand-blue bg-blue-50/50 shadow-sm" : "border-gray-200 bg-white hover:border-brand-blue"}">
+    <div class="font-semibold text-sm line-clamp-2">${esc(p.name)}</div>
+    <div class="text-brand-red font-bold mt-1">${rub(p.result_price)}</div>
+  </button>`).join("")
+    : `<span class="text-gray-500 italic p-4 text-center">Ничего не найдено</span>`;
   box.querySelectorAll("button").forEach(b => b.onclick = () => showProduct(Number(b.dataset.id)));
 }
 document.getElementById("product-q").oninput = () => { clearTimeout(searchTimer); searchTimer = setTimeout(searchProducts, 250); };
 
 async function showProduct(id) {
   productId = id;
-  document.querySelectorAll("#product-results button").forEach(b => b.classList.toggle("on", Number(b.dataset.id) === id));
+  document.querySelectorAll("#product-results button").forEach(b => b.classList.toggle("border-brand-blue", Number(b.dataset.id) === id));
   const p = await api(`/api/v1/products/${id}`);
   const chars = p.characteristics.map(c => `<span class="pill">${esc(c.name)}: ${esc(c.value)}</span>`).join("");
-  const binding = p.binding ? `${esc(T.materials[p.binding.material])} → ${p.binding.work_types.map(w => esc(T.works[w])).join(", ")}` : "не привязан";
+  const binding = p.binding ? `<span class="text-green-600 font-semibold">${esc(T.materials[p.binding.material])}</span> → ${p.binding.work_types.map(w => esc(T.works[w])).join(", ")}` : "не привязан";
+  
+  // Добавил заглушку картинки, если её нет
+  const imgHtml = p.picture_url ? `<img src="${p.picture_url}" class="w-full h-48 object-cover rounded-t-xl">` : 
+    `<div class="w-full h-48 bg-gray-200 flex items-center justify-center text-gray-400 rounded-t-xl mb-4"><svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg></div>`;
+
   document.getElementById("product-info").innerHTML = `
-    <h3>${esc(p.name)}</h3>
-    <div class="big">${rub(p.result_price)} <span class="muted">за ${esc(p.unit || "шт")}</span></div>
-    <div>${chars || '<span class="muted">характеристик нет</span>'}</div>
-    <div class="muted">Как понял сервис: ${Object.keys(p.specs).length ? esc(JSON.stringify(p.specs)) : "размеров не найдено"}</div>
-    <div class="muted">Привязка: ${binding}</div>`;
+    ${imgHtml}
+    <h3 class="text-xl font-bold mb-2 leading-tight">${esc(p.name)}</h3>
+    <div class="text-3xl font-extrabold text-brand-red mb-4">${rub(p.result_price)} <span class="text-sm font-medium text-gray-500">/ ${esc(p.unit || "шт")}</span></div>
+    <div class="mb-4">${chars || '<span class="text-gray-400 italic text-sm">Характеристик нет</span>'}</div>
+    <div class="text-xs bg-white p-3 rounded-lg border border-gray-100 mb-2"><span class="text-gray-400 font-semibold uppercase tracking-wider">Спецификация</span><br>${Object.keys(p.specs).length ? esc(JSON.stringify(p.specs)) : "Размеров не найдено"}</div>
+    <div class="text-xs bg-white p-3 rounded-lg border border-gray-100"><span class="text-gray-400 font-semibold uppercase tracking-wider">Привязка</span><br>${binding}</div>`;
+    
   document.getElementById("calc-form").hidden = false;
   document.getElementById("calc-result").innerHTML = "";
 }
@@ -559,15 +670,19 @@ document.getElementById("run-calc").onclick = async () => {
       openings_area_m2: Number(document.getElementById("c-open").value || 0),
       layers: Number(document.getElementById("c-layers").value || 1),
     }) });
-    out.innerHTML = `<div class="big">Нужно ${r.packages} × ${esc(r.product.unit || "шт")} — ${rub(r.total_cost)}</div>
-      <div class="formula">${esc(r.formula)}</div>
-      <p class="muted">Площадь ${num(r.area_m2)} м², запас ${num(r.reserve_pct)}%</p>`;
-  } catch (e) { out.innerHTML = `<div class="warn">Не получается посчитать: ${esc(e.message)}</div>`; }
+    out.innerHTML = `<div class="bg-blue-50 border border-blue-100 rounded-xl p-5">
+      <div class="text-xl font-bold text-brand-blue mb-2">Нужно: ${r.packages} × ${esc(r.product.unit || "шт")}</div>
+      <div class="text-3xl font-extrabold text-gray-900 mb-4">${rub(r.total_cost)}</div>
+      <div class="font-mono text-sm bg-white/50 p-3 rounded-lg text-gray-600 border border-blue-100 mb-3">${esc(r.formula)}</div>
+      <p class="text-xs text-gray-500">Площадь ${num(r.area_m2)} м², запас на подрезку ${num(r.reserve_pct)}%</p>
+    </div>`;
+  } catch (e) { out.innerHTML = `<div class="warn">Ошибка: ${esc(e.message)}</div>`; }
 };
 
+// --- Админка ---
 let adminStatus = "unbound", adminRows = [];
 const flagTitles = { moisture_resistant: "влагостойкий", washable: "моющийся" };
-const describe = x => `<b>${esc(T.materials[x.material])}</b><div class="muted">${x.work_types.map(w => esc(T.works[w])).join(", ") || "виды работ не указаны"}</div>`;
+const describe = x => `<b class="text-gray-900">${esc(T.materials[x.material])}</b><div class="text-xs text-gray-500 mt-0.5">${x.work_types.map(w => esc(T.works[w])).join(", ") || "работы не указаны"}</div>`;
 
 async function loadAdmin() {
   const q = document.getElementById("admin-q").value.trim();
@@ -576,29 +691,33 @@ async function loadAdmin() {
     api(`/api/v1/admin/products?status=${adminStatus}&limit=100${q ? `&q=${encodeURIComponent(q)}` : ""}`),
   ]);
   adminRows = rows;
-  document.getElementById("admin-stats").textContent =
-    `Товаров: ${stats.products_total} · подтверждено вручную: ${stats.bound_manual} · привязано ML: ${stats.bound_ml} · без привязки: ${stats.unbound} · доля автопривязки: ${Math.round(stats.auto_bound_share * 100)}%`;
+  document.getElementById("admin-stats").innerHTML =
+    `Всего: <b>${stats.products_total}</b> · Вручную: <b>${stats.bound_manual}</b> · ML: <b class="text-brand-blue">${stats.bound_ml}</b> · Без привязки: <b class="text-brand-red">${stats.unbound}</b> · Автопривязка: <b class="text-green-600">${Math.round(stats.auto_bound_share * 100)}%</b>`;
+    
   document.getElementById("admin-table").innerHTML = rows.length ? `
-    <tr><th>Товар</th><th>Подсказка ML</th><th>Текущая привязка</th><th></th></tr>
+    <thead class="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider border-b border-gray-200">
+      <tr><th class="px-4 py-3 font-semibold">Товар</th><th class="px-4 py-3 font-semibold">Подсказка ML</th><th class="px-4 py-3 font-semibold">Текущая привязка</th><th class="px-4 py-3 font-semibold">Действия</th></tr>
+    </thead>
+    <tbody>
     ${rows.map(r => {
       const s = r.suggestion, b = r.binding;
       const flags = Object.entries(s.flags).filter(([, v]) => v).map(([k]) => `<span class="pill">${esc(flagTitles[k] || k)}</span>`).join("");
-      const bound = !b ? '<span class="muted">нет</span>'
+      const bound = !b ? '<span class="text-gray-400 italic">нет</span>'
         : `<span class="pill ${b.confirmed ? "ok" : ""}">${b.confirmed ? "✓ подтверждено" : "ML"}</span>${describe(b)}`;
-      return `<tr data-id="${r.product.id}">
-        <td>${esc(r.product.name)}<div class="muted">${[esc(r.category || ""), r.manual ? '<span class="pill">ручной</span>' : ""].filter(Boolean).join(" · ")}</div></td>
-        <td>${describe(s)}<div class="muted">уверенность ${Math.round(s.confidence * 100)}%</div><div>${flags}</div></td>
-        <td>${bound}</td>
-        <td data-cell>${actionButtons(r)}</td></tr>`;
-    }).join("")}` : `<tr><td class="muted">Здесь пусто.</td></tr>`;
+      return `<tr data-id="${r.product.id}" class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+        <td class="px-4 py-4"><div class="font-medium text-gray-900 whitespace-normal max-w-xs">${esc(r.product.name)}</div><div class="text-xs text-gray-500 mt-1">${[esc(r.category || ""), r.manual ? '<span class="text-brand-yellow font-bold">Ручной</span>' : ""].filter(Boolean).join(" · ")}</div></td>
+        <td class="px-4 py-4">${describe(s)}<div class="text-xs font-semibold ${s.confidence > 0.8 ? 'text-green-600' : 'text-brand-yellow'} mt-1">Уверенность: ${Math.round(s.confidence * 100)}%</div><div class="mt-1">${flags}</div></td>
+        <td class="px-4 py-4">${bound}</td>
+        <td class="px-4 py-4" data-cell>${actionButtons(r)}</td></tr>`;
+    }).join("")}</tbody>` : `<tbody><tr><td class="p-8 text-center text-gray-500 italic" colspan="4">Здесь пусто. Добавьте товары или нажмите ML-привязку.</td></tr></tbody>`;
   bindRowButtons();
 }
 
 function actionButtons(r) {
   const confirmed = r.binding && r.binding.confirmed;
-  return `<div class="actions">${confirmed ? "" : '<button class="primary small" data-confirm>✓ Подтвердить</button>'}
-    <button class="secondary small" data-edit>Изменить</button>
-    ${r.manual ? '<button class="secondary small" data-delete title="Удалить ручной товар">Удалить</button>' : ""}</div>`;
+  return `<div class="flex gap-2">${confirmed ? "" : '<button class="bg-brand-red hover:bg-red-900 text-white text-xs font-semibold py-1.5 px-3 rounded-lg transition-colors shadow-sm" data-confirm>✓ Подтвердить</button>'}
+    <button class="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 text-xs font-semibold py-1.5 px-3 rounded-lg transition-colors" data-edit>Изменить</button>
+    ${r.manual ? '<button class="text-red-500 hover:text-red-700 text-xs font-semibold py-1.5 px-2 transition-colors" data-delete title="Удалить">Удалить</button>' : ""}</div>`;
 }
 
 function bindRowButtons() {
@@ -621,28 +740,37 @@ function bindRowButtons() {
     });
     tr.querySelector("[data-edit]").addEventListener("click", () => {
       const chosen = new Set(src.work_types);
-      cell.innerHTML = `<select data-m>${opts(T.materials, src.material)}</select>
-        <div class="works-pick">${Object.entries(T.works).map(([id, title]) =>
-          `<label><input type="checkbox" value="${id}" ${chosen.has(id) ? "checked" : ""}>${esc(title)}</label>`).join("")}</div>
-        <div class="actions" style="margin-top:6px"><button class="primary small" data-save>Сохранить</button><button class="secondary small" data-cancel>Отмена</button></div>`;
+      cell.innerHTML = `<div class="flex flex-col gap-2 bg-white p-3 border border-brand-blue rounded-xl shadow-lg absolute z-10 right-10 w-64">
+        <select data-m class="w-full bg-gray-50 border border-gray-300 rounded p-1.5 text-xs outline-none">${opts(T.materials, src.material)}</select>
+        <div class="max-h-40 overflow-y-auto grid gap-1">${Object.entries(T.works).map(([id, title]) =>
+          `<label class="flex items-center gap-2 text-xs cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="${id}" ${chosen.has(id) ? "checked" : ""} class="rounded text-brand-blue">${esc(title)}</label>`).join("")}</div>
+        <div class="flex gap-2 mt-1"><button class="flex-1 bg-brand-red text-white text-xs font-bold py-1.5 rounded" data-save>ОК</button><button class="flex-1 bg-gray-200 text-gray-700 text-xs font-bold py-1.5 rounded" data-cancel>Отмена</button></div>
+      </div>`;
       cell.querySelector("[data-cancel]").onclick = () => { cell.innerHTML = actionButtons(r); bindRowButtons(); };
       cell.querySelector("[data-save]").onclick = () => save({
         material: cell.querySelector("[data-m]").value,
-        work_types: [...cell.querySelectorAll(".works-pick input:checked")].map(c => c.value),
+        work_types: [...cell.querySelectorAll("input:checked")].map(c => c.value),
         room_types: src.room_types, flags: src.flags,
       });
     });
   });
 }
 
+// Слушатели фильтров
 document.querySelectorAll("#admin-filter button").forEach(b => b.onclick = () => {
   adminStatus = b.dataset.status;
-  document.querySelectorAll("#admin-filter button").forEach(x => x.classList.toggle("on", x === b));
+  document.querySelectorAll("#admin-filter button").forEach(x => {
+    x.classList.toggle("bg-white", x === b);
+    x.classList.toggle("shadow-sm", x === b);
+    x.classList.toggle("text-brand-red", x === b);
+    x.classList.toggle("text-gray-600", x !== b);
+  });
   loadAdmin();
 });
 document.getElementById("admin-search").onclick = loadAdmin;
 document.getElementById("admin-q").addEventListener("keydown", e => { if (e.key === "Enter") loadAdmin(); });
 
+// Добавление товара
 const addForm = document.getElementById("add-form");
 document.getElementById("add-toggle").onclick = () => { addForm.hidden = !addForm.hidden; };
 document.getElementById("add-cancel").onclick = () => { addForm.hidden = true; };
@@ -661,7 +789,13 @@ addForm.onsubmit = async e => {
     }) });
     addForm.reset(); addForm.hidden = true;
     adminStatus = "unbound";
-    document.querySelectorAll("#admin-filter button").forEach(x => x.classList.toggle("on", x.dataset.status === "unbound"));
+    document.querySelectorAll("#admin-filter button").forEach(x => {
+      const isUnbound = x.dataset.status === "unbound";
+      x.classList.toggle("bg-white", isUnbound);
+      x.classList.toggle("shadow-sm", isUnbound);
+      x.classList.toggle("text-brand-red", isUnbound);
+      x.classList.toggle("text-gray-600", !isUnbound);
+    });
     document.getElementById("admin-q").value = "";
     await loadAdmin();
     document.getElementById("admin-msg").textContent =
@@ -670,24 +804,27 @@ addForm.onsubmit = async e => {
     document.getElementById("admin-msg").textContent = `Не удалось добавить: ${err.message}`;
   }
 };
+
+// Автопривязка
 document.getElementById("autobind").onclick = async () => {
   const btn = document.getElementById("autobind");
   const info = document.getElementById("admin-stats");
   btn.disabled = true;
-  btn.textContent = "Привязываю… (до минуты)";
+  btn.innerHTML = `<svg class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Привязываю...`;
   try {
     const before = await api("/api/v1/admin/stats");
     const after = await api("/api/v1/admin/autobind", { method: "POST" });
     await loadAdmin();
-    info.textContent = `Новых привязок: ${after.bound_ml - before.bound_ml}. ` + info.textContent;
+    info.innerHTML = `<span class="text-green-600 font-bold">Новых привязок: ${after.bound_ml - before.bound_ml}.</span> ` + info.innerHTML;
   } catch (e) {
-    info.textContent = `Ошибка привязки: ${e.message}`;
+    info.innerHTML = `<span class="text-red-500 font-bold">Ошибка привязки: ${e.message}</span>`;
   } finally {
     btn.disabled = false;
-    btn.textContent = "Привязать автоматически (ML)";
+    btn.innerHTML = `Привязать (ML)`;
   }
 };
 
+// Инициализация справочников
 api("/api/v1/taxonomy").then(t => {
   t.stages.forEach(s => T.stages[s.id] = s.title);
   t.works.forEach(w => T.works[w.id] = w.title);
