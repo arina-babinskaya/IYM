@@ -76,6 +76,19 @@ td.num { text-align: right; white-space: nowrap; }
 .works-pick { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 2px 12px; margin-top: 6px; font-size: 13px; }
 .works-pick label { display: flex; gap: 6px; color: var(--ink); font-size: 13px; }
 .actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.why { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; border: 1px solid var(--accent); color: var(--accent); font-weight: 700; font-size: 12px; cursor: pointer; position: relative; margin-right: 6px; background: none; padding: 0; vertical-align: 1px; }
+.why-pop { position: absolute; z-index: 5; left: -4px; bottom: 26px; width: 260px; background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font-weight: 400; font-size: 13px; text-align: left; box-shadow: 0 6px 20px rgba(0,0,0,.12); }
+.why-pop ul { margin: 4px 0 0; padding-left: 18px; }
+.link { background: none; border: 0; padding: 0; color: var(--accent); font: inherit; font-size: 13px; cursor: pointer; text-decoration: underline; }
+.drawer-bg { position: fixed; inset: 0; background: rgba(0,0,0,.35); z-index: 20; }
+.drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(960px, 100%); background: var(--bg); z-index: 21; overflow-y: auto; padding: 20px; display: grid; gap: 14px; align-content: start; box-shadow: -8px 0 30px rgba(0,0,0,.2); }
+.variants { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; }
+.variant { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px; display: grid; gap: 6px; align-content: start; }
+.variant.on { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.variant h4 { margin: 0; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+.filters { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: end; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+.filters label.chk { display: flex; gap: 6px; align-items: center; color: var(--ink); font-size: 13px; }
+.filters input[type=number] { width: 90px; }
 </style>
 </head>
 <body>
@@ -155,6 +168,7 @@ td.num { text-align: right; white-space: nowrap; }
 
 <script>
 const ROOMS = {};
+const ROOM_OPENINGS = {};
 const T = { stages: {}, works: {}, materials: {}, renovation: {} };
 const rub = v => v == null ? "—" : Number(v).toLocaleString("ru-RU", { maximumFractionDigits: 2 }) + " ₽";
 const num = v => Number(v).toLocaleString("ru-RU", { maximumFractionDigits: 2 });
@@ -229,23 +243,26 @@ function stepSize() {
       <label>Длина, м<input type="number" id="w-len" value="${r.length_m ?? ""}" step="0.1" min="0"></label>
       <label>Ширина, м<input type="number" id="w-wid" value="${r.width_m ?? ""}" step="0.1" min="0"></label>
       <label>Высота потолка, м<input type="number" id="w-hei" value="${r.height_m ?? 2.7}" step="0.1" min="0"></label>
-      <label>Окна и двери, м²<input type="number" id="w-open" value="${r.openings_area_m2 ?? 0}" step="0.1" min="0"></label>
+      <label>Окон, шт<input type="number" id="w-win" value="${r.windows ?? (ROOM_OPENINGS[r.room_type] || [1, 1])[0]}" step="1" min="0" max="30"></label>
+      <label>Дверей, шт<input type="number" id="w-door" value="${r.doors ?? (ROOM_OPENINGS[r.room_type] || [1, 1])[1]}" step="1" min="0" max="30"></label>
       <label>Влажность<select id="w-hum"><option value="">по типу комнаты</option>${opts({ low: "низкая", normal: "обычная", high: "высокая" }, r.humidity || "")}</select></label>
     </div>
     <p class="muted" id="w-area"></p>
     ${nav(true, true)}`;
   const v = id => Number(document.getElementById(id).value);
+  const openings = () => v("w-win") * 2.1 + v("w-door") * 1.6;
   const area = () => {
     const ok = v("w-len") > 0 && v("w-wid") > 0 && v("w-hei") > 0;
     document.getElementById("w-area").textContent = ok
-      ? `Пол ${num(v("w-len") * v("w-wid"))} м² · стены ${num(Math.max(2 * (v("w-len") + v("w-wid")) * v("w-hei") - v("w-open"), 0))} м²`
+      ? `Пол ${num(v("w-len") * v("w-wid"))} м² · стены ${num(Math.max(2 * (v("w-len") + v("w-wid")) * v("w-hei") - openings(), 0))} м² (без окон и дверей; окно считаем 1,5 × 1,4 м, дверь 0,8 × 2 м)`
       : "Укажите длину, ширину и высоту";
     wizard.querySelector("[data-next]").disabled = !ok;
   };
   wizard.querySelectorAll("input").forEach(el => el.oninput = area);
   area();
   bindNav(() => {
-    Object.assign(r, { length_m: v("w-len"), width_m: v("w-wid"), height_m: v("w-hei"), openings_area_m2: v("w-open") });
+    Object.assign(r, { length_m: v("w-len"), width_m: v("w-wid"), height_m: v("w-hei"), windows: v("w-win"), doors: v("w-door") });
+    delete r.openings_area_m2;
     const hum = document.getElementById("w-hum").value;
     if (hum) r.humidity = hum; else delete r.humidity;
     showStep(2);
@@ -312,38 +329,171 @@ function stepSummary() {
     showStep(0);
   });
   wizard.querySelectorAll("[data-del]").forEach(b => b.onclick = () => { W.rooms.splice(Number(b.dataset.del), 1); showStep(4); });
-  wizard.querySelector("[data-calc]").onclick = runEstimate;
+  wizard.querySelector("[data-calc]").onclick = () => runEstimate();
 }
 
-async function runEstimate() {
+function roomsPayload() {
+  return W.rooms.map(r => {
+    const { pickMap, ...room } = r;
+    return { ...room, picks: Object.values(pickMap || {}) };
+  });
+}
+
+const pickKey = i => `${i.material}|${i.surface || ""}`;
+
+function productCell(ri, i) {
+  const why = (i.why || []).length
+    ? `<button class="why" data-why title="Почему этот товар">!</button>` : "";
+  const picked = (W.rooms[ri].pickMap || {})[pickKey(i)] ? ' <span class="pill ok">ваш выбор</span>' : "";
+  return `${why}${esc(i.product.name)}${picked}
+    <div><button class="link" data-change="${ri}|${i.material}|${i.surface || ""}">Изменить</button></div>`;
+}
+
+function bindEstimateButtons(r) {
+  const out = document.getElementById("estimate-result");
+  out.querySelectorAll("[data-why]").forEach(btn => btn.onclick = e => {
+    e.stopPropagation();
+    const open = btn.querySelector(".why-pop");
+    out.querySelectorAll(".why-pop").forEach(x => x.remove());
+    if (open) return;
+    const tr = btn.closest("tr");
+    const [ri, material, surface] = tr.querySelector("[data-change]").dataset.change.split("|");
+    const item = r.rooms[ri].items.find(x => x.material === material && (x.surface || "") === surface);
+    btn.insertAdjacentHTML("beforeend", `<div class="why-pop"><b>Почему выбран этот товар</b><ul>${
+      item.why.map(w => `<li>${esc(w)}</li>`).join("")}</ul></div>`);
+  });
+  out.querySelectorAll("[data-change]").forEach(btn => btn.onclick = () => {
+    const [ri, material, surface] = btn.dataset.change.split("|");
+    const item = r.rooms[ri].items.find(x => x.material === material && (x.surface || "") === surface);
+    openPicker(Number(ri), item);
+  });
+}
+document.addEventListener("click", () => document.querySelectorAll(".why-pop").forEach(x => x.remove()));
+
+const P = { ri: 0, item: null, offset: 0, rows: [] };
+const VARIANT_TITLES = { recommended: "Рекомендуем", quality: "Самый качественный", cheapest: "Самый выгодный из подходящих" };
+const FEATURES = { moisture_resistant: "влагостойкий", washable: "моющийся", wear_class: "износостойкий",
+  anti_slip: "противоскользящий", frost_resistant: "морозостойкий", low_emission: "без запаха", ip_protected: "защита от брызг (IP44+)" };
+
+function openPicker(ri, item) {
+  Object.assign(P, { ri, item, offset: 0, rows: [] });
+  document.body.insertAdjacentHTML("beforeend", `<div class="drawer-bg" id="picker-bg"></div>
+    <aside class="drawer" id="picker">
+      <div class="row" style="justify-content:space-between;align-items:center">
+        <h2>${esc(item.title)}${({ floor: " · пол", wall: " · стены", ceiling: " · потолок" })[item.surface] || ""}
+          <span class="muted">· ${esc(ROOMS[W.rooms[ri].room_type])}</span></h2>
+        <button class="secondary small" id="picker-close">✕ Закрыть</button>
+      </div>
+      <div class="variants" id="picker-variants"><p class="muted">Загружаю…</p></div>
+      <div class="filters">
+        <label>Поиск<input id="pf-q" placeholder="название, бренд"></label>
+        <label>Сортировка<select id="pf-sort">
+          <option value="recommended">рекомендуемые</option><option value="quality">по качеству</option>
+          <option value="price_asc">сначала дешёвые (за ед.)</option><option value="price_desc">сначала дорогие (за ед.)</option>
+          <option value="name">по названию</option></select></label>
+        <label>Цена от<input id="pf-min" type="number" min="0"></label>
+        <label>до<input id="pf-max" type="number" min="0"></label>
+        <label class="chk"><input type="checkbox" id="pf-suitable"> только подходящие</label>
+        ${Object.entries(FEATURES).map(([k, v]) => `<label class="chk"><input type="checkbox" data-feature="${k}"> ${v}</label>`).join("")}
+      </div>
+      <div class="muted" id="picker-total"></div>
+      <div class="scroll"><table id="picker-table"></table></div>
+      <button class="secondary" id="picker-more" hidden>Показать ещё</button>
+    </aside>`);
+  const close = () => { document.getElementById("picker")?.remove(); document.getElementById("picker-bg")?.remove(); };
+  document.getElementById("picker-close").onclick = close;
+  document.getElementById("picker-bg").onclick = close;
+  let t = null;
+  document.querySelectorAll("#picker .filters input, #picker .filters select").forEach(el =>
+    el.addEventListener(el.type === "checkbox" || el.tagName === "SELECT" ? "change" : "input", () => {
+      clearTimeout(t); t = setTimeout(() => loadOptions(true), 300);
+    }));
+  document.getElementById("picker-more").onclick = () => loadOptions(false);
+  loadOptions(true);
+}
+
+async function loadOptions(reset) {
+  if (reset) { P.offset = 0; P.rows = []; }
+  const v = id => document.getElementById(id).value;
+  const body = {
+    room: roomsPayload()[P.ri], material: P.item.material, surface: P.item.surface, sort: v("pf-sort"),
+    q: v("pf-q") || null, price_min: v("pf-min") ? Number(v("pf-min")) : null, price_max: v("pf-max") ? Number(v("pf-max")) : null,
+    suitable_only: document.getElementById("pf-suitable").checked,
+    features: [...document.querySelectorAll("#picker [data-feature]:checked")].map(c => c.dataset.feature),
+    limit: 30, offset: P.offset,
+  };
+  const o = await api("/api/v1/estimate/options", { method: "POST", body: JSON.stringify(body) });
+  P.rows = P.rows.concat(o.products);
+  P.offset += o.products.length;
+  const current = P.item.product?.id;
+  const costLine = x => x.cost != null ? `${x.packages} упак. · <b>${rub(x.cost)}</b>` : `<span class="muted">количество уточните</span>`;
+  const shown = {};
+  if (reset) document.getElementById("picker-variants").innerHTML = Object.entries(o.variants).map(([k, x]) => {
+    const same = shown[x.product.id];
+    shown[x.product.id] = shown[x.product.id] || VARIANT_TITLES[k];
+    if (same) return `<div class="variant"><h4>${VARIANT_TITLES[k]}</h4>
+      <div class="muted">Совпадает с «${esc(same)}»: ${k === "cheapest" ? "среди подходящих товаров дешевле за единицу нет" : "качественнее товара в подборке нет"}.</div></div>`;
+    return `
+    <div class="variant ${x.product.id === current ? "on" : ""}">
+      <h4>${VARIANT_TITLES[k]}</h4>
+      <div>${esc(x.product.name)}</div>
+      <div class="muted">${rub(x.unit_price)} ${esc(x.unit_price_title.replace("₽", ""))} · качество ${x.quality_pct}%</div>
+      <div>${x.features.map(f => `<span class="pill">${esc(f)}</span>`).join("")}</div>
+      <div>${costLine(x)}</div>
+      ${x.product.id === current ? '<span class="pill ok">сейчас в смете</span>'
+        : `<button class="primary small" data-pick="${x.product.id}">Выбрать</button>`}
+    </div>`;
+  }).join("") || '<p class="muted">Нет подходящих товаров.</p>';
+  document.getElementById("picker-total").textContent = `Найдено товаров: ${o.total}`;
+  document.getElementById("picker-table").innerHTML = `
+    <tr><th>Товар</th><th>Качество</th><th style="text-align:right">Цена за ед.</th><th style="text-align:right">Цена</th><th style="text-align:right">На комнату</th><th></th></tr>
+    ${P.rows.map(x => `<tr>
+      <td>${esc(x.product.name)}<div>${x.features.map(f => `<span class="pill">${esc(f)}</span>`).join("")}${x.suitable ? "" : ' <span class="muted">· подходит хуже</span>'}</div></td>
+      <td>${x.quality_pct}%</td>
+      <td class="num">${rub(x.unit_price)}<div class="muted">${esc(x.unit_price_title.replace("₽", ""))}</div></td>
+      <td class="num">${rub(x.product.result_price)}</td>
+      <td class="num">${costLine(x)}</td>
+      <td>${x.product.id === current ? '<span class="pill ok">в смете</span>' : `<button class="secondary small" data-pick="${x.product.id}">Выбрать</button>`}</td>
+    </tr>`).join("")}`;
+  document.getElementById("picker-more").hidden = P.offset >= o.total;
+  document.querySelectorAll("#picker [data-pick]").forEach(b => b.onclick = async () => {
+    const room = W.rooms[P.ri];
+    room.pickMap = { ...(room.pickMap || {}), [pickKey(P.item)]: Number(b.dataset.pick) };
+    document.getElementById("picker")?.remove(); document.getElementById("picker-bg")?.remove();
+    await runEstimate(true);
+  });
+}
+
+async function runEstimate(keepScroll = false) {
   const out = document.getElementById("estimate-result");
   out.hidden = false; out.dataset.filled = "1";
-  out.innerHTML = `<p class="muted">Считаю…</p>`;
+  if (!keepScroll) out.innerHTML = `<p class="muted">Считаю…</p>`;
   try {
     const r = await api("/api/v1/estimate", { method: "POST", body: JSON.stringify({
       object_type: document.getElementById("object").value,
       renovation_type: W.rooms[0].renovation_type,
-      rooms: W.rooms,
+      rooms: roomsPayload(),
     }) });
     out.innerHTML = renderEstimate(r);
     document.getElementById("copy-list").onclick = () => copyList(r);
-    out.scrollIntoView({ behavior: "smooth" });
+    bindEstimateButtons(r);
+    if (!keepScroll) out.scrollIntoView({ behavior: "smooth" });
   } catch (e) { out.innerHTML = `<div class="warn">${esc(e.message)}</div>`; }
 }
 
 function renderEstimate(r) {
-  const rooms = r.rooms.map(room => {
+  const rooms = r.rooms.map((room, ri) => {
     let stage = null;
     const rows = room.items.map(i => {
       const head = i.stage !== stage ? `<tr class="stage"><td colspan="6">${esc(T.stages[i.stage])}</td></tr>` : "";
       stage = i.stage;
       const work = `${esc(i.title)}<div class="muted">${esc(T.works[i.work_type])}${({ floor: " · пол", wall: " · стены", ceiling: " · потолок" })[i.surface] || ""}</div>`;
       if (i.packages === 0 && !i.product) return head + `<tr class="empty"><td>${work}</td><td colspan="5">${esc(i.reason)}</td></tr>`;
-      if (i.packages === 0) return head + `<tr><td>${work}</td><td>${esc(i.product.name)}<div class="muted">${esc(i.reason)}</div></td>
+      if (i.packages === 0) return head + `<tr><td>${work}</td><td>${productCell(ri, i)}<div class="muted">${esc(i.reason)}</div></td>
         <td class="num" colspan="2"><span class="muted">количество уточните</span></td>
         <td class="num">${rub(i.product.result_price)}</td><td class="num">—</td></tr>`;
       return head + `<tr><td>${work}${i.reason ? `<div class="muted">${esc(i.reason)}</div>` : ""}</td>
-        <td>${esc(i.product?.name)}</td>
+        <td>${productCell(ri, i)}</td>
         <td class="num">${num(i.required_amount)} ${esc(i.required_unit)}</td>
         <td class="num">${i.packages} × ${esc(i.product?.unit || "шт")}</td>
         <td class="num">${rub(i.unit_price)}</td>
@@ -543,7 +693,7 @@ api("/api/v1/taxonomy").then(t => {
   t.works.forEach(w => T.works[w.id] = w.title);
   t.materials.forEach(m => T.materials[m.id] = m.title);
   t.renovation_types.forEach(r => T.renovation[r.id] = r.title);
-  t.room_types.forEach(r => ROOMS[r.id] = r.title);
+  t.room_types.forEach(r => { ROOMS[r.id] = r.title; ROOM_OPENINGS[r.id] = [r.windows, r.doors]; });
   showStep(0);
   searchProducts();
 });

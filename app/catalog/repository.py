@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.catalog import normalize as nz
 from app.db import upsert
+from app.ml.ranker import signals
 from app.models import Product, ProductBinding, ProductCategory, ProductCharacteristic
 from app.schemas import BindingIn, BindingOut, Characteristic, ProductBrief, ProductCreate, ProductOut, Suggestion
 from app.taxonomy import Material, WorkType
@@ -20,6 +21,12 @@ def to_brief(p: Product) -> ProductBrief:
         id=p.id, sku=p.sku, name=p.name, url_key=p.url_key, picture_url=p.picture_url, brand=p.brand_name,
         unit=p.unit, result_price=p.result_price, currency=p.currency or "RUB", in_stock=p.in_stock,
     )
+
+
+def has_flags(p: Product, b: ProductBinding, required: Sequence[str]) -> bool:
+    flags = b.flags or {}
+    found = signals(p, b)
+    return all(flags.get(f) or found.get(f, 0) >= 1 for f in required)
 
 
 class CatalogRepo:
@@ -90,7 +97,8 @@ class CatalogRepo:
         rows = [(p, b) for p, b in self.session.execute(stmt.limit(limit * 5))]
         if work_type is not None:
             rows = [(p, b) for p, b in rows if work_type.value in (b.work_types or [])]
-        rows = [(p, b) for p, b in rows if all((b.flags or {}).get(f) for f in required_flags)]
+        if required_flags:
+            rows = [(p, b) for p, b in rows if has_flags(p, b, required_flags)]
         return rows[:limit]
 
     def set_binding(

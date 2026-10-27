@@ -130,7 +130,10 @@ RULES: list[Rule] = [
          rooms=LIVING),
 ]
 
-BASE_WEIGHTS = {"in_stock": 3.0, "calculable": 2.0, "confirmed": 1.0, "recsys": 1.5, "rating": 1.0, "room_match": 3.0}
+BASE_WEIGHTS = {"in_stock": 3.0, "calculable": 2.0, "confirmed": 1.0, "recsys": 1.5, "rating": 1.0, "room_match": 3.0,
+                "price": 2.0}
+SUITABLE_SHARE = 0.8
+BASIS_TITLES = {"m2": "₽/м²", "l": "₽/л", "kg": "₽/кг", "m": "₽/м", "pcs": "₽/шт"}
 
 PIECE_MATERIALS = {M.cable, M.cable_channel, M.socket, M.switch, M.electrical_boxes, M.circuit_breakers, M.lighting,
                    M.lamps, M.heating, M.profile, M.beacons, M.skirting, M.damper_tape, M.fasteners,
@@ -144,6 +147,9 @@ class Scored:
     score: float
     parts: dict[str, float] = field(default_factory=dict)
     filled: int = 0
+    quality: float = 0.0
+    unit_price: float | None = None
+    basis: str = "pcs"
 
 
 def _num(v: object) -> float | None:
@@ -295,6 +301,32 @@ def calculable(p: Product, b: ProductBinding) -> bool:
     return False
 
 
+def unit_price(p: Product) -> tuple[float | None, str]:
+    price = _num(p.result_price)
+    if not price or price <= 0:
+        return None, "pcs"
+    area = _num(p.package_area) or _spec(p, "pack_area_m2")
+    if not area and _spec(p, "length_m") and _spec(p, "width_m"):
+        area = _spec(p, "length_m") * _spec(p, "width_m")
+    if (p.unit or "").lower() in ("м2", "м²", "кв.м"):
+        return price, "m2"
+    for amount, basis in ((area, "m2"), (_spec(p, "volume_l"), "l"), (_spec(p, "weight_kg"), "kg"),
+                          (_spec(p, "pack_length_m"), "m")):
+        if amount and amount > 0:
+            return price / amount, basis
+    return price, "pcs"
+
+
+def _cheapness(prices: list[tuple[float | None, str]]) -> list[float]:
+    out = [0.0] * len(prices)
+    for basis in {b for _, b in prices}:
+        idx = [i for i, (v, b) in enumerate(prices) if b == basis]
+        ranks = _percentile([prices[i][0] for i in idx])
+        for i, r in zip(idx, ranks):
+            out[i] = 0.0 if prices[i][0] is None else 1.0 - r
+    return out
+
+
 def _percentile(values: list[float | None]) -> list[float]:
     known = sorted({v for v in values if v is not None})
     if len(known) < 2:
@@ -317,9 +349,14 @@ class ContextRanker:
             unique.setdefault(p.id, (p, b))
         items = list(unique.values())
         recsys = _percentile([_num(p.recsys_rating) for p, _ in items])
+        prices = [unit_price(p) for p, _ in items]
+        cheap = _cheapness(prices)
+        if len(items) < 2:
+            cheap = [0.0] * len(items)
+        picked = {pid: i for i, pid in enumerate(room.picks)}
 
         scored = []
-        for (p, b), rs in zip(items, recsys):
+        for (p, b), rs, (up, basis), ch in zip(items, recsys, prices, cheap):
             rating = _num(p.rating)
             w = self.base_weights
             parts = {
@@ -335,8 +372,33 @@ class ContextRanker:
             for r in self.rules:
                 if sig.get(r.signal) and r.applies(material, room):
                     parts[r.signal] = parts.get(r.signal, 0.0) + r.weight * sig[r.signal]
+            quality = sum(parts.values())
+            parts["price"] = self.base_weights["price"] * ch
             parts = {k: round(v, 4) for k, v in parts.items() if v}
-            scored.append(Scored(p, round(sum(parts.values()), 4), parts, len(characteristics(p))))
+            scored.append(Scored(p, round(sum(parts.values()), 4), parts, len(characteristics(p)), round(quality, 4),
+                                 up, basis))
 
-        scored.sort(key=lambda s: (-s.score, -s.filled, s.product.id))
+        scored.sort(key=lambda s: (picked.get(s.product.id, len(picked)), -s.score, -s.filled, s.product.id))
         return scored
+
+    def ideal_quality(self, material: Material | None, room: RoomInput, scored: list[Scored]) -> float:
+        w = self.base_weights
+        ideal = w["calculable"] + sum(r.weight for r in self.rules if r.weight > 0 and r.applies(material, room))
+        for key in ("in_stock", "confirmed", "recsys", "rating"):
+            if any(s.parts.get(key, 0) > 0 for s in scored):
+                ideal += w[key]
+        return ideal
+
+    def quality_pct(self, s: Scored, ideal: float) -> int:
+        return max(0, min(100, round(100 * s.quality / ideal))) if ideal > 0 else 100
+
+    def variants(self, candidates: list[tuple[Product, ProductBinding]], room: RoomInput) -> dict[str, Scored]:
+        scored = self.score(candidates, room.model_copy(update={"picks": []}))
+        if not scored:
+            return {}
+        recommended = scored[0]
+        quality = min(scored, key=lambda s: (-s.quality, -s.filled, s.product.id))
+        suitable = [s for s in scored if s.quality >= SUITABLE_SHARE * quality.quality and s.unit_price is not None
+                    and s.basis == recommended.basis]
+        cheapest = min(suitable, key=lambda s: (s.unit_price, -s.quality, s.product.id)) if suitable else recommended
+        return {"recommended": recommended, "quality": quality, "cheapest": cheapest}

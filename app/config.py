@@ -34,7 +34,7 @@ class Settings(BaseSettings):
     ml_classifier_artifact_path: Path = Path(
         "ml_workspace/data/experiments_v3/tfidf_logreg/model"
     )
-    ranker_impl: str = "app.ml.baseline:RatingRanker"
+    ranker_impl: str = "app.ml.ranker:ContextRanker"
     autobind_min_confidence: float = 0.8
 
     cors_origins: list[str] = ["*"]

@@ -80,13 +80,27 @@ def test_weights_depend_on_material_and_room():
     assert ids([s.product for s in best]) == [2, 1] and best[0].parts["wear_class"] == 4.0
 
 
-def test_base_signals_and_price_ignored():
-    out_of_stock = item(1, in_stock=False, rating=5, **PACK)
-    no_pack = item(2, rating=5)
-    good = item(3, price=99999, **PACK)
-    assert ids(ContextRanker().rank([out_of_stock, no_pack, good], room())) == [3, 2, 1]
-    cheap, expensive = item(5, price=1, **PACK), item(4, price=1000, **PACK)
-    assert ids(ContextRanker().rank([cheap, expensive], room())) == [4, 5]
+def test_price_is_normalized_and_moderate():
+    cheap, expensive = item(1, price=100, **PACK), item(2, price=900, **PACK)
+    assert ids(ContextRanker().rank([expensive, cheap], room())) == [1, 2]
+    out_of_stock_cheap = item(3, price=100, in_stock=False, **PACK)
+    assert ids(ContextRanker().rank([out_of_stock_cheap, expensive], room())) == [2, 3]
+    big_can = item(4, price=900, specs={"volume_l": "9"})
+    small_can = item(5, price=150, specs={"volume_l": "0.9"})
+    best = ContextRanker().score([small_can, big_can], room())
+    assert ids([s.product for s in best]) == [4, 5] and best[0].unit_price == 100 and best[0].basis == "l"
+    wet_expensive = item(6, price=5000, chars={"Влагостойкость краски": "да"}, **PACK)
+    assert ids(ContextRanker().rank([cheap, wet_expensive], room("bathroom"))) == [6, 1]
+
+
+def test_variants_and_picks():
+    premium = item(1, price=3000, chars={"Влагостойкость краски": "да", "Аромат": "без запаха"}, **PACK)
+    good_cheap = item(2, price=900, chars={"Влагостойкость краски": "да"}, **PACK)
+    junk_cheap = item(3, price=10, **PACK)
+    v = ContextRanker().variants([premium, good_cheap, junk_cheap], room("kitchen"))
+    assert v["quality"].product.id == 1
+    assert v["cheapest"].product.id == 2
+    assert ids(ContextRanker().rank([premium, good_cheap, junk_cheap], room("kitchen", picks=[3]))) [0] == 3
 
 
 def test_missing_data_deterministic_and_no_mutation():
@@ -144,3 +158,31 @@ def test_typical_outweighs_moisture_of_wrong_product():
     moment = item(1, "wallpaper_glue", name="клей МОМЕНТ особопрочный 30мл", chars={"Влагостойкость": "да"})
     glue = item(2, "wallpaper_glue", name="клей обойный KLEO флизелиновый 240г", **PACK)
     assert ids(ContextRanker().rank([moment, glue], room("bathroom"))) == [2, 1]
+
+
+def test_quality_pct_is_relative_to_ideal_product():
+    from app.taxonomy import Material
+
+    r = ContextRanker()
+    plain = item(1, "laminate", name="ламинат Дуб 33 класс", chars={"Износостойкость": "33"}, in_stock=None, **PACK)
+    best = item(2, "laminate", name="ламинат Дуб 34 класс", chars={"Износостойкость": "34", "Аромат": "без запаха"},
+                in_stock=None, **PACK)
+    scored = r.score([plain, best], room("bedroom"))
+    ideal = r.ideal_quality(Material.laminate, room("bedroom"), scored)
+    pct = {s.product.id: r.quality_pct(s, ideal) for s in scored}
+    assert ideal == 11 and pct[2] == 100 and 75 <= pct[1] <= 80
+
+    tile = item(3, "tile", name="керамогранит влагостойкий", chars={"Влагостойкость": "да"}, in_stock=None, **PACK)
+    tiles = r.score([tile], room("bathroom"))
+    assert r.quality_pct(tiles[0], r.ideal_quality(Material.tile, room("bathroom"), tiles)) == 75
+
+
+def test_moisture_filter_uses_catalog_characteristics():
+    from app.catalog.repository import has_flags
+
+    wet = ["moisture_resistant"]
+    assert has_flags(*item(1, chars={"Влагостойкость краски": "да"}), wet)
+    assert has_flags(*item(2, name="Гипсокартон влагостойкий ГКЛВ"), wet)
+    assert has_flags(*item(3, flags={"moisture_resistant": True}), wet)
+    assert not has_flags(*item(4, chars={"Тип помещения": "с умеренной влажностью"}), wet)
+    assert not has_flags(*item(5, name="Краска интерьерная"), wet)
