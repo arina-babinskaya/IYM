@@ -95,3 +95,61 @@ def test_pack_length():
     assert "pack_length_m" not in extract_specs([], product_name="обои 10,05х1,06м")
     assert "pack_length_m" not in extract_specs([], product_name="кабель-канал 25х25мм")
     assert extract_specs([{"name": "Метраж упаковки", "value": "100"}])["pack_length_m"] == "100"
+
+
+def test_part_and_box_sizes_are_not_material_dimensions():
+    lamp_junk = [{"name": n, "value": v} for n, v in [
+        ("Вес", "3"), ("Высота светильника", "340"), ("Длина сетевого шнура", "1.6"), ("Ширина светильника", "125")]]
+    specs = extract_specs(lamp_junk, product_name="Шпатлевка акриловая ЛАКРА 3кг")
+    assert specs["weight_kg"] == "3" and not {"length_m", "width_m", "height_m"} & specs.keys()
+    bag = extract_specs([{"name": "Длина упаковки", "value": "600"}, {"name": "Ширина упаковки", "value": "400"}])
+    assert "length_m" not in bag and "width_m" not in bag
+
+
+def test_roll_size_characteristics():
+    specs = extract_specs([{"name": "Длина рулона", "value": "10,05"}, {"name": "Ширина рулона", "value": "1,06"}])
+    assert specs["length_m"] == "10.05" and specs["width_m"] == "1.06"
+
+
+@pytest.mark.parametrize("name, chars, expected", [
+    ("клей обойный KLEO 250г", {"Вес": "250"}, {"weight_kg": "0.25"}),
+    ("краска акриловая 0,9л", {"Объем": "900"}, {"volume_l": "0.9"}),
+    ("мовиль FILL INN 520мл аэрозоль", {"Объем": "520"}, {"volume_l": "0.52"}),
+    ("панель для ванны AM.PM 150х70см", {"Длина": "150"}, {"length_m": "1.5"}),
+    ("планка с крючками 33х5,5х3,5см", {"Длина": "3,5", "Ширина": "33"}, {"length_m": "0.035", "width_m": "0.33"}),
+    ("плитка настенная 25х40 см", {"Длина": "40", "Ширина": "25"}, {"length_m": "0.4", "width_m": "0.25"}),
+    ("гипсокартон KNAUF 2500х1200х12,5мм", {"Длина": "2500", "Ширина": "1200"}, {"length_m": "2.5", "width_m": "1.2"}),
+    ("шпатлевка финишная 20кг", {"Вес": "20"}, {"weight_kg": "20"}),
+])
+def test_units_in_name_beat_unitless_card_values(name, chars, expected):
+    specs = extract_specs([{"name": k, "value": v} for k, v in chars.items()], product_name=name)
+    assert {k: specs.get(k) for k in expected} == expected
+
+
+@pytest.mark.parametrize("name, chars, expected", [
+    ("клей обойный ЭКОН универсальный 200гр", {"Вес": "200"}, {"weight_kg": "0.2"}),
+    ("клей обойный МЕТИЛАН Флизелин 200г", {"Вес": "200", "Расход материала": "36"},
+     {"weight_kg": "0.2", "pack_area_m2": "36", "consumption": None}),
+    ("эмаль аэрозольная MOTIP Деко 400мл", {"Объем, л": "400"}, {"volume_l": "0.4"}),
+    ("ламинат Дуб фактурный 8мм 2,131м2 32 класс", {}, {"pack_area_m2": "2.131"}),
+    ("плитка настенная ВКЗ Axima 25х50 бело-серая", {}, {"length_m": "0.5", "width_m": "0.25"}),
+    ("линолеум MASTER HAVANNA OAK 1 3,5 м", {}, {"width_m": "3.5", "length_m": "1", "pack_length_m": None}),
+    ("кабель ВВГнг-LS 3х2,5 бухта 50м", {}, {"pack_length_m": "50", "width_m": None}),
+])
+def test_catalog_audit_cases(name, chars, expected):
+    specs = extract_specs([{"name": k, "value": v} for k, v in chars.items()], product_name=name)
+    assert {k: specs.get(k) for k in expected} == expected
+
+
+@pytest.mark.parametrize("name, chars, expected", [
+    ("клей для обоев QUELYD MULTI PRO готовый 11л", {"Вес": "11000"}, {"weight_kg": "11"}),
+    ("клей обойный KLEO EXTRA готовый 5кг", {"Вес": "5", "Расход материала": "25"}, {"pack_area_m2": "25", "consumption": None}),
+    ("штукатурка гипсовая 30кг", {"Вес": "30", "Расход материала": "8,5"}, {"pack_area_m2": None}),
+    ("керамогранит Kerama Marazzi Александрия 30х30 см", {}, {"length_m": "0.3", "width_m": "0.3"}),
+    ("керамогранит 60x120х0,9 Urban Marble", {}, {"length_m": "1.2", "width_m": "0.6"}),
+    ("линолеум IVC Modus 3,5 м", {"Ширина рулона": "3,5"}, {"width_m": "3.5", "length_m": "1", "pack_length_m": None}),
+    ("щит мебельный СОЮЗ 3050х600х4мм", {"Длина, м": "3050"}, {"length_m": "3.05"}),
+])
+def test_catalog_audit_second_round(name, chars, expected):
+    specs = extract_specs([{"name": k, "value": v} for k, v in chars.items()], product_name=name)
+    assert {k: specs.get(k) for k in expected} == expected
