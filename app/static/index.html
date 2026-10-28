@@ -496,7 +496,7 @@ async function runEstimate(keepScroll = false) {
   out.hidden = false; out.dataset.filled = "1";
   if (!keepScroll) out.innerHTML = `<div class="p-10 text-center"><div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-brand-red"></div><p class="mt-4 text-gray-500 font-medium">Считаем смету...</p></div>`;
   try {
-    const r = await api("/api/v1/estimate", { method: "POST", body: JSON.stringify({ object_type: document.getElementById("object").value, renovation_type: W.rooms[0].renovation_type, rooms: roomsPayload() }) });
+    const r = await api("/api/v1/estimate", { method: "POST", body: JSON.stringify({ object_type: document.getElementById("object").value, renovation_type: W.rooms[0].renovation_type, rooms: roomsPayload(), explain: false }) });
     if (requestVersion !== estimateRequestVersion) return;
     if (r.status) estimateStatus = r.status;
     out.innerHTML = renderEstimate(r);
