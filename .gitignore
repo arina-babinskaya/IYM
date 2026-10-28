@@ -1,9 +1,15 @@
 *.pyc
 *.sqlite
 .env
-.venv-sandbox
+.venv-sandbox/
 .pytest_cache/
+.cache/
+ml_workspace/outputs/gigachat_matching_experiment/catalog_predictions.csv
+ml_workspace/outputs/gigachat_matching_experiment/gigachat_results.csv
+ml_workspace/outputs/gigachat_matching_experiment/gigachat_api_usage.csv
+ml_workspace/outputs/gigachat_matching_experiment/manual_annotations_completed.csv
 .venv/
+.venv-ml/
 __pycache__/
 data/
 ml_workspace/artifacts/models/

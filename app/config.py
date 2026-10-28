@@ -33,7 +33,31 @@ class Settings(BaseSettings):
     ml_classifier_backend: Literal["baseline", "trained", "tfidf"] = "trained"
     ml_classifier_artifact_path: Path = Path("ml_workspace/model/tfidf_logreg/model")
     ranker_impl: str = "app.ml.ranker:ContextRanker"
-    autobind_min_confidence: float = 0.8
+    autobind_min_confidence: float = 0.7
+
+    gigachat_enabled: bool = False
+    gigachat_credentials: str | None = None
+    gigachat_scope: str = "GIGACHAT_API_PERS"
+    gigachat_auth_url: str = "https://ngw.devices.sberbank.ru:9443/api/v2/oauth"
+    gigachat_api_url: str = "https://gigachat.devices.sberbank.ru/api/v1"
+    gigachat_model: str = "GigaChat-2"
+    gigachat_timeout_s: float = 45.0
+    gigachat_retries: int = 3
+    gigachat_verify_ssl: bool = True
+    # Optional PEM bundle shared by OAuth, discovery, chat, retries and explanations.
+    gigachat_ca_bundle: Path | None = None
+    gigachat_structured_output: bool = True
+    gigachat_repair_invalid_response: bool = True
+    gigachat_cache_path: Path = Path(".cache/gigachat.sqlite")
+    gigachat_token_budget: int | None = None
+    gigachat_token_reservation: int = 2500
+    gigachat_max_requests: int | None = None
+    gigachat_autobind_max_products: int = 30
+    gigachat_cache_namespace: str = "hybrid-v2"
+    gigachat_binding_confidence: float = 0.8
+    gigachat_accept_material_only: bool = True
+    gigachat_explanations: bool = False
+    gigachat_explanation_max_items: int = 30
 
     cors_origins: list[str] = ["*"]
 
