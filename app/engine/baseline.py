@@ -165,11 +165,88 @@ def _spec(p: Product, key: str) -> Decimal | None:
     return to_decimal(v["value"] if isinstance(v, dict) else v)
 
 
+def _extract_pack_area(name: str | None) -> Decimal | None:
+    if not name:
+        return None
+    m = re.search(r'(\d+(?:[.,]\d+)?)\s*(?:м2|м²|кв\.?\s*м)', name, re.IGNORECASE)
+    if m:
+        try:
+            val = Decimal(m.group(1).replace(',', '.'))
+            if val > 0:
+                return val
+        except Exception:
+            pass
+    m = re.search(r'(\d+(?:[.,]\d+)?)\s*[xх×]\s*(\d+(?:[.,]\d+)?)\s*м\b', name, re.IGNORECASE)
+    if m:
+        try:
+            val = Decimal(m.group(1).replace(',', '.')) * Decimal(m.group(2).replace(',', '.'))
+            if val > 0:
+                return val
+        except Exception:
+            pass
+    m = re.search(r'(\d+(?:[.,]\d+)?)\s*[xх×]\s*(\d+(?:[.,]\d+)?)\s*см\b', name, re.IGNORECASE)
+    if m:
+        try:
+            w = Decimal(m.group(1).replace(',', '.')) / Decimal(100)
+            h = Decimal(m.group(2).replace(',', '.')) / Decimal(100)
+            if w > 0 and h > 0:
+                return (w * h * 4).quantize(Decimal('0.01'))
+        except Exception:
+            pass
+    return None
+
+
+def _extract_weight_volume(name: str | None) -> tuple[Decimal | None, Decimal | None]:
+    if not name:
+        return None, None
+    weight, volume = None, None
+    mw = re.search(r'(\d+(?:[.,]\d+)?)\s*(?:кг|kg)\b', name, re.IGNORECASE)
+    if mw:
+        try:
+            weight = Decimal(mw.group(1).replace(',', '.'))
+        except Exception:
+            pass
+    mv = re.search(r'(\d+(?:[.,]\d+)?)\s*(?:л|l)\b', name, re.IGNORECASE)
+    if mv:
+        try:
+            volume = Decimal(mv.group(1).replace(',', '.'))
+        except Exception:
+            pass
+    return weight, volume
+
+
+PASTE_OR_MIX_MATERIALS = {
+    Material.putty,
+    Material.plaster,
+    Material.screed_mix,
+    Material.primer,
+    Material.paint,
+    Material.tile_adhesive,
+    Material.grout,
+    Material.wallpaper_glue,
+    Material.waterproofing,
+}
+
+
+def _is_paste_or_mix(p: Product, material: Material | None) -> bool:
+    if material in PASTE_OR_MIX_MATERIALS:
+        return True
+    name_lower = (p.name or '').lower()
+    return any(
+        w in name_lower
+        for w in (
+            'шпатлевк', 'шпаклевк', 'штукатурк', 'стяжк', 'наливной пол',
+            'грунтовк', 'грунт ', 'краск', 'эмаль', 'клей плиточн', 'затирк'
+        )
+    )
+
+
 def packages_for_area(
     p: Product,
     area: Decimal,
     reserve_pct: Decimal,
     layers: int = 1,
+    material: Material | None = None,
 ) -> tuple[Decimal, str, int, str]:
     """
     Расчёт требуемого количества упаковок/штук материала для заданной площади.
@@ -180,8 +257,8 @@ def packages_for_area(
     need = area * layers * (1 + reserve_pct / 100)
     unit = (p.unit or "").lower()
 
-    # 1. Товар с заданной площадью покрытия упаковкой (плитка, ламинат, панели)
-    pack_area = p.package_area or _spec(p, "pack_area_m2")
+    # 1. Товар с заданной площадью покрытия упаковкой (плитка, ламинат, панели, подложка)
+    pack_area = p.package_area or _spec(p, "pack_area_m2") or _extract_pack_area(p.name)
     if pack_area and pack_area > 0:
         n = _ceil(need / pack_area)
         formula = f"{area:.2f} м² × {layers} × (1 + {reserve_pct}%) / {pack_area} м² в упак. → {n}"
@@ -193,32 +270,39 @@ def packages_for_area(
         formula = f"{area:.2f} м² × (1 + {reserve_pct}%) → {n} м²"
         return need, "м²", n, formula
 
-    # 3. Листовой или рулонный материал с известными размерами (обои, ГКЛ)
-    length, width = _spec(p, "length_m"), _spec(p, "width_m")
-    if length and width and length > 0 and width > 0:
-        rapport = _spec(p, "rapport_m")
-        if rapport and rapport > 0:
-            # Учёт раппорта обоев: отходы на подгонку рисунка при стандартной высоте стены 2.7 м
-            wall_h = Decimal("2.7")
-            cut_length = wall_h + rapport
-            strips_per_roll = max(int(length / cut_length), 1)
-            effective_roll_area = Decimal(strips_per_roll) * width * wall_h
-            if effective_roll_area > 0:
-                n = _ceil(need / effective_roll_area)
-                formula = (
-                    f"{area:.2f} м² × (1 + {reserve_pct}%) / {effective_roll_area:.2f} м² "
-                    f"(рулон {width}×{length} м с раппортом {rapport} м, {strips_per_roll} пол.) → {n}"
-                )
-                return need, "м²", n, formula
+    is_mix = _is_paste_or_mix(p, material)
 
-        sheet = length * width
-        n = _ceil(need / sheet)
-        formula = f"{area:.2f} м² × (1 + {reserve_pct}%) / {sheet:.3f} м² (лист/рулон) → {n}"
-        return need, "м²", n, formula
+    # 3. Листовой или рулонный материал с известными размерами (обои, ГКЛ) — строго НЕ строительные смеси
+    if not is_mix:
+        length, width = _spec(p, "length_m"), _spec(p, "width_m")
+        if length and width and length > 0 and width > 0:
+            rapport = _spec(p, "rapport_m")
+            if rapport and rapport > 0:
+                # Учёт раппорта обоев: отходы на подгонку рисунка при стандартной высоте стены 2.7 м
+                wall_h = Decimal("2.7")
+                cut_length = wall_h + rapport
+                strips_per_roll = max(int(length / cut_length), 1)
+                effective_roll_area = Decimal(strips_per_roll) * width * wall_h
+                if effective_roll_area > 0:
+                    n = _ceil(need / effective_roll_area)
+                    formula = (
+                        f"{area:.2f} м² × (1 + {reserve_pct}%) / {effective_roll_area:.2f} м² "
+                        f"(рулон {width}×{length} м с раппортом {rapport} м, {strips_per_roll} пол.) → {n}"
+                    )
+                    return need, "м²", n, formula
+
+            sheet = length * width
+            n = _ceil(need / sheet)
+            formula = f"{area:.2f} м² × (1 + {reserve_pct}%) / {sheet:.3f} м² (лист/рулон) → {n}"
+            return need, "м²", n, formula
 
     # 4. Материал с нормой расхода (краска, грунтовка, штукатурка, смеси)
     cons = (p.specs or {}).get("consumption")
     volume, weight = _spec(p, "volume_l"), _spec(p, "weight_kg")
+    if not volume and not weight:
+        ew, ev = _extract_weight_volume(p.name)
+        weight, volume = weight or ew, volume or ev
+
     if isinstance(cons, dict):
         rate = to_decimal(cons.get("value"))
         cons_unit = cons.get("unit")
@@ -237,6 +321,35 @@ def packages_for_area(
             n = _ceil(liters / volume)
             formula = f"{area:.2f} м² × {layers} сл. / {rate} м²/л / {volume} л → {n}"
             return liters, "л", n, formula
+
+    # 5. Применение нормативного расхода из СНиП/СП для смесей и паст без расхода в каталоге
+    std_key = material.value if material else None
+    if not std_key and is_mix:
+        name_lower = (p.name or "").lower()
+        if "шпатлевк" in name_lower or "шпаклевк" in name_lower:
+            std_key = "putty"
+        elif "штукатурк" in name_lower:
+            std_key = "plaster"
+        elif "стяжк" in name_lower:
+            std_key = "screed_mix"
+        elif "грунтовк" in name_lower:
+            std_key = "primer"
+        elif "краск" in name_lower or "эмаль" in name_lower:
+            std_key = "paint"
+
+    if std_key:
+        std = CONSUMPTION_RATES.get(std_key)
+        if std and std.consumption_rate:
+            if std.consumption_unit == "kg/m2" and weight and weight > 0:
+                kg = area * std.consumption_rate * (1 + reserve_pct / 100)
+                n = _ceil(kg / weight)
+                formula = f"{area:.2f} м² × {std.consumption_rate} кг/м² (СНиП) / {weight} кг → {n}"
+                return kg, "кг", n, formula
+            if std.consumption_unit == "l/m2" and volume and volume > 0:
+                liters = area * layers * std.consumption_rate * (1 + reserve_pct / 100)
+                n = _ceil(liters / volume)
+                formula = f"{area:.2f} м² × {layers} сл. × {std.consumption_rate} л/м² (СНиП) / {volume} л → {n}"
+                return liters, "л", n, formula
 
     raise CalcError(f"Для товара {p.id} нет фасовки или расхода в характеристиках")
 
@@ -364,7 +477,7 @@ class BaselineEngine:
             reserve = RESERVE.get(material, Decimal(5))
             layers = 2 if material == Material.paint else 1
             try:
-                need, unit, n, _ = packages_for_area(p, area, reserve, layers=layers)
+                need, unit, n, _ = packages_for_area(p, area, reserve, layers=layers, material=material)
                 reason = "влагостойкий, т.к. высокая влажность" if wet else None
             except CalcError as e:
                 # Попытка применить нормативный расход из СНиП (CONSUMPTION_RATES)
@@ -447,10 +560,15 @@ class BaselineEngine:
                     items.append(item)
 
             items.sort(key=lambda i: STAGE_ORDER.index(i.stage))
-            missing = sorted({i.title for i in items if i.packages == 0})
-            if missing:
+            missing_no_product = sorted({i.title for i in items if i.product is None})
+            if missing_no_product:
                 warnings.append(
-                    f"{room.name or ROOM_TITLES[room.room_type]}: не подобраны — {', '.join(missing)}"
+                    f"{room.name or ROOM_TITLES[room.room_type]}: не найдены в каталоге — {', '.join(missing_no_product)}"
+                )
+            missing_qty = sorted({i.title for i in items if i.product is not None and i.packages == 0})
+            if missing_qty:
+                warnings.append(
+                    f"{room.name or ROOM_TITLES[room.room_type]}: товар подобран, но требуется уточнить количество — {', '.join(missing_qty)}"
                 )
 
             subtotal = _money(sum((i.cost for i in items), Decimal(0)))
@@ -518,7 +636,7 @@ class BaselineEngine:
             if req.reserve_pct is not None
             else RESERVE.get(material, Decimal(5))
         )
-        need, unit, n, formula = packages_for_area(product, req.net_area, reserve, req.layers)
+        need, unit, n, formula = packages_for_area(product, req.net_area, reserve, req.layers, material=material)
         price = product.result_price
         return ProductCalcResponse(
             product=to_brief(product),
