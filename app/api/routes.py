@@ -4,7 +4,6 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import text
 
 from app.api.deps import get_classifier, get_estimate_engine, get_repo
-from app.api.picker import add_why
 from app.catalog.repository import MANUAL_ID_START, AdminStatus, CatalogRepo, to_brief
 from app.config import get_settings
 from app.engine.interface import CalcError
@@ -22,7 +21,6 @@ from app.schemas import (
     ProductCreate,
     ProductOut,
     Suggestion,
-    ROOM_DEFAULT_OPENINGS,
     ROOM_TITLES,
     RoomType,
     StageOptions,
@@ -40,7 +38,7 @@ router = APIRouter(prefix="/api/v1")
 async def estimate(req: EstimateRequest, repo: CatalogRepo = Depends(get_repo)) -> EstimateResponse:
     t0 = time.perf_counter()
     engine = get_estimate_engine()
-    resp = add_why(engine.estimate(req, repo), repo)
+    resp = engine.estimate(req, repo)
     if req.explain:
         try:
             resp = await engine.explain(req, resp)
@@ -54,8 +52,7 @@ async def estimate(req: EstimateRequest, repo: CatalogRepo = Depends(get_repo)) 
 def taxonomy() -> TaxonomyOut:
     return TaxonomyOut(
         stages=[{"id": k.value, "title": v} for k, v in STAGE_TITLES.items()],
-        room_types=[{"id": k.value, "title": v, "windows": ROOM_DEFAULT_OPENINGS.get(k, (1, 1))[0],
-                     "doors": ROOM_DEFAULT_OPENINGS.get(k, (1, 1))[1]} for k, v in ROOM_TITLES.items()],
+        room_types=[{"id": k.value, "title": v} for k, v in ROOM_TITLES.items()],
         renovation_types=[{"id": k.value, "title": v} for k, v in RENOVATION_TITLES.items()],
         works=[{"id": k.value, "title": v.title, "stage": v.stage.value, "stages": [s.value for s in v.stages],
                 "materials": [m.value for m in v.materials]}

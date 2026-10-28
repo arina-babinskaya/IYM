@@ -2,7 +2,7 @@ from decimal import Decimal
 from enum import StrEnum
 from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, PlainSerializer, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, PlainSerializer, field_validator
 
 from app.taxonomy import Material, RenovationType, Stage, WorkType
 
@@ -103,17 +103,6 @@ class WorkChoice(BaseModel):
     materials: list[Material] | None = None
 
 
-WINDOW_AREA_M2 = Decimal("2.1")
-DOOR_AREA_M2 = Decimal("1.6")
-
-ROOM_DEFAULT_OPENINGS: dict[RoomType, tuple[int, int]] = {
-    RoomType.bathroom: (0, 1),
-    RoomType.hallway: (0, 2),
-    RoomType.utility_room: (0, 1),
-    RoomType.general_indoor: (1, 1),
-}
-
-
 class RoomInput(BaseModel):
     name: str | None = None
     room_type: RoomType
@@ -122,17 +111,8 @@ class RoomInput(BaseModel):
     width_m: Amount = Field(gt=0)
     height_m: Amount = Field(Decimal("2.7"), gt=0)
     openings_area_m2: Amount = Field(Decimal("0"), ge=0)
-    windows: int | None = Field(None, ge=0, le=30)
-    doors: int | None = Field(None, ge=0, le=30)
     humidity: Level | None = None
     works: list[WorkChoice] | None = None
-    picks: list[int] = Field(default_factory=list)
-
-    @model_validator(mode="after")
-    def _openings_from_counts(self) -> "RoomInput":
-        if not self.openings_area_m2 and (self.windows or self.doors):
-            self.openings_area_m2 = (self.windows or 0) * WINDOW_AREA_M2 + (self.doors or 0) * DOOR_AREA_M2
-        return self
 
     @field_validator("works", mode="before")
     @classmethod
@@ -173,7 +153,6 @@ class EstimateItem(BaseModel):
     cost: Money = Decimal("0")
     reason: str | None = None
     alternatives: list[ProductBrief] = Field(default_factory=list)
-    why: list[str] = Field(default_factory=list)
 
 
 class RoomEstimate(BaseModel):
@@ -305,55 +284,10 @@ class WorkOptionsOut(BaseModel):
 
 class TaxonomyOut(BaseModel):
     stages: list[dict[str, str]]
-    room_types: list[dict[str, Any]] = Field(default_factory=list)
+    room_types: list[dict[str, str]] = Field(default_factory=list)
     renovation_types: list[dict[str, str]]
     works: list[dict[str, Any]]
     materials: list[dict[str, str]]
 
 
 ProductOut.model_rebuild()
-
-
-OptionSort = Literal["recommended", "price_asc", "price_desc", "quality", "name"]
-OptionFeature = Literal["moisture_resistant", "washable", "wear_class", "anti_slip", "frost_resistant", "antifungal",
-                        "low_emission", "ip_protected"]
-
-
-class OptionsRequest(BaseModel):
-    room: RoomInput
-    material: Material
-    surface: Surface | None = None
-    sort: OptionSort = "recommended"
-    q: str | None = None
-    features: list[OptionFeature] = Field(default_factory=list)
-    suitable_only: bool = False
-    price_min: Money | None = None
-    price_max: Money | None = None
-    limit: int = Field(30, ge=1, le=200)
-    offset: int = Field(0, ge=0)
-
-
-class OptionProduct(BaseModel):
-    product: ProductBrief
-    score: float
-    quality: float
-    quality_pct: int
-    suitable: bool
-    unit_price: Money | None = None
-    unit_price_title: str = ""
-    packages: int | None = None
-    required_amount: Amount | None = None
-    required_unit: str | None = None
-    cost: Money | None = None
-    features: list[str] = Field(default_factory=list)
-    why: list[str] = Field(default_factory=list)
-
-
-class OptionsResponse(BaseModel):
-    material: Material
-    material_title: str
-    surface: Surface | None = None
-    area_m2: Amount
-    total: int
-    variants: dict[str, OptionProduct] = Field(default_factory=dict)
-    products: list[OptionProduct] = Field(default_factory=list)

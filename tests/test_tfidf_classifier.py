@@ -9,13 +9,14 @@ from app.api.deps import get_classifier
 from app.config import get_settings
 from app.db import get_sessionmaker
 from app.main import app
+from app.ml.baseline import KeywordClassifier
 from app.ml.tfidf import ClassifierArtifactError, TfidfClassifier, prediction_to_suggestion, product_to_input
 from app.models import Product
 from ml_workspace.ml_api import ProductInput, load_model, predict
 from ml_workspace.ml_api.types import Prediction
 
 
-ARTIFACT = Path(__file__).parents[1] / "ml_workspace/model/tfidf_logreg/model"
+ARTIFACT = Path(__file__).parents[1] / "ml_workspace/data/experiments_v3/tfidf_logreg/model"
 
 
 @pytest.fixture(scope="module")
@@ -84,18 +85,12 @@ def test_invalid_artifact_path_has_meaningful_error(tmp_path):
         TfidfClassifier(tmp_path / "missing")
 
 
-def test_trained_is_default_and_cached(monkeypatch):
-    if not ARTIFACT.is_dir():
-        pytest.skip("local selected v3 artifact is unavailable")
+def test_baseline_is_default_and_cached(monkeypatch):
     monkeypatch.delenv("RC_ML_CLASSIFIER_BACKEND", raising=False)
-    monkeypatch.delenv("RC_ML_CLASSIFIER_ARTIFACT_PATH", raising=False)
     get_classifier.cache_clear(); get_settings.cache_clear()
-    try:
-        first = get_classifier()
-        assert isinstance(first, TfidfClassifier)
-        assert get_classifier() is first
-    finally:
-        get_classifier.cache_clear(); get_settings.cache_clear()
+    first = get_classifier()
+    assert isinstance(first, KeywordClassifier)
+    assert get_classifier() is first
 
 
 def test_trained_backend_name_loads_selected_v3_artifact(monkeypatch):
