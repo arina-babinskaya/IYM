@@ -154,8 +154,9 @@
     <!-- Форма добавления (скрыта по умолчанию) -->
     <form id="add-form" class="bg-gray-50 border border-gray-200 rounded-xl p-5 mb-6 grid gap-4" hidden>
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <label class="md:col-span-2 text-sm font-medium text-gray-700">Название <span class="text-brand-red font-bold">*</span><input name="name" required minlength="2" placeholder="Краска интерьерная..." class="mt-1 w-full bg-white border border-gray-300 rounded-lg p-2.5 outline-none focus:border-brand-blue"></label>
-        <label class="text-sm font-medium text-gray-700">Цена, ₽ <span class="text-brand-red font-bold">*</span><input name="price" type="number" min="0.01" step="0.01" required class="mt-1 w-full bg-white border border-gray-300 rounded-lg p-2.5 outline-none focus:border-brand-blue"></label>        <label class="text-sm font-medium text-gray-700">Единица<input name="unit" placeholder="шт" class="mt-1 w-full bg-white border border-gray-300 rounded-lg p-2.5 outline-none focus:border-brand-blue"></label>
+        <label class="md:col-span-2 text-sm font-medium text-gray-700">Название*<input name="name" required minlength="2" placeholder="Краска интерьерная..." class="mt-1 w-full bg-white border border-gray-300 rounded-lg p-2.5 outline-none focus:border-brand-blue"></label>
+        <label class="text-sm font-medium text-gray-700">Цена, ₽*<input name="price" type="number" min="0.01" step="0.01" required class="mt-1 w-full bg-white border border-gray-300 rounded-lg p-2.5 outline-none focus:border-brand-blue"></label>
+        <label class="text-sm font-medium text-gray-700">Единица<input name="unit" placeholder="шт" class="mt-1 w-full bg-white border border-gray-300 rounded-lg p-2.5 outline-none focus:border-brand-blue"></label>
       </div>
       <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
         <label class="text-sm font-medium text-gray-700">Категория<input name="category" placeholder="Краски" class="mt-1 w-full bg-white border border-gray-300 rounded-lg p-2.5 outline-none focus:border-brand-blue"></label>
@@ -164,12 +165,9 @@
         <label class="text-sm font-medium text-gray-700">Штук в упаковке<input name="quantity_in_package" type="number" min="0" step="1" class="mt-1 w-full bg-white border border-gray-300 rounded-lg p-2.5 outline-none focus:border-brand-blue"></label>
       </div>
       <label class="text-sm font-medium text-gray-700">Характеристики (Название: значение)<textarea name="characteristics" rows="2" placeholder="Влагостойкость краски: да&#10;Расход материала: 0,12" class="mt-1 w-full bg-white border border-gray-300 rounded-lg p-2.5 outline-none focus:border-brand-blue"></textarea></label>
-            <div class="flex flex-col gap-3">
-        <p class="text-xs text-gray-500"><span class="text-brand-red font-bold">*</span> — обязательные поля</p>
-        <div class="flex gap-2">
-          <button type="submit" class="bg-brand-red hover:bg-red-900 text-white font-semibold py-2 px-5 rounded-lg transition-colors">Добавить</button>
-          <button type="button" id="add-cancel" class="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold py-2 px-5 rounded-lg transition-colors">Отмена</button>
-        </div>
+      <div class="flex gap-2">
+        <button type="submit" class="bg-brand-red hover:bg-red-900 text-white font-semibold py-2 px-5 rounded-lg transition-colors">Добавить</button>
+        <button type="button" id="add-cancel" class="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold py-2 px-5 rounded-lg transition-colors">Отмена</button>
       </div>
     </form>
 
@@ -204,34 +202,6 @@ const rub = v => v == null ? "—" : Number(v).toLocaleString("ru-RU", { maximum
 const num = v => Number(v).toLocaleString("ru-RU", { maximumFractionDigits: 2 });
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const opts = (map, sel) => Object.entries(map).map(([k, v]) => `<option value="${k}" ${[].concat(sel).includes(k) ? "selected" : ""}>${esc(v)}</option>`).join("");
-
-// Делает первую букву заглавной
-const capitalize = str => str ? str.charAt(0).toUpperCase() + str.slice(1) : "";
-
-// Красиво переводит технические спецификации
-const renderSpecs = (specs) => {
-  if (!specs || Object.keys(specs).length === 0) return "Размеров не найдено";
-  
-  const titles = {
-    weight_kg: "Вес", volume_l: "Объем", pack_area_m2: "Площадь упаковки", 
-    length_m: "Длина", width_m: "Ширина", height_m: "Высота", thickness_mm: "Толщина",
-    piece_count: "Количество в упаковке", consumption: "Расход"
-  };
-  const units = {
-    weight_kg: " кг", volume_l: " л", pack_area_m2: " м²", 
-    length_m: " м", width_m: " м", height_m: " м", thickness_mm: " мм"
-  };
-
-  let html = '<ul class="space-y-1 mt-1">';
-  for (const [key, val] of Object.entries(specs)) {
-    if (key === 'guessed') continue; // Скрываем техническое поле ML
-    const title = titles[key] || key; // Если ключа нет в словаре, выводим как есть
-    const unit = units[key] || "";
-    html += `<li><span class="text-gray-500">${esc(title)}:</span> <span class="font-semibold text-gray-800">${esc(val)}${unit}</span></li>`;
-  }
-  html += '</ul>';
-  return html;
-};
 
 async function api(path, options = {}) {
   const res = await fetch(path, { headers: { "Content-Type": "application/json" }, ...options });
@@ -611,50 +581,23 @@ async function runEstimate(keepScroll = false) {
 }
 
 function renderEstimate(r) {
-  currentEstimateData = r;
-  const estimateStatus = r.status || (r.total > 0 ? "complete" : "unavailable");
   const rooms = r.rooms.map((room, ri) => {
     let stage = null;
-    const rows = room.items.map((i, itemIndex) => {
+    const rows = room.items.map(i => {
       const head = i.stage !== stage ? `<tr class="stage-row"><td colspan="6" class="px-4 py-2">${esc(T.stages[i.stage])}</td></tr>` : "";
       stage = i.stage;
       const work = `<div class="font-semibold">${esc(i.title)}</div><div class="text-xs text-gray-500 mt-0.5">${esc(T.works[i.work_type])}${({ floor: " · пол", wall: " · стены", ceiling: " · потолок" })[i.surface] || ""}</div>`;
-      
-      // Очищаем название и артикул для сметы
-      const rawName = i.product?.name || "";
-      const cleanName = capitalize(rawName.replace(/,\s*арт\.\s*\d+/gi, '').replace(/\s*арт\.\s*\d+/gi, '').trim());
-      const article = rawName.match(/арт\.\s*(\d+)/i)?.[1] || i.product?.sku || "";
-
-      // Новая аккуратная кнопка с иконкой
-      const replaceBtn = (i.alternatives && i.alternatives.length > 0) 
-        ? `<button onclick="openAlternatives(${ri}, ${itemIndex})" class="inline-flex items-center gap-1.5 px-2.5 py-1 mt-1.5 text-[11px] font-bold text-brand-blue bg-blue-50 hover:bg-blue-100 border border-blue-100 rounded-md transition-colors" title="Найти аналог">
-             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
-             Заменить
-           </button>` 
-        : "";
-
       if (i.packages === 0 && !i.product) return head + `<tr class="border-b border-gray-100"><td class="px-4 py-3">${work}</td><td colspan="5" class="px-4 py-3 text-sm text-gray-400 italic">${esc(i.reason)}</td></tr>`;
-      if (i.packages === 0) return head + `<tr class="border-b border-gray-100 hover:bg-gray-50"><td class="px-4 py-3">${work}</td><td class="px-4 py-3">
-        <div class="flex flex-col items-start gap-1">
-          ${productCell(ri, i, itemIndex)}
-          ${replaceBtn}
-        </div>
-        <div class="text-xs text-gray-500 mt-1">${esc(i.reason)}</div></td>
+      if (i.packages === 0) return head + `<tr class="border-b border-gray-100 hover:bg-gray-50"><td class="px-4 py-3">${work}</td><td class="px-4 py-3">${productCell(ri, i)}<div class="text-xs text-gray-500">${esc(i.reason)}</div></td>
         <td class="px-4 py-3 text-right text-sm text-gray-400" colspan="2">уточните кол-во</td>
         <td class="px-4 py-3 text-right font-medium">${rub(i.product.result_price)}</td><td class="px-4 py-3 text-right text-gray-400">—</td></tr>`;
-
       return head + `<tr class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
         <td class="px-4 py-3">${work}${i.reason ? `<div class="text-xs text-brand-yellow font-medium mt-1">${esc(i.reason)}</div>` : ""}</td>
-        <td class="px-4 py-3">
-          <div class="flex flex-col items-start gap-1">
-            ${productCell(ri, i, itemIndex)}
-            ${replaceBtn}
-          </div>
-        </td>
-        <td class="px-4 py-3 text-right whitespace-nowrap"><span class="text-sm text-gray-500">${num(i.required_amount)}</span> ${esc(i.required_unit)}</td>
-        <td class="px-4 py-3 text-right font-bold text-brand-blue whitespace-nowrap">${i.packages} <span class="text-xs font-normal">${esc(i.product?.unit || "шт")}</span></td>
-        <td class="px-4 py-3 text-right text-gray-600 whitespace-nowrap">${rub(i.unit_price)}</td>
-        <td class="px-4 py-3 text-right font-bold text-gray-900 whitespace-nowrap">${rub(i.cost)}</td></tr>`;
+        <td class="px-4 py-3 font-medium text-gray-900">${productCell(ri, i)}</td>
+        <td class="px-4 py-3 text-right"><span class="text-sm text-gray-500">${num(i.required_amount)}</span> ${esc(i.required_unit)}</td>
+        <td class="px-4 py-3 text-right font-bold text-brand-blue">${i.packages} <span class="text-xs font-normal">× ${esc(i.product?.unit || "шт")}</span></td>
+        <td class="px-4 py-3 text-right text-gray-600">${rub(i.unit_price)}</td>
+        <td class="px-4 py-3 text-right font-bold text-gray-900">${rub(i.cost)}</td></tr>`;
     }).join("");
     
     return `<div class="mb-8">
@@ -670,7 +613,7 @@ function renderEstimate(r) {
           </thead>
           <tbody>${rows}</tbody>
           <tfoot class="bg-gray-50/50">
-            <tr><td colspan="5" class="px-4 py-3 text-right font-bold text-gray-600">Итого по комнате:</td><td class="px-4 py-3 text-right font-extrabold text-lg text-brand-red whitespace-nowrap">${rub(room.subtotal)}</td></tr>
+            <tr><td colspan="5" class="px-4 py-3 text-right font-bold text-gray-600">Итого по комнате:</td><td class="px-4 py-3 text-right font-extrabold text-lg text-brand-red">${rub(room.subtotal)}</td></tr>
           </tfoot>
         </table>
       </div>
@@ -711,186 +654,17 @@ function copyList(r) {
     () => alert(lines.join("\n")));
 }
 
-// --- Логика модального окна альтернатив ---
-let currentEstimateData = null; // Глобально храним смету
-let altState = { list: [], filtered: [], page: 1, perPage: 6, roomIndex: null, itemIndex: null };
-
-function openAlternatives(roomIndex, itemIndex) {
-  if (!currentEstimateData) return;
-  const item = currentEstimateData.rooms[roomIndex].items[itemIndex];
-  
-  altState.list = item.alternatives || [];
-  altState.page = 1;
-  altState.roomIndex = roomIndex;
-  altState.itemIndex = itemIndex;
-
-  // Сброс фильтров
-  document.getElementById("alt-search").value = "";
-  document.getElementById("alt-sort").value = "price-asc";
-  document.getElementById("alt-instock").checked = false;
-
-    // Очищаем название для заголовка
-  const rawTitle = item.product?.name || item.title;
-  const cleanTitle = capitalize(rawTitle.replace(/,\s*арт\.\s*\d+/gi, '').replace(/\s*арт\.\s*\d+/gi, '').trim());
-  document.getElementById("alt-title").innerText = "Замена: " + cleanTitle;
-  document.getElementById("alt-subtitle").innerText = `Найдено аналогов: ${altState.list.length}`;
-  
-  const modal = document.getElementById("alt-modal");
-  modal.classList.remove("hidden");
-  modal.classList.add("flex");
-  
-  filterAlternatives();
-}
-
-function closeAlternatives() {
-  const modal = document.getElementById("alt-modal");
-  modal.classList.add("hidden");
-  modal.classList.remove("flex");
-}
-
-function filterAlternatives() {
-  const q = document.getElementById("alt-search").value.toLowerCase();
-  const sort = document.getElementById("alt-sort").value;
-  const inStockOnly = document.getElementById("alt-instock").checked;
-
-  // Фильтрация
-  altState.filtered = altState.list.filter(p => {
-    const matchName = (p.name || "").toLowerCase().includes(q);
-    const matchStock = inStockOnly ? p.in_stock !== false : true; // Если in_stock null, считаем что есть
-    return matchName && matchStock;
-  });
-
-  // Сортировка
-  altState.filtered.sort((a, b) => {
-    const pA = a.result_price || 0;
-    const pB = b.result_price || 0;
-    return sort === "price-asc" ? pA - pB : pB - pA;
-  });
-
-  renderAltGrid();
-}
-
-function renderAltGrid() {
-  const grid = document.getElementById("alt-grid");
-  const start = (altState.page - 1) * altState.perPage;
-  const pageItems = altState.filtered.slice(start, start + altState.perPage);
-
-  if (pageItems.length === 0) {
-    grid.innerHTML = `<div class="col-span-full text-center py-10 text-gray-500 italic">Ничего не найдено по вашему запросу</div>`;
-  } else {
-        grid.innerHTML = pageItems.map(p => {
-      // Очищаем название и достаем артикул
-      const cleanName = capitalize(p.name.replace(/,\s*арт\.\s*\d+/gi, '').replace(/\s*арт\.\s*\d+/gi, '').trim());
-      const article = p.name.match(/арт\.\s*(\d+)/i)?.[1] || p.sku || String(p.id).padStart(6, '0');
-      
-      // Заглушка для картинки
-      const imgHtml = p.picture_url 
-        ? `<img src="${p.picture_url}" class="w-full h-32 object-cover rounded-t-xl bg-white">`
-        : `<div class="w-full h-32 bg-gray-100 flex items-center justify-center text-gray-300 rounded-t-xl"><svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg></div>`;
-
-      const stockBadge = p.in_stock === false 
-        ? `<span class="text-xs font-bold text-red-500 bg-red-50 px-2 py-1 rounded">Нет в наличии</span>` 
-        : `<span class="text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded">В наличии</span>`;
-
-      return `<div class="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col">
-        ${imgHtml}
-        <div class="p-4 flex-1 flex flex-col">
-          <div class="text-[10px] text-gray-400 font-bold mb-1 uppercase tracking-wider">${esc(p.brand || "Бренд не указан")}</div>
-          
-          <!-- Название с ограничением в 3 строки -->
-          <div class="text-sm font-bold text-gray-900 line-clamp-3 leading-snug flex-1" title="${esc(p.name)}">
-            ${esc(cleanName)}
-          </div>
-          
-          <!-- Артикул мелким серым шрифтом на новой строке -->
-          ${article ? `<div class="text-[11px] text-gray-400 font-normal mt-1.5">Арт. ${esc(article)}</div>` : ''}
-          
-          <div class="flex justify-between items-end mt-3 pt-3 border-t border-gray-100">
-            <div>
-              <div class="text-xl font-extrabold text-brand-red">${rub(p.result_price)}</div>
-              <div class="text-xs text-gray-500">за ${esc(p.unit || "шт")}</div>
-            </div>
-            ${stockBadge}
-          </div>
-          <button onclick="selectAlternative(${p.id})" class="mt-4 w-full bg-brand-blue hover:bg-blue-600 text-white font-bold py-2 rounded-lg transition-colors shadow-sm">Выбрать</button>
-        </div>
-      </div>`;
-    }).join("");
-  }
-  renderAltPagination();
-}
-
-function renderAltPagination() {
-  const totalPages = Math.ceil(altState.filtered.length / altState.perPage);
-  const pag = document.getElementById("alt-pagination");
-  if (totalPages <= 1) {
-    pag.innerHTML = `<span class="text-sm text-gray-500">Показано ${altState.filtered.length} товаров</span><span></span>`;
-    return;
-  }
-
-  pag.innerHTML = `
-    <span class="text-sm text-gray-500">Страница ${altState.page} из ${totalPages}</span>
-    <div class="flex gap-2">
-      <button onclick="changeAltPage(-1)" ${altState.page === 1 ? 'disabled' : ''} class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-semibold bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">Назад</button>
-      <button onclick="changeAltPage(1)" ${altState.page === totalPages ? 'disabled' : ''} class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-semibold bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">Вперед</button>
-    </div>
-  `;
-}
-
-function changeAltPage(dir) {
-  altState.page += dir;
-  renderAltGrid();
-  document.getElementById("alt-grid").scrollTop = 0;
-}
-
-function selectAlternative(newProductId) {
-  const newProduct = altState.list.find(p => p.id === newProductId);
-  if (!newProduct) return;
-
-  // Меняем товар в глобальных данных (для будущего пересчета)
-  const item = currentEstimateData.rooms[altState.roomIndex].items[altState.itemIndex];
-  item.product = newProduct;
-  item.unit_price = newProduct.result_price;
-  // Внимание: пересчет количества упаковок и суммы зависит от спецификации товара. 
-  // Для MVP просто обновим название и цену в UI, чтобы пользователь видел результат.
-  // (В идеале тут нужно делать запрос на пересчет или пересчитывать локально, если есть данные).
-  
-  // Перерисовываем смету, чтобы увидеть изменения
-  document.getElementById("estimate-result").innerHTML = renderEstimate(currentEstimateData);
-  document.getElementById("copy-list").onclick = () => copyList(currentEstimateData);
-  
-  closeAlternatives();
-}
-
 // --- Карточка товара ---
 let productId = null, searchTimer = null;
 async function searchProducts() {
   const q = document.getElementById("product-q").value.trim();
   const list = await api(`/api/v1/products?limit=30${q ? `&q=${encodeURIComponent(q)}` : ""}`);
   const box = document.getElementById("product-results");
-  
-  box.innerHTML = list.length ? list.map(p => {
-    // Хитрость: вырезаем "арт.12345" из названия, чтобы текст не был таким тяжелым
-        const cleanName = capitalize(p.name.replace(/,\s*арт\.\s*\d+/gi, '').replace(/\s*арт\.\s*\d+/gi, '').trim());
-      const article = p.name.match(/арт\.\s*(\d+)/i)?.[1] || p.sku || String(p.id).padStart(6, '0');
-
-    return `<button data-id="${p.id}" class="text-left w-full p-4 rounded-xl border transition-all flex flex-col justify-between group ${p.id === productId ? "border-brand-blue bg-blue-50/50 shadow-sm" : "border-gray-200 bg-white hover:border-brand-blue hover:shadow-md"}">
-      <div class="w-full">
-        <!-- Ограничиваем текст 3 строками, полное название в title (при наведении) -->
-        <div class="font-semibold text-sm text-gray-800 leading-snug line-clamp-3 break-words group-hover:text-brand-red transition-colors" title="${esc(p.name)}">
-          ${esc(cleanName)}
-        </div>
-        ${article ? `<div class="text-[10px] text-gray-400 mt-2 font-medium uppercase tracking-wider">Арт. ${esc(article)}</div>` : ''}
-      </div>
-      <!-- Красивый футер с ценой и единицей -->
-      <div class="flex items-end justify-between w-full mt-3 pt-3 border-t border-gray-100">
-        <div class="text-brand-red font-extrabold text-lg">${rub(p.result_price)}</div>
-        <div class="text-[11px] text-gray-500 font-medium pb-1">за ${esc(p.unit || "шт")}</div>
-      </div>
-    </button>`;
-  }).join("")
-    : `<div class="text-gray-500 italic p-8 text-center bg-gray-50 rounded-xl border border-gray-200">Ничего не найдено</div>`;
-    
+  box.innerHTML = list.length ? list.map(p => `<button data-id="${p.id}" class="text-left w-full p-3 rounded-xl border transition-all ${p.id === productId ? "border-brand-blue bg-blue-50/50 shadow-sm" : "border-gray-200 bg-white hover:border-brand-blue"}">
+    <div class="font-semibold text-sm line-clamp-2">${esc(p.name)}</div>
+    <div class="text-brand-red font-bold mt-1">${rub(p.result_price)}</div>
+  </button>`).join("")
+    : `<span class="text-gray-500 italic p-4 text-center">Ничего не найдено</span>`;
   box.querySelectorAll("button").forEach(b => b.onclick = () => showProduct(Number(b.dataset.id)));
 }
 document.getElementById("product-q").oninput = () => { clearTimeout(searchTimer); searchTimer = setTimeout(searchProducts, 250); };
@@ -899,34 +673,19 @@ async function showProduct(id) {
   productId = id;
   document.querySelectorAll("#product-results button").forEach(b => b.classList.toggle("border-brand-blue", Number(b.dataset.id) === id));
   const p = await api(`/api/v1/products/${id}`);
-  
-  // Очищаем название и достаем артикул
-    const cleanName = capitalize(p.name.replace(/,\s*арт\.\s*\d+/gi, '').replace(/\s*арт\.\s*\d+/gi, '').trim());
-  const article = p.name.match(/арт\.\s*(\d+)/i)?.[1] || p.sku || "";
-
-  const chars = (p.characteristics || []).map(c => `<span class="pill">${esc(c.name)}: ${esc(c.value)}</span>`).join("");
+  const chars = p.characteristics.map(c => `<span class="pill">${esc(c.name)}: ${esc(c.value)}</span>`).join("");
   const binding = p.binding ? `<span class="text-green-600 font-semibold">${esc(T.materials[p.binding.material])}</span> → ${p.binding.work_types.map(w => esc(T.works[w])).join(", ")}` : "не привязан";
   
+  // Добавил заглушку картинки, если её нет
   const imgHtml = p.picture_url ? `<img src="${p.picture_url}" class="w-full h-48 object-cover rounded-t-xl">` : 
     `<div class="w-full h-48 bg-gray-200 flex items-center justify-center text-gray-400 rounded-t-xl mb-4"><svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg></div>`;
 
   document.getElementById("product-info").innerHTML = `
     ${imgHtml}
-    <h3 class="text-xl font-bold mb-1 leading-tight text-gray-900">${esc(cleanName)}</h3>
-    ${article ? `<div class="text-xs text-gray-400 font-medium mb-3">Артикул: ${esc(article)}</div>` : '<div class="mb-3"></div>'}
-    
+    <h3 class="text-xl font-bold mb-2 leading-tight">${esc(p.name)}</h3>
     <div class="text-3xl font-extrabold text-brand-red mb-4">${rub(p.result_price)} <span class="text-sm font-medium text-gray-500">/ ${esc(p.unit || "шт")}</span></div>
-    
     <div class="mb-4">${chars || '<span class="text-gray-400 italic text-sm">Характеристик нет</span>'}</div>
-    <div class="text-xs bg-white p-3 rounded-lg border border-gray-100 mb-2">
-      <span class="text-gray-400 font-semibold uppercase tracking-wider block mb-1">Спецификация</span>
-      ${renderSpecs(p.specs)}
-    </div>
-    
-    <div class="text-xs bg-white p-3 rounded-lg border border-gray-100">
-      <span class="text-gray-400 font-semibold uppercase tracking-wider block mb-1">Привязка</span>
-      ${binding}
-    </div>`;
+    <div class="text-xs bg-white p-3 rounded-lg border border-gray-100"><span class="text-gray-400 font-semibold uppercase tracking-wider">Привязка</span><br>${binding}</div>`;
     
   document.getElementById("calc-form").hidden = false;
   document.getElementById("calc-result").innerHTML = "";
@@ -977,18 +736,9 @@ async function loadAdmin() {
       const flags = Object.entries(s.flags).filter(([, v]) => v).map(([k]) => `<span class="pill">${esc(flagTitles[k] || k)}</span>`).join("");
       const bound = !b ? '<span class="text-gray-400 italic">нет</span>'
         : `<span class="pill ${b.confirmed ? "ok" : ""}">${b.confirmed ? "✓ подтверждено" : "ML"}</span>${describe(b)}`;
-      
-      // Очищаем название и артикул для Админки
-      const cleanName = capitalize(r.product.name.replace(/,\s*арт\.\s*\d+/gi, '').replace(/\s*арт\.\s*\d+/gi, '').trim());
-      const article = r.product.name.match(/арт\.\s*(\d+)/i)?.[1] || r.product.sku || `ID: ${r.product.id}`;
-
       return `<tr data-id="${r.product.id}" class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-        <td class="px-4 py-4">
-          <div class="font-medium text-gray-900 whitespace-normal max-w-xs leading-snug">${esc(cleanName)}</div>
-          ${article ? `<div class="text-[11px] text-gray-400 mt-1">Арт. ${esc(article)}</div>` : ''}
-          <div class="text-xs text-gray-500 mt-1.5">${[esc(r.category || ""), r.manual ? '<span class="text-brand-yellow font-bold">Ручной</span>' : ""].filter(Boolean).join(" · ")}</div>
-        </td>
-        <td class="px-4 py-4">${describe(s)}<div class="text-xs font-semibold ${s.confidence >= 0.7 ? 'text-green-600' : 'text-brand-yellow'} mt-1">Уверенность: ${Math.round(s.confidence * 100)}%</div><div class="mt-1">${flags}</div></td>
+        <td class="px-4 py-4 whitespace-normal"><div class="font-medium text-gray-900 max-w-xs [overflow-wrap:anywhere]">${esc(r.product.name)}</div><div class="text-xs text-gray-500 mt-1">${[esc(r.category || ""), r.manual ? '<span class="text-brand-yellow font-bold">Ручной</span>' : ""].filter(Boolean).join(" · ")}</div></td>
+        <td class="px-4 py-4 whitespace-normal">${describe(s)}<div class="text-xs font-semibold ${s.confidence > 0.8 ? 'text-green-600' : 'text-brand-yellow'} mt-1">Уверенность: ${Math.round(s.confidence * 100)}%</div><div class="mt-1">${flags}</div></td>
         <td class="px-4 py-4">${bound}</td>
         <td class="px-4 py-4" data-cell>${actionButtons(r)}</td></tr>`;
     }).join("")}</tbody>` : `<tbody><tr><td class="p-8 text-center text-gray-500 italic" colspan="4">Здесь пусто. Добавьте товары или нажмите ML-привязку.</td></tr></tbody>`;
@@ -1118,43 +868,5 @@ api("/api/v1/taxonomy").then(t => {
   searchProducts();
 });
 </script>
-<!-- Модальное окно альтернатив -->
-<div id="alt-modal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center p-4 backdrop-blur-sm transition-opacity">
-  <div class="bg-white rounded-2xl w-full max-w-5xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
-    
-    <!-- Шапка модалки -->
-    <div class="flex justify-between items-start p-6 border-b border-gray-100 bg-gray-50/50">
-      <div>
-        <h3 class="text-xl font-bold text-gray-900" id="alt-title">Замена товара</h3>
-        <p class="text-sm text-gray-500 mt-1" id="alt-subtitle">Выберите аналог из списка</p>
-      </div>
-      <button onclick="closeAlternatives()" class="text-gray-400 hover:text-red-500 transition-colors p-2 bg-white rounded-lg border border-gray-200 shadow-sm">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-      </button>
-    </div>
-
-    <!-- Фильтры и сортировка -->
-    <div class="p-4 border-b border-gray-100 flex flex-wrap gap-4 items-center bg-white">
-      <input type="text" id="alt-search" placeholder="Поиск по названию..." class="border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-brand-blue w-full sm:w-64" oninput="filterAlternatives()">
-      <select id="alt-sort" class="border border-gray-300 rounded-lg px-3 py-2 text-sm outline-none focus:border-brand-blue cursor-pointer" onchange="filterAlternatives()">
-        <option value="price-asc">Сначала дешевле</option>
-        <option value="price-desc">Сначала дороже</option>
-      </select>
-      <label class="flex items-center gap-2 text-sm font-medium text-gray-700 sm:ml-auto cursor-pointer">
-        <input type="checkbox" id="alt-instock" onchange="filterAlternatives()" class="rounded text-brand-red focus:ring-brand-red"> Только в наличии
-      </label>
-    </div>
-
-    <!-- Сетка товаров -->
-    <div class="p-6 flex-1 overflow-y-auto bg-gray-50 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4" id="alt-grid">
-      <!-- Сюда будут рендериться карточки -->
-    </div>
-
-    <!-- Пагинация -->
-    <div class="p-4 border-t border-gray-100 bg-white flex justify-between items-center" id="alt-pagination">
-      <!-- Кнопки страниц -->
-    </div>
-  </div>
-</div>
 </body>
 </html>
