@@ -13,6 +13,15 @@ python run_local.py                  # открывает http://localhost:8000
 python run_local.py --reload-data    # пересоздать базу и загрузить каталог заново
 ```
 
+Если каталог уже загружен, но таблица привязок пуста, `run_local.py` безопасно заполнит только
+отсутствующие TF-IDF-привязки (без GigaChat). Тот же процесс можно сначала просмотреть, а затем
+явно применить; существующие и подтверждённые привязки не перезаписываются:
+
+```bash
+python -m scripts.backfill_bindings
+python -m scripts.backfill_bindings --apply
+```
+
 Если есть `data/catalog.json` (формат организаторов) или `data/catalog.xml` (YML), загружается он, иначе — пример `mock_catalog/sample_catalog.json` (27 синтетических товаров).
 Для большого каталога можно ограничить число товаров: `$env:RC_LOCAL_LIMIT=5000` (PowerShell) перед запуском.
 
@@ -53,7 +62,7 @@ docker compose down                          # остановить (данны�
 | POST | `/api/v1/admin/products` | Добавить товар вручную (не удаляется при загрузке каталога) |
 | DELETE | `/api/v1/admin/products/{id}` | Удалить товар, добавленный вручную |
 | PUT | `/api/v1/admin/products/{id}/binding` | Подтвердить или исправить привязку |
-| POST | `/api/v1/admin/autobind` | Автопривязка предсказаний с уверенностью от `RC_AUTOBIND_MIN_CONFIDENCE` (по умолчанию 0.8) |
+| POST | `/api/v1/admin/autobind` | Автопривязка TF-IDF от `RC_AUTOBIND_MIN_CONFIDENCE` (по умолчанию 0.7) и ограниченный GigaChat fallback; порог не является вероятностью корректности |
 | GET | `/api/v1/admin/stats` | Доля автопривязанных товаров |
 | GET | `/health` | БД и нейросеть |
 | POST | `/internal/llm/chat`, `/internal/llm/embed` | Нейросеть и эмбеддинги для команды |
@@ -86,3 +95,27 @@ docker compose down                          # остановить (данны�
 Названия классов (`BaselineEngine`, `KeywordClassifier`, `RatingRanker`) и их функций не меняются, внутри — любой код.
 
 Нейросеть вызывается только через `app.llm.client.get_llm()`: `chat`, `chat_json`, `embed`.
+
+## Опциональный GigaChat fallback
+
+TF-IDF остаётся первым и воспроизводимым классификатором. При включённом GigaChat реальный
+`/admin/autobind` последовательно проверяет ограниченное число неуверенных непривязанных товаров;
+отдельная команда остаётся безопасным способом пилота и по умолчанию не вызывает API и не меняет БД:
+
+```bash
+python -m scripts.gigachat_fallback --limit 20
+python -m scripts.gigachat_fallback --limit 20 --use-api          # API + cache, без записи binding
+python -m scripts.gigachat_fallback --ids 123 456 --use-api --apply
+python -m scripts.gigachat_fallback --ids 123 456 --use-api --cache-namespace pilot-2026-10-28
+```
+
+Задайте `RC_GIGACHAT_ENABLED=true` и `RC_GIGACHAT_CREDENTIALS` (Authorization Key проекта,
+без префикса `Basic`). Модель, scope, URL, timeout, retries, SQLite-cache и общий token budget
+настраиваются переменными из `.env.example`. Запросы выполняются последовательно; ответы проходят
+Pydantic-проверку по текущим `Material`/`WorkType`, конфликт material/work уходит на review. Cache
+обеспечивает resume. `--apply` никогда не перезаписывает существующие или исторические bindings.
+
+Контекстные объяснения выбранных строк сметы включаются отдельно через
+`RC_GIGACHAT_EXPLANATIONS=true`. Они не участвуют в выборе товара; при ошибке API сохраняются
+детерминированные `why` и рабочая смета. Реализация следует REST-потоку GigaChat OAuth
+(`POST /api/v2/oauth`, `RqUID`, scope) и Chat Completions (`POST /api/v1/chat/completions`).

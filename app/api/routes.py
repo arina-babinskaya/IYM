@@ -3,11 +3,15 @@ import time
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import text
 
-from app.api.deps import get_classifier, get_estimate_engine, get_repo
+from app.api.deps import get_classifier, get_estimate_engine, get_gigachat, get_repo
+from app.api.picker import add_why, apply_explanations, explanation_signals
 from app.catalog.repository import MANUAL_ID_START, AdminStatus, CatalogRepo, to_brief
 from app.config import get_settings
 from app.engine.interface import CalcError
 from app.llm.client import LLMError, get_llm
+from app.llm.gigachat import GigaChatError
+from app.ml.hybrid import decide_hybrid, eligible_for_gigachat, gigachat_suggestion
+from app.ml.tfidf import publishable
 from app.schemas import (
     AdminProductRow,
     AdminStats,
@@ -21,6 +25,7 @@ from app.schemas import (
     ProductCreate,
     ProductOut,
     Suggestion,
+    ROOM_DEFAULT_OPENINGS,
     ROOM_TITLES,
     RoomType,
     StageOptions,
@@ -29,7 +34,8 @@ from app.schemas import (
     WorkOptionsOut,
 )
 from app.plans import RENOVATION_STAGES, work_materials, works_for_room
-from app.taxonomy import MATERIAL_TITLES, RENOVATION_TITLES, STAGE_ORDER, STAGE_TITLES, WORKS, Material, RenovationType
+from app.taxonomy import (MATERIAL_TITLES, PRODUCT_CATEGORY_TITLES, RENOVATION_TITLES, STAGE_ORDER,
+                          STAGE_TITLES, WORKS, Material, RenovationType)
 
 router = APIRouter(prefix="/api/v1")
 
@@ -38,12 +44,20 @@ router = APIRouter(prefix="/api/v1")
 async def estimate(req: EstimateRequest, repo: CatalogRepo = Depends(get_repo)) -> EstimateResponse:
     t0 = time.perf_counter()
     engine = get_estimate_engine()
-    resp = engine.estimate(req, repo)
+    resp = add_why(engine.estimate(req, repo), repo)
     if req.explain:
         try:
             resp = await engine.explain(req, resp)
         except LLMError as e:
             resp.warnings.append(f"пояснение недоступно: {e}")
+        settings = get_settings()
+        if settings.gigachat_explanations:
+            try:
+                facts = explanation_signals(resp, repo, settings.gigachat_explanation_max_items)
+                if facts:
+                    apply_explanations(resp, await get_gigachat().explain_estimate(resp, facts))
+            except GigaChatError as e:
+                resp.warnings.append(f"GigaChat-пояснение недоступно: {e}")
     resp.elapsed_ms = int((time.perf_counter() - t0) * 1000)
     return resp
 
@@ -52,12 +66,14 @@ async def estimate(req: EstimateRequest, repo: CatalogRepo = Depends(get_repo)) 
 def taxonomy() -> TaxonomyOut:
     return TaxonomyOut(
         stages=[{"id": k.value, "title": v} for k, v in STAGE_TITLES.items()],
-        room_types=[{"id": k.value, "title": v} for k, v in ROOM_TITLES.items()],
+        room_types=[{"id": k.value, "title": v, "windows": ROOM_DEFAULT_OPENINGS.get(k, (1, 1))[0],
+                     "doors": ROOM_DEFAULT_OPENINGS.get(k, (1, 1))[1]} for k, v in ROOM_TITLES.items()],
         renovation_types=[{"id": k.value, "title": v} for k, v in RENOVATION_TITLES.items()],
         works=[{"id": k.value, "title": v.title, "stage": v.stage.value, "stages": [s.value for s in v.stages],
                 "materials": [m.value for m in v.materials]}
                for k, v in WORKS.items()],
         materials=[{"id": k.value, "title": v} for k, v in MATERIAL_TITLES.items()],
+        product_categories=[{"id": k.value, "title": v} for k, v in PRODUCT_CATEGORY_TITLES.items()],
     )
 
 
@@ -177,22 +193,42 @@ def admin_bind(product_id: int, data: BindingIn, repo: CatalogRepo = Depends(get
 
 
 @router.post("/admin/autobind", response_model=AdminStats, tags=["admin"])
-def admin_autobind(
+async def admin_autobind(
     min_confidence: float | None = Query(None, ge=0, le=1),
     batch: int = Query(1000, le=5000),
+    use_gigachat: bool | None = None,
     repo: CatalogRepo = Depends(get_repo),
 ) -> AdminStats:
     if min_confidence is None:
         min_confidence = get_settings().autobind_min_confidence
+    settings = get_settings()
     clf = get_classifier()
+    if use_gigachat is None:
+        use_gigachat = settings.gigachat_enabled
+    giga = get_gigachat() if use_gigachat else None
+    giga_considered = 0
     after_id = -1
     while products := repo.unbound(batch, after_id):
         after_id = products[-1].id
-        pairs = [
-            (p.id, s)
-            for p, s in zip(products, clf.predict(products), strict=True)
-            if s.confidence >= min_confidence and s.material != Material.other
-        ]
+        predictions = clf.predict(products)
+        pairs = [(p.id, s) for p, s in zip(products, predictions, strict=True)
+                 if publishable(s, min_confidence)]
+        if giga is not None and giga.configured:
+            for product, ml in zip(products, predictions, strict=True):
+                if publishable(ml, min_confidence) or not eligible_for_gigachat(ml, min_confidence):
+                    continue
+                if giga_considered >= settings.gigachat_autobind_max_products:
+                    break
+                giga_considered += 1
+                try:
+                    result = await giga.classify(product, ml)
+                    decision = decide_hybrid(ml, result, min_confidence)
+                    if decision.action == "accept_gigachat":
+                        pairs.append((product.id, gigachat_suggestion(result,
+                            model=settings.gigachat_model, confidence=settings.gigachat_binding_confidence)))
+                except (GigaChatError, ValueError):
+                    # The product remains unbound for admin review; ML autobinding continues.
+                    continue
         repo.save_ml_bindings(pairs)
     return admin_stats(repo)
 

@@ -2,11 +2,12 @@
 from __future__ import annotations
 
 from pathlib import Path
+import re
 from typing import Any
 
 from app.models import Product
 from app.schemas import RoomType, Suggestion
-from app.taxonomy import Material, WorkType
+from app.taxonomy import Material, ProductCategory, WorkType, works_for_material
 from ml_workspace.ml_api import ProductInput, load_model, predict
 from ml_workspace.ml_api.types import Prediction
 
@@ -25,6 +26,77 @@ CATEGORY_MATERIAL_MAP: dict[str, Material] = {
     "plaster": Material.plaster, "drywall": Material.drywall, "tile": Material.tile,
     "waterproofing_material": Material.waterproofing, "sealant": Material.sealant,
     "fasteners": Material.fasteners, "plumbing": Material.plumbing,
+    "lighting": Material.lighting, "doors_windows": Material.doors,
+    "heating_climate": Material.heating, "ventilation": Material.ventilation,
+    "decorative_materials": Material.decorative, "decorative_panels": Material.decorative,
+    "adhesive": Material.adhesive, "construction_mix": Material.construction_mix,
+    "insulation": Material.insulation, "lumber_sheet_material": Material.lumber_sheet_material,
+    "installation_accessories": Material.installation_accessories,
+    "hand_tools": Material.hand_tools, "power_tools": Material.power_tools,
+    "tool_accessories": Material.tool_accessories, "consumables": Material.consumables,
+    "protective_equipment": Material.protective_equipment,
+}
+
+# Categories whose members have several materially different roles are resolved from the
+# product card.  Falling through to ``other`` is deliberate: it is safer than publishing an
+# unrelated estimate material merely to improve coverage.
+MATERIAL_HINTS: tuple[tuple[str, Material], ...] = (
+    (r"\bобои\b|обойн\w* полотн", Material.wallpaper),
+    (r"рамк\w*.{0,24}(розет|выключател)|накладк\w* декоратив", Material.installation_accessories),
+    (r"клемм|соединительн\w* гильз|колпачк\w* сиз", Material.installation_accessories),
+    (r"\bсвп\b|систем\w* выравниван\w* плит", Material.tile_leveling),
+    (r"плиточн\w* клей|клей.{0,24}(плит|керамогранит)", Material.tile_adhesive),
+    (r"обойн\w* клей|клей.{0,24}обо", Material.wallpaper_glue),
+    (r"жидк\w* гвозд|монтажн\w* клей", Material.mounting_adhesive),
+    (r"затирк|фуг", Material.grout),
+    (r"монтажн\w* пен", Material.mounting_foam),
+    (r"подрозетник|установочн\w* короб|распаечн\w* короб", Material.electrical_boxes),
+    (r"кабель[- ]канал|гофротруб|гофрированн\w* труб", Material.cable_channel),
+    (r"автоматическ\w* выключател|\bузо\b|дифавтомат|электрощит|щиток", Material.circuit_breakers),
+    (r"\bрозетк\w*\b(?!.*(рамк|накладк))", Material.socket),
+    (r"\bвыключател", Material.switch),
+    (r"кабел|электропровод|\bпровод\b", Material.cable),
+    (r"дверн\w* (петл|ручк|замок|фурнитур)|наличник", Material.door_hardware),
+    (r"профил\w*.{0,30}(гипсокартон|гкл)|\b(cd|ud|cw|uw)[ -]?профил", Material.profile),
+    (r"гипсокартон|\bгкл[впо]?\b", Material.drywall),
+    (r"демпферн\w* лент", Material.damper_tape),
+    (r"маяк", Material.beacons),
+    (r"серпянк|армирующ\w* сетк|стеклосетк", Material.reinforcing_mesh),
+    (r"подложк", Material.underlay),
+    (r"плинтус|порожек", Material.skirting),
+    (r"герметик", Material.sealant),
+    (r"\bламп[аы]\b|светодиодн\w* ламп", Material.lamps),
+    (r"оконн\w* (блок|рама)|стеклопакет|\bокно\b", Material.windows),
+    (r"водорозетк|\bтруб[аыу]?\b|фитинг|канализац|запорн\w* арматур|тройник", Material.pipes),
+)
+
+HINT_CATEGORIES: dict[Material, frozenset[str]] = {
+    Material.wallpaper: frozenset({"other_renovation_material", "decorative_materials"}),
+    Material.installation_accessories: frozenset({"electrical_goods", "installation_accessories"}),
+    Material.tile_leveling: frozenset({"tile", "installation_accessories"}),
+    Material.tile_adhesive: frozenset({"tile", "adhesive", "construction_mix"}),
+    Material.wallpaper_glue: frozenset({"adhesive"}),
+    Material.mounting_adhesive: frozenset({"adhesive", "installation_accessories"}),
+    Material.grout: frozenset({"tile", "installation_accessories"}),
+    Material.mounting_foam: frozenset({"sealant", "installation_accessories"}),
+    Material.electrical_boxes: frozenset({"electrical_goods", "installation_accessories"}),
+    Material.cable_channel: frozenset({"electrical_goods", "installation_accessories"}),
+    Material.circuit_breakers: frozenset({"electrical_goods"}),
+    Material.socket: frozenset({"electrical_goods"}),
+    Material.switch: frozenset({"electrical_goods"}),
+    Material.cable: frozenset({"electrical_goods"}),
+    Material.door_hardware: frozenset({"doors_windows", "installation_accessories"}),
+    Material.profile: frozenset({"drywall", "installation_accessories"}),
+    Material.drywall: frozenset({"drywall"}),
+    Material.damper_tape: frozenset({"construction_mix", "installation_accessories", "heating_climate"}),
+    Material.beacons: frozenset({"construction_mix", "installation_accessories"}),
+    Material.reinforcing_mesh: frozenset({"construction_mix", "installation_accessories"}),
+    Material.underlay: frozenset({"floor_covering", "installation_accessories"}),
+    Material.skirting: frozenset({"floor_covering", "installation_accessories"}),
+    Material.sealant: frozenset({"sealant", "adhesive"}),
+    Material.lamps: frozenset({"lighting"}),
+    Material.windows: frozenset({"doors_windows"}),
+    Material.pipes: frozenset({"plumbing"}),
 }
 
 
@@ -64,10 +136,13 @@ def _floor_work(prediction: Prediction, product: Product) -> WorkType | None:
 
 
 def _material(prediction: Prediction, product: Product) -> Material:
+    text = f"{product.name} {' '.join((product.categories or {}).values())}".lower()
+    for pattern, material in MATERIAL_HINTS:
+        if prediction.product_category in HINT_CATEGORIES.get(material, frozenset()) and re.search(pattern, text):
+            return material
     mapped = CATEGORY_MATERIAL_MAP.get(prediction.product_category)
     if mapped is not None:
         return mapped
-    text = f"{product.name} {' '.join((product.categories or {}).values())}".lower()
     if prediction.product_category == "floor_covering":
         if "ламинат" in text:
             return Material.laminate
@@ -80,6 +155,14 @@ def _material(prediction: Prediction, product: Product) -> Material:
             return Material.switch
         if "кабел" in text or "провод" in text:
             return Material.cable
+    if prediction.product_category == "floor_covering":
+        if "подложк" in text:
+            return Material.underlay
+        if "плинтус" in text or "порож" in text:
+            return Material.skirting
+        return Material.floor_covering
+    if prediction.product_category == "electrical_goods":
+        return Material.electrical_goods
     return Material.other
 
 
@@ -109,13 +192,49 @@ def prediction_to_suggestion(prediction: Prediction, product: Product) -> Sugges
 
     flags: dict[str, bool] = {
         "ml_unknown": prediction.status in {"unknown", "uncertain"},
+        "domain_renovation": prediction.domain_label == "renovation",
+        "domain_furnishing": prediction.domain_label == "furnishing",
+        "domain_non_renovation": prediction.status == "non_renovation",
         **{f"unsupported_work_type__{label}": True for label in unsupported},
         **{f"unsupported_room_type__{label}": True for label in unsupported_rooms},
     }
     material = _material(prediction, product)
-    confidence = max(scores.values(), default=0.0)
-    return Suggestion(material=material, work_types=mapped, work_scores=scores, room_types=rooms,
+    plausible = works_for_material(material) if material != Material.other else []
+    incompatible = bool(mapped) and bool(plausible) and not any(work in plausible for work in mapped)
+    if incompatible:
+        flags["taxonomy_inconsistent"] = True
+    # A single taxonomy consequence is safe to infer.  Materials shared by several works remain
+    # material-only unless the work model supplied evidence.
+    if not mapped and len(plausible) == 1 and prediction.status == "predicted":
+        mapped = list(plausible)
+        flags["work_type_inferred"] = True
+
+    category_scores = prediction.dimension_scores.get("product_category", {})
+    domain_scores = prediction.dimension_scores.get("domain", {})
+    category_confidence = category_scores.get(prediction.product_category, 0.0)
+    domain_confidence = domain_scores.get(prediction.domain_label, 0.0)
+    material_confidence = min(category_confidence, domain_confidence) if domain_confidence else category_confidence
+    work_confidence = max(scores.values(), default=0.0)
+    # Backward-compatible ``confidence`` now represents the binding/material decision, not merely
+    # the optional work-type decision. Old artifacts without dimension scores retain work score.
+    confidence = material_confidence or work_confidence
+    flags["material_confident"] = confidence >= 0.7
+    flags["work_type_missing"] = not mapped
+    category = ProductCategory(prediction.product_category) if prediction.product_category else None
+    return Suggestion(product_category=category, material=material, work_types=mapped, work_scores=scores, room_types=rooms,
                       flags=flags, confidence=confidence, model="tfidf-logreg-taxonomy-v2")
+
+
+def publishable(suggestion: Suggestion, min_confidence: float) -> bool:
+    """Conservative automatic-publication policy shared by API and batch jobs."""
+    return (
+        suggestion.confidence >= min_confidence
+        and suggestion.product_category is not None
+        and suggestion.material != Material.other
+        and suggestion.flags.get("domain_renovation", False)
+        and not suggestion.flags.get("ml_unknown", False)
+        and not suggestion.flags.get("taxonomy_inconsistent", False)
+    )
 
 
 class TfidfClassifier:

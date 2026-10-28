@@ -12,6 +12,7 @@ from decimal import ROUND_CEILING, ROUND_HALF_UP, Decimal
 
 from app.catalog.normalize import to_decimal
 from app.catalog.repository import CatalogRepo, to_brief
+from app.config import get_settings
 from app.engine.consumption_standards import CONSUMPTION_RATES, RAG_KNOWLEDGE_BASE
 from app.engine.interface import CalcError
 from app.ml.interface import Ranker
@@ -53,7 +54,7 @@ RESERVE: dict[Material, Decimal] = {
     Material.tile_adhesive: Decimal(10),
     Material.grout: Decimal(10),
     Material.primer: Decimal(10),
-    Material.paint: Decimal(10),
+    Material.paint: Decimal(5),
     Material.wallpaper: Decimal(10),
     Material.wallpaper_glue: Decimal(10),
     Material.laminate: Decimal(7),
@@ -318,11 +319,17 @@ class BaselineEngine:
         info = WORKS[work]
         area = walls if surface == Surface.wall else floor
         wet = room.effective_humidity == Level.high and material in NEEDS_MOISTURE
-
+        is_tool = material in SHARED_PROJECT_MATERIALS or material in (
+            Material.painting_tools,
+            Material.demolition_tools,
+            Material.hand_tools,
+            Material.power_tools,
+        )
         cands = repo.candidates(
             material,
+            work_type=None if is_tool else work,
             required_flags=["moisture_resistant"] if wet else [],
-            min_confidence=0.8,
+            min_confidence=get_settings().autobind_min_confidence,
             limit=CANDIDATES_LIMIT,
         )
         ranked = self.ranker.rank(cands, room)
@@ -482,11 +489,22 @@ class BaselineEngine:
             )
             rooms.append(shared_room)
 
+        priced_items = sum(1 for room in rooms for item in room.items if item.packages > 0 and item.cost > 0)
+        missing_items = sum(1 for room in rooms for item in room.items if item.packages == 0)
+        status = "unavailable" if not priced_items else ("partial" if missing_items else "complete")
+        if status == "unavailable":
+            warnings.insert(0, "Смета не рассчитана: для выбранных работ нет товаров с подходящей привязкой, ценой и данными для расчёта")
+        elif status == "partial":
+            warnings.insert(0, f"Смета рассчитана частично: не удалось рассчитать позиций — {missing_items}")
+
         return EstimateResponse(
             object_type=req.object_type,
             renovation_type=req.renovation_type,
             rooms=rooms,
             total=_money(sum((r.subtotal for r in rooms), Decimal(0))),
+            status=status,
+            priced_items=priced_items,
+            missing_items=missing_items,
             warnings=warnings,
         )
 
