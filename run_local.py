@@ -1,3 +1,4 @@
+import asyncio
 import os
 import sys
 import threading
@@ -16,7 +17,7 @@ from app.catalog.repository import CatalogRepo
 from app.catalog.loader import load_catalog
 from app.config import get_settings
 from app.db import get_sessionmaker, init_db
-from app.models import Product
+from app.models import Product, ProductBinding
 
 PORT = 8000
 SAMPLE = Path("mock_catalog/sample_catalog.json")
@@ -25,17 +26,22 @@ SAMPLE = Path("mock_catalog/sample_catalog.json")
 def seed() -> None:
     init_db()
     with get_sessionmaker()() as session:
-        if session.scalar(select(func.count()).select_from(Product)):
-            return
-        candidates = [Path(get_settings().catalog_path), Path("data/catalog.json"), Path("data/catalog.xml")]
-        source = next((c for c in candidates if c.exists()), SAMPLE)
-        limit = int(os.environ.get("RC_LOCAL_LIMIT", "0")) or None
-        print(f"Первый запуск: загружаю каталог из {source}" + (f" (первые {limit} товаров)" if limit else "") + "…")
-        stats = load_catalog(session, source, max_offers=limit)
-        print(f"Товаров: {stats.offers}, категорий: {stats.categories}")
-        print("Привязываю товары к видам работ…")
-        result = admin_autobind(min_confidence=get_settings().autobind_min_confidence, batch=1000, repo=CatalogRepo(session))
-        print(f"Привязано автоматически: {result.bound_ml} из {result.products_total}")
+        products = session.scalar(select(func.count()).select_from(Product)) or 0
+        if not products:
+            candidates = [Path(get_settings().catalog_path), Path("data/catalog.json"), Path("data/catalog.xml")]
+            source = next((c for c in candidates if c.exists()), SAMPLE)
+            limit = int(os.environ.get("RC_LOCAL_LIMIT", "0")) or None
+            print(f"Первый запуск: загружаю каталог из {source}" + (f" (первые {limit} товаров)" if limit else "") + "…")
+            stats = load_catalog(session, source, max_offers=limit)
+            products = stats.offers
+            print(f"Товаров: {stats.offers}, категорий: {stats.categories}")
+        bindings = session.scalar(select(func.count()).select_from(ProductBinding)) or 0
+        if products and not bindings:
+            print("В каталоге нет привязок. Запускаю безопасную TF-IDF привязку без GigaChat…")
+            result = asyncio.run(admin_autobind(
+                min_confidence=get_settings().autobind_min_confidence, batch=1000,
+                use_gigachat=False, repo=CatalogRepo(session)))
+            print(f"Привязано автоматически: {result.bound_ml} из {result.products_total}")
 
 
 if __name__ == "__main__":

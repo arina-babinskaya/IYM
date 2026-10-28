@@ -4,7 +4,7 @@ from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, PlainSerializer, field_validator, model_validator
 
-from app.taxonomy import Material, RenovationType, Stage, WorkType
+from app.taxonomy import Material, ProductCategory, RenovationType, Stage, WorkType
 
 Money = Annotated[Decimal, PlainSerializer(lambda v: float(v), return_type=float, when_used="json")]
 Amount = Annotated[Decimal, PlainSerializer(lambda v: float(v), return_type=float, when_used="json")]
@@ -174,6 +174,26 @@ class EstimateItem(BaseModel):
     reason: str | None = None
     alternatives: list[ProductBrief] = Field(default_factory=list)
     why: list[str] = Field(default_factory=list)
+    recommendation_explanation: str | None = None
+    recommendation_evidence: "RecommendationEvidence | None" = None
+
+
+class ExplanationFact(BaseModel):
+    code: str
+    label: str
+    source: Literal["binding", "catalog", "request", "ranking", "user"]
+    value: str | None = None
+    score: float | None = None
+
+
+class RecommendationEvidence(BaseModel):
+    status: Literal["available", "limited", "unavailable"]
+    product_id: int
+    room_type: RoomType
+    work_type: WorkType
+    surface: Surface | None = None
+    material: Material
+    facts: list[ExplanationFact] = Field(default_factory=list)
 
 
 class RoomEstimate(BaseModel):
@@ -189,6 +209,9 @@ class EstimateResponse(BaseModel):
     renovation_type: RenovationType
     rooms: list[RoomEstimate]
     total: Money
+    status: Literal["complete", "partial", "unavailable"] = "complete"
+    priced_items: int = 0
+    missing_items: int = 0
     currency: str = "RUB"
     explanation: str | None = None
     sources: list[str] = Field(default_factory=list)
@@ -223,6 +246,7 @@ class ProductCalcResponse(BaseModel):
 
 
 class Suggestion(BaseModel):
+    product_category: ProductCategory | None = None
     material: Material
     work_types: list[WorkType] = Field(default_factory=list)
     work_scores: dict[WorkType, float] = Field(default_factory=dict)
@@ -233,6 +257,7 @@ class Suggestion(BaseModel):
 
 
 class BindingIn(BaseModel):
+    product_category: ProductCategory | None = None
     material: Material
     work_types: list[WorkType] = Field(default_factory=list)
     room_types: list[RoomType] = Field(default_factory=list)
@@ -309,6 +334,7 @@ class TaxonomyOut(BaseModel):
     renovation_types: list[dict[str, str]]
     works: list[dict[str, Any]]
     materials: list[dict[str, str]]
+    product_categories: list[dict[str, str]] = Field(default_factory=list)
 
 
 ProductOut.model_rebuild()

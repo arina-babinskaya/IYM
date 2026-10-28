@@ -45,7 +45,7 @@
     /* «!» — почему выбран товар */
     .why { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid #75A4BE; color: #75A4BE; font-weight: 700; font-size: 12px; cursor: pointer; position: relative; margin-right: 6px; background: #fff; padding: 0; vertical-align: 1px; }
     .why:hover { background: #75A4BE; color: #fff; }
-    .why-pop { position: absolute; z-index: 30; left: -4px; bottom: 26px; width: 280px; background: #fff; color: #111827; border: 1px solid #e5e7eb; border-radius: 0.75rem; padding: 10px 12px; font-weight: 400; font-size: 13px; text-align: left; box-shadow: 0 10px 25px rgba(0,0,0,.12); white-space: normal; }
+    .why-pop { position: absolute; z-index: 30; left: -4px; bottom: 26px; width: min(360px, 80vw); background: #fff; color: #111827; border: 1px solid #e5e7eb; border-radius: 0.75rem; padding: 12px 14px; font-weight: 400; font-size: 13px; text-align: left; box-shadow: 0 10px 25px rgba(0,0,0,.12); white-space: normal; }
     .why-pop ul { margin: 4px 0 0; padding-left: 18px; list-style: disc; }
   </style>
 </head>
@@ -436,16 +436,37 @@ function roomsPayload() {
 
 const pickKey = i => `${i.material}|${i.surface || ""}`;
 
-function productCell(ri, i) {
-  const why = (i.why || []).length ? `<button class="why" data-why title="Почему этот товар">!</button>` : "";
+function productCell(ri, i, itemIndex) {
+  const why = i.product ? `<button class="why" data-why data-item="${ri}|${itemIndex}" title="Данные рекомендации">!</button>` : "";
   const picked = (W.rooms[ri].pickMap || {})[pickKey(i)] ? ' <span class="pill ok">ваш выбор</span>' : "";
   return `<div class="flex items-start"><span class="shrink-0">${why}</span><span>${esc(i.product.name)}${picked}</span></div>
     <button class="text-xs font-semibold text-brand-blue hover:text-brand-red underline mt-1" data-change="${ri}|${i.material}|${i.surface || ""}">Изменить</button>`;
 }
 
+function recommendationPopover(item) {
+  const deterministic = item.recommendation_explanation;
+  const provider = item.reason && item.reason !== deterministic ? item.reason : null;
+  const explanation = provider || deterministic;
+  const status = item.recommendation_evidence?.status;
+  const body = explanation
+    ? `<p class="mt-2">${esc(explanation)}</p>`
+    : `<p class="text-gray-500 mt-2">Для этого товара недостаточно проверенных данных, чтобы объяснить выбор.</p>`;
+  const note = provider
+    ? `<p class="text-xs text-gray-500 mt-2">Формулировка подготовлена сервисом объяснений по проверенным данным подбора.</p>`
+    : (status === "limited" ? `<p class="text-xs text-gray-500 mt-2">Объяснение ограничено доступными данными каталога.</p>` : "");
+  return `<div class="why-pop" role="dialog" aria-label="Почему выбран этот товар?">
+    <b>Почему выбран этот товар?</b>
+    ${body}${note}
+  </div>`;
+}
+
 function bindEstimateButtons(r) {
   const out = document.getElementById("estimate-result");
   const itemOf = el => {
+    if (el.dataset.item) {
+      const [ri, itemIndex] = el.dataset.item.split("|").map(Number);
+      return [ri, r.rooms[ri].items[itemIndex]];
+    }
     const [ri, material, surface] = el.closest("tr").querySelector("[data-change]").dataset.change.split("|");
     return [Number(ri), r.rooms[ri].items.find(x => x.material === material && (x.surface || "") === surface)];
   };
@@ -455,8 +476,7 @@ function bindEstimateButtons(r) {
     out.querySelectorAll(".why-pop").forEach(x => x.remove());
     if (open) return;
     const [, item] = itemOf(btn);
-    btn.insertAdjacentHTML("beforeend", `<div class="why-pop"><b>Почему выбран этот товар</b><ul>${
-      item.why.map(w => `<li>${esc(w)}</li>`).join("")}</ul></div>`);
+    btn.insertAdjacentHTML("beforeend", recommendationPopover(item));
   });
   out.querySelectorAll("[data-change]").forEach(btn => btn.onclick = () => openPicker(...itemOf(btn)));
 }
@@ -567,7 +587,9 @@ async function loadOptions(reset) {
   });
 }
 
+let estimateRequestVersion = 0;
 async function runEstimate(keepScroll = false) {
+  const requestVersion = ++estimateRequestVersion;
   const out = document.getElementById("estimate-result");
   out.hidden = false; out.dataset.filled = "1";
   if (!keepScroll) out.innerHTML = `<div class="p-10 text-center"><div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-brand-red"></div><p class="mt-4 text-gray-500 font-medium">Считаем смету...</p></div>`;
@@ -577,21 +599,21 @@ async function runEstimate(keepScroll = false) {
       renovation_type: W.rooms[0].renovation_type,
       rooms: roomsPayload(),
     }) });
+    if (requestVersion !== estimateRequestVersion) return;
     out.innerHTML = renderEstimate(r);
     document.getElementById("copy-list").onclick = () => copyList(r);
     bindEstimateButtons(r);
     if (!keepScroll) out.scrollIntoView({ behavior: "smooth" });
-  } catch (e) { out.innerHTML = `<div class="p-6"><div class="warn">${esc(e.message)}</div></div>`; }
+  } catch (e) {
+    if (requestVersion === estimateRequestVersion)
+      out.innerHTML = `<div class="p-6"><div class="warn">Не удалось загрузить рекомендации: ${esc(e.message)}</div></div>`;
+  }
 }
 
 function renderEstimate(r) {
-<<<<<<< HEAD
+  currentEstimateData = r;
+  const estimateStatus = r.status || (r.total > 0 ? "complete" : "unavailable");
   const rooms = r.rooms.map((room, ri) => {
-=======
-  currentEstimateData = r; // Сохраняем данные для модалки!
-  
-  const rooms = r.rooms.map((room, roomIndex) => {
->>>>>>> front
     let stage = null;
     const rows = room.items.map((i, itemIndex) => {
       const head = i.stage !== stage ? `<tr class="stage-row"><td colspan="6" class="px-4 py-2">${esc(T.stages[i.stage])}</td></tr>` : "";
@@ -605,7 +627,7 @@ function renderEstimate(r) {
 
       // Новая аккуратная кнопка с иконкой
       const replaceBtn = (i.alternatives && i.alternatives.length > 0) 
-        ? `<button onclick="openAlternatives(${roomIndex}, ${itemIndex})" class="inline-flex items-center gap-1.5 px-2.5 py-1 mt-1.5 text-[11px] font-bold text-brand-blue bg-blue-50 hover:bg-blue-100 border border-blue-100 rounded-md transition-colors" title="Найти аналог">
+        ? `<button onclick="openAlternatives(${ri}, ${itemIndex})" class="inline-flex items-center gap-1.5 px-2.5 py-1 mt-1.5 text-[11px] font-bold text-brand-blue bg-blue-50 hover:bg-blue-100 border border-blue-100 rounded-md transition-colors" title="Найти аналог">
              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
              Заменить
            </button>` 
@@ -614,7 +636,7 @@ function renderEstimate(r) {
       if (i.packages === 0 && !i.product) return head + `<tr class="border-b border-gray-100"><td class="px-4 py-3">${work}</td><td colspan="5" class="px-4 py-3 text-sm text-gray-400 italic">${esc(i.reason)}</td></tr>`;
       if (i.packages === 0) return head + `<tr class="border-b border-gray-100 hover:bg-gray-50"><td class="px-4 py-3">${work}</td><td class="px-4 py-3">
         <div class="flex flex-col items-start gap-1">
-          ${productCell(ri, i)}
+          ${productCell(ri, i, itemIndex)}
           ${replaceBtn}
         </div>
         <div class="text-xs text-gray-500 mt-1">${esc(i.reason)}</div></td>
@@ -625,7 +647,7 @@ function renderEstimate(r) {
         <td class="px-4 py-3">${work}${i.reason ? `<div class="text-xs text-brand-yellow font-medium mt-1">${esc(i.reason)}</div>` : ""}</td>
         <td class="px-4 py-3">
           <div class="flex flex-col items-start gap-1">
-            ${productCell(ri, i)}
+            ${productCell(ri, i, itemIndex)}
             ${replaceBtn}
           </div>
         </td>
@@ -657,14 +679,19 @@ function renderEstimate(r) {
   
   const warns = r.warnings.length ? `<div class="warn mb-6">${r.warnings.map(esc).join("<br>")}</div>` : "";
   
+  const heading = estimateStatus === "unavailable" ? "Смету не удалось рассчитать"
+    : estimateStatus === "partial" ? "Предварительная смета рассчитана частично" : "Ваша смета готова";
+  const emptyNotice = estimateStatus === "unavailable"
+    ? `<div class="warn mb-6"><b>Нет рассчитанных товарных позиций.</b><br>Проверьте загрузку и привязки каталога в разделе администратора, затем повторите расчёт.</div>` : "";
   return `<div class="p-6 md:p-8">
-    <h2 class="text-2xl font-bold mb-6">Ваша смета готова</h2>
+    <h2 class="text-2xl font-bold mb-6">${heading}</h2>
+    ${emptyNotice}
     ${warns}
     ${rooms}
     
     <div class="mt-8 p-6 bg-gray-900 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4 shadow-xl">
       <div>
-        <p class="text-gray-400 text-sm font-medium mb-1">Общая стоимость материалов</p>
+        <p class="text-gray-400 text-sm font-medium mb-1">${estimateStatus === "unavailable" ? "Стоимость недоступна" : "Общая стоимость рассчитанных материалов"}</p>
         <p class="text-4xl font-extrabold text-white">${rub(r.total)}</p>
       </div>
       <div class="flex gap-3 w-full md:w-auto">
@@ -891,11 +918,7 @@ async function showProduct(id) {
     <div class="text-3xl font-extrabold text-brand-red mb-4">${rub(p.result_price)} <span class="text-sm font-medium text-gray-500">/ ${esc(p.unit || "шт")}</span></div>
     
     <div class="mb-4">${chars || '<span class="text-gray-400 italic text-sm">Характеристик нет</span>'}</div>
-<<<<<<< HEAD
-    <div class="text-xs bg-white p-3 rounded-lg border border-gray-100"><span class="text-gray-400 font-semibold uppercase tracking-wider">Привязка</span><br>${binding}</div>`;
-=======
-    
-        <div class="text-xs bg-white p-3 rounded-lg border border-gray-100 mb-2">
+    <div class="text-xs bg-white p-3 rounded-lg border border-gray-100 mb-2">
       <span class="text-gray-400 font-semibold uppercase tracking-wider block mb-1">Спецификация</span>
       ${renderSpecs(p.specs)}
     </div>
@@ -904,7 +927,6 @@ async function showProduct(id) {
       <span class="text-gray-400 font-semibold uppercase tracking-wider block mb-1">Привязка</span>
       ${binding}
     </div>`;
->>>>>>> front
     
   document.getElementById("calc-form").hidden = false;
   document.getElementById("calc-result").innerHTML = "";
@@ -961,17 +983,12 @@ async function loadAdmin() {
       const article = r.product.name.match(/арт\.\s*(\d+)/i)?.[1] || r.product.sku || `ID: ${r.product.id}`;
 
       return `<tr data-id="${r.product.id}" class="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-<<<<<<< HEAD
-        <td class="px-4 py-4 whitespace-normal"><div class="font-medium text-gray-900 max-w-xs [overflow-wrap:anywhere]">${esc(r.product.name)}</div><div class="text-xs text-gray-500 mt-1">${[esc(r.category || ""), r.manual ? '<span class="text-brand-yellow font-bold">Ручной</span>' : ""].filter(Boolean).join(" · ")}</div></td>
-        <td class="px-4 py-4 whitespace-normal">${describe(s)}<div class="text-xs font-semibold ${s.confidence > 0.8 ? 'text-green-600' : 'text-brand-yellow'} mt-1">Уверенность: ${Math.round(s.confidence * 100)}%</div><div class="mt-1">${flags}</div></td>
-=======
         <td class="px-4 py-4">
           <div class="font-medium text-gray-900 whitespace-normal max-w-xs leading-snug">${esc(cleanName)}</div>
           ${article ? `<div class="text-[11px] text-gray-400 mt-1">Арт. ${esc(article)}</div>` : ''}
           <div class="text-xs text-gray-500 mt-1.5">${[esc(r.category || ""), r.manual ? '<span class="text-brand-yellow font-bold">Ручной</span>' : ""].filter(Boolean).join(" · ")}</div>
         </td>
-        <td class="px-4 py-4">${describe(s)}<div class="text-xs font-semibold ${s.confidence > 0.8 ? 'text-green-600' : 'text-brand-yellow'} mt-1">Уверенность: ${Math.round(s.confidence * 100)}%</div><div class="mt-1">${flags}</div></td>
->>>>>>> front
+        <td class="px-4 py-4">${describe(s)}<div class="text-xs font-semibold ${s.confidence >= 0.7 ? 'text-green-600' : 'text-brand-yellow'} mt-1">Уверенность: ${Math.round(s.confidence * 100)}%</div><div class="mt-1">${flags}</div></td>
         <td class="px-4 py-4">${bound}</td>
         <td class="px-4 py-4" data-cell>${actionButtons(r)}</td></tr>`;
     }).join("")}</tbody>` : `<tbody><tr><td class="p-8 text-center text-gray-500 italic" colspan="4">Здесь пусто. Добавьте товары или нажмите ML-привязку.</td></tr></tbody>`;

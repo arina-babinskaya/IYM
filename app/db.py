@@ -2,7 +2,7 @@ from collections.abc import Iterator, Sequence
 from functools import lru_cache
 from typing import Any
 
-from sqlalchemy import Engine, create_engine, event
+from sqlalchemy import Engine, create_engine, event, inspect, text
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 
 from app.config import get_settings
@@ -41,7 +41,18 @@ def get_session() -> Iterator[Session]:
 def init_db(engine: Engine | None = None) -> None:
     from app import models
 
-    Base.metadata.create_all(engine or get_engine())
+    target = engine or get_engine()
+    Base.metadata.create_all(target)
+    # Backward-compatible additive migration. Existing bindings and their material values are
+    # untouched; the authoritative ML category is populated only by future classification runs.
+    columns = {column["name"] for column in inspect(target).get_columns("product_bindings")}
+    if "product_category" not in columns:
+        with target.begin() as connection:
+            connection.execute(text("ALTER TABLE product_bindings ADD COLUMN product_category VARCHAR(64)"))
+            connection.execute(text(
+                "CREATE INDEX IF NOT EXISTS ix_product_bindings_product_category "
+                "ON product_bindings (product_category)"
+            ))
 
 
 def upsert(

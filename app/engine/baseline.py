@@ -3,6 +3,7 @@ from decimal import ROUND_CEILING, ROUND_HALF_UP, Decimal
 
 from app.catalog.normalize import to_decimal
 from app.catalog.repository import CatalogRepo, to_brief
+from app.config import get_settings
 from app.engine.interface import CalcError
 from app.ml.interface import Ranker
 from app.models import Product
@@ -125,7 +126,9 @@ class BaselineEngine:
         info = WORKS[work]
         area = walls if surface == Surface.wall else floor
         wet = room.effective_humidity == Level.high and material in NEEDS_MOISTURE
-        cands = repo.candidates(material, required_flags=["moisture_resistant"] if wet else [], min_confidence=0.8,
+        cands = repo.candidates(material, work_type=work,
+                                required_flags=["moisture_resistant"] if wet else [],
+                                min_confidence=get_settings().autobind_min_confidence,
                                 limit=CANDIDATES_LIMIT)
         ranked = self.ranker.rank(cands, room)
         hint = SURFACE_HINTS.get(surface) if material == Material.tile else None
@@ -174,9 +177,17 @@ class BaselineEngine:
                 warnings.append(f"{room.name or ROOM_TITLES[room.room_type]}: не подобраны — {', '.join(missing)}")
             rooms.append(RoomEstimate(room=room, floor_area_m2=floor, wall_area_m2=walls.quantize(CENT), items=items,
                                       subtotal=_money(sum((i.cost for i in items), Decimal(0)))))
+        priced_items = sum(1 for room in rooms for item in room.items if item.packages > 0 and item.cost > 0)
+        missing_items = sum(1 for room in rooms for item in room.items if item.packages == 0)
+        status = "unavailable" if not priced_items else ("partial" if missing_items else "complete")
+        if status == "unavailable":
+            warnings.insert(0, "Смета не рассчитана: для выбранных работ нет товаров с подходящей привязкой, ценой и данными для расчёта")
+        elif status == "partial":
+            warnings.insert(0, f"Смета рассчитана частично: не удалось рассчитать позиций — {missing_items}")
         return EstimateResponse(
             object_type=req.object_type, renovation_type=req.renovation_type, rooms=rooms,
-            total=_money(sum((r.subtotal for r in rooms), Decimal(0))), warnings=warnings,
+            total=_money(sum((r.subtotal for r in rooms), Decimal(0))), status=status,
+            priced_items=priced_items, missing_items=missing_items, warnings=warnings,
         )
 
     def calc_product(self, product: Product, req: ProductCalcRequest, repo: CatalogRepo) -> ProductCalcResponse:
