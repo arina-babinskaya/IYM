@@ -80,6 +80,7 @@ class ProductBinding(Base):
     __tablename__ = "product_bindings"
 
     product_id: Mapped[int] = mapped_column(Id, ForeignKey("products.id", ondelete="CASCADE"), primary_key=True)
+    product_category: Mapped[str | None] = mapped_column(String(64), index=True)
     material: Mapped[str] = mapped_column(String(64), index=True)
     work_types: Mapped[list[str]] = mapped_column(Json, default=list)
     room_types: Mapped[list[str]] = mapped_column(Json, default=list)

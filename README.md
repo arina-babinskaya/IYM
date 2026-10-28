@@ -13,6 +13,15 @@ python run_local.py                  # открывает http://localhost:8000
 python run_local.py --reload-data    # пересоздать базу и загрузить каталог заново
 ```
 
+Если каталог уже загружен, но таблица привязок пуста, `run_local.py` безопасно заполнит только
+отсутствующие TF-IDF-привязки (без GigaChat). Тот же процесс можно сначала просмотреть, а затем
+явно применить; существующие и подтверждённые привязки не перезаписываются:
+
+```bash
+python -m scripts.backfill_bindings
+python -m scripts.backfill_bindings --apply
+```
+
 Если есть `data/catalog.json` (формат организаторов) или `data/catalog.xml` (YML), загружается он, иначе — пример `mock_catalog/sample_catalog.json` (27 синтетических товаров).
 Для большого каталога можно ограничить число товаров: `$env:RC_LOCAL_LIMIT=5000` (PowerShell) перед запуском.
 
@@ -44,8 +53,9 @@ docker compose down                          # остановить (данны�
 
 | Метод | Путь | Что делает |
 |---|---|---|
-| POST | `/api/v1/estimate` | Смета: комнаты (длина × ширина, вид ремонта, выбранные работы) → позиции по этапам |
+| POST | `/api/v1/estimate` | Смета: комнаты (длина × ширина, вид ремонта, выбранные работы, `windows`/`doors` — сколько окон и дверей (площадь проёмов считается сама: окно 2,1 м², дверь 1,6 м²), `picks` — выбранные пользователем товары) → позиции по этапам; у позиции `why` — почему выбран товар |
 | GET | `/api/v1/works?room_type=&renovation_type=` | Шаг «Работы»: какие работы можно выбрать для помещения и вида ремонта (по этапам, с отметкой «по умолчанию») |
+| POST | `/api/v1/estimate/options` | Окно «Изменить»: варианты «рекомендуем / самый качественный / самый выгодный из подходящих» и все товары для строки сметы с сортировкой (`sort`) и фильтрами (`q`, `features`, `suitable_only`, `price_min/max`) |
 | GET | `/api/v1/taxonomy` | Справочник: этапы, виды ремонта, виды работ, материалы |
 | POST | `/api/v1/product/{id}/calc` | Расчёт в карточке: размеры → упаковки и цена |
 | GET | `/api/v1/products?q=`, `/api/v1/products/{id}` | Поиск и карточка товара |
@@ -53,12 +63,14 @@ docker compose down                          # остановить (данны�
 | POST | `/api/v1/admin/products` | Добавить товар вручную (не удаляется при загрузке каталога) |
 | DELETE | `/api/v1/admin/products/{id}` | Удалить товар, добавленный вручную |
 | PUT | `/api/v1/admin/products/{id}/binding` | Подтвердить или исправить привязку |
-| POST | `/api/v1/admin/autobind` | Автопривязка предсказаний с уверенностью от `RC_AUTOBIND_MIN_CONFIDENCE` (по умолчанию 0.8) |
+| POST | `/api/v1/admin/autobind` | Автопривязка TF-IDF от `RC_AUTOBIND_MIN_CONFIDENCE` (по умолчанию 0.7) и ограниченный GigaChat fallback; порог не является вероятностью корректности |
 | GET | `/api/v1/admin/stats` | Доля автопривязанных товаров |
 | GET | `/health` | БД и нейросеть |
 | POST | `/internal/llm/chat`, `/internal/llm/embed` | Нейросеть и эмбеддинги для команды |
 
 Живая документация с примерами: http://localhost:8000/docs
+
+Статика (картинки, стили фронта) раздаётся из `app/static/` по адресу `/static/…`, например `app/static/logo.png` → `http://localhost:8000/static/logo.png`.
 
 ## Структура
 
@@ -76,8 +88,9 @@ docker compose down                          # остановить (данны�
 | `app/work_materials.py` | какие позиции из справочника участника 2 (`ml_workspace/taxonomy/work_type_materials_v2.py`) каким категориям каталога соответствуют; тест `tests/test_work_materials.py` проверяет, что `app/taxonomy.py` совпадает со справочником | 1 |
 | `app/plans.py` | какие работы доступны для помещения и вида ремонта, какие отмечены по умолчанию | 1 |
 | `app/engine/baseline.py` | заглушка движка расчёта | 2 заменяет своим |
-| `app/ml/baseline.py` | заглушка классификатора и запасной ранжировщик `RatingRanker` | 3 заменяет своим |
-| `app/ml/ranker.py` | ранжирование `ContextRanker` (включено в `run_local.py` и `docker-compose.yml`): веса характеристик по материалу, комнате и влажности, таблица `RULES` | 1 |
+| `app/ml/tfidf.py` + `ml_workspace/model/tfidf_logreg/model` | классификатор участника 3 — включён по умолчанию (`RC_ML_CLASSIFIER_BACKEND=trained`) | 3 |
+| `app/ml/baseline.py` | старая заглушка классификатора (`RC_ML_CLASSIFIER_BACKEND=baseline`, нужна только тестам) и запасной ранжировщик `RatingRanker` | 3 |
+| `app/ml/ranker.py` | ранжирование `ContextRanker` (включено по умолчанию): веса характеристик по материалу, комнате и влажности, таблица `RULES` | 1 |
 | `app/static/index.html` | простой демо-фронт | 4 заменяет своим |
 | `mock_catalog/` | пример каталога и эталонной разметки | все |
 | `tests/` | автотесты: `pytest` | все |
@@ -86,3 +99,27 @@ docker compose down                          # остановить (данны�
 Названия классов (`BaselineEngine`, `KeywordClassifier`, `RatingRanker`) и их функций не меняются, внутри — любой код.
 
 Нейросеть вызывается только через `app.llm.client.get_llm()`: `chat`, `chat_json`, `embed`.
+
+## Опциональный GigaChat fallback
+
+TF-IDF остаётся первым и воспроизводимым классификатором. При включённом GigaChat реальный
+`/admin/autobind` последовательно проверяет ограниченное число неуверенных непривязанных товаров;
+отдельная команда остаётся безопасным способом пилота и по умолчанию не вызывает API и не меняет БД:
+
+```bash
+python -m scripts.gigachat_fallback --limit 20
+python -m scripts.gigachat_fallback --limit 20 --use-api          # API + cache, без записи binding
+python -m scripts.gigachat_fallback --ids 123 456 --use-api --apply
+python -m scripts.gigachat_fallback --ids 123 456 --use-api --cache-namespace pilot-2026-10-28
+```
+
+Задайте `RC_GIGACHAT_ENABLED=true` и `RC_GIGACHAT_CREDENTIALS` (Authorization Key проекта,
+без префикса `Basic`). Модель, scope, URL, timeout, retries, SQLite-cache и общий token budget
+настраиваются переменными из `.env.example`. Запросы выполняются последовательно; ответы проходят
+Pydantic-проверку по текущим `Material`/`WorkType`, конфликт material/work уходит на review. Cache
+обеспечивает resume. `--apply` никогда не перезаписывает существующие или исторические bindings.
+
+Контекстные объяснения выбранных строк сметы включаются отдельно через
+`RC_GIGACHAT_EXPLANATIONS=true`. Они не участвуют в выборе товара; при ошибке API сохраняются
+детерминированные `why` и рабочая смета. Реализация следует REST-потоку GigaChat OAuth
+(`POST /api/v2/oauth`, `RqUID`, scope) и Chat Completions (`POST /api/v1/chat/completions`).

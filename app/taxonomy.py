@@ -78,6 +78,19 @@ class Material(StrEnum):
     doors = "doors"
     lighting = "lighting"
     decorative = "decorative"
+    adhesive = "adhesive"
+    construction_mix = "construction_mix"
+    insulation = "insulation"
+    lumber_sheet_material = "lumber_sheet_material"
+    installation_accessories = "installation_accessories"
+    hand_tools = "hand_tools"
+    power_tools = "power_tools"
+    tool_accessories = "tool_accessories"
+    consumables = "consumables"
+    protective_equipment = "protective_equipment"
+    floor_covering = "floor_covering"
+    electrical_goods = "electrical_goods"
+    windows = "windows"
     demolition_tools = "demolition_tools"
     other = "other"
 
@@ -124,8 +137,68 @@ MATERIAL_TITLES: dict[Material, str] = {
     Material.doors: "Двери и окна",
     Material.lighting: "Светильники",
     Material.decorative: "Декоративные панели и молдинги",
+    Material.adhesive: "Клеи (тип требует уточнения)",
+    Material.construction_mix: "Строительные смеси",
+    Material.insulation: "Изоляционные материалы",
+    Material.lumber_sheet_material: "Пиломатериалы и листовые материалы",
+    Material.installation_accessories: "Монтажные комплектующие",
+    Material.hand_tools: "Ручной инструмент",
+    Material.power_tools: "Электроинструмент",
+    Material.tool_accessories: "Оснастка для инструмента",
+    Material.consumables: "Расходные материалы",
+    Material.protective_equipment: "Средства защиты",
+    Material.floor_covering: "Напольное покрытие (тип требует уточнения)",
+    Material.electrical_goods: "Электротовары (тип требует уточнения)",
+    Material.windows: "Окна и оконные блоки",
     Material.demolition_tools: "Инструмент для демонтажа",
     Material.other: "Другое",
+}
+
+
+class ProductCategory(StrEnum):
+    """Authoritative taxonomy_v2 product-category task classes."""
+    primer = "primer"
+    paint = "paint"
+    putty = "putty"
+    plaster = "plaster"
+    drywall = "drywall"
+    tile = "tile"
+    floor_covering = "floor_covering"
+    waterproofing_material = "waterproofing_material"
+    adhesive = "adhesive"
+    sealant = "sealant"
+    construction_mix = "construction_mix"
+    fasteners = "fasteners"
+    hand_tools = "hand_tools"
+    power_tools = "power_tools"
+    tool_accessories = "tool_accessories"
+    consumables = "consumables"
+    protective_equipment = "protective_equipment"
+    plumbing = "plumbing"
+    electrical_goods = "electrical_goods"
+    ventilation = "ventilation"
+    heating_climate = "heating_climate"
+    lighting = "lighting"
+    doors_windows = "doors_windows"
+    decorative_panels = "decorative_panels"
+    decorative_materials = "decorative_materials"
+    installation_accessories = "installation_accessories"
+    insulation = "insulation"
+    lumber_sheet_material = "lumber_sheet_material"
+    tables = "tables"
+    seating = "seating"
+    shelving_storage = "shelving_storage"
+    cabinets_wardrobes = "cabinets_wardrobes"
+    beds = "beds"
+    countertops = "countertops"
+    mirrors = "mirrors"
+    interior_accessories = "interior_accessories"
+    decorative_objects = "decorative_objects"
+    other_renovation_material = "other_renovation_material"
+
+
+PRODUCT_CATEGORY_TITLES: dict[ProductCategory, str] = {
+    item: item.value.replace("_", " ") for item in ProductCategory
 }
 
 

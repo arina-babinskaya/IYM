@@ -34,5 +34,11 @@ def get_estimate_engine() -> Any:
     return load(get_settings().engine_impl)(ranker=get_ranker())
 
 
+@lru_cache
+def get_gigachat() -> Any:
+    from app.llm.gigachat import GigaChatClient
+    return GigaChatClient(get_settings())
+
+
 def get_repo(session: Session = Depends(get_session)) -> CatalogRepo:
     return CatalogRepo(session)

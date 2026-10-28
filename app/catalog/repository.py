@@ -7,9 +7,10 @@ from sqlalchemy.orm import Session
 
 from app.catalog import normalize as nz
 from app.db import upsert
+from app.ml.ranker import moisture_rejected, signals
 from app.models import Product, ProductBinding, ProductCategory, ProductCharacteristic
 from app.schemas import BindingIn, BindingOut, Characteristic, ProductBrief, ProductCreate, ProductOut, Suggestion
-from app.taxonomy import Material, WorkType
+from app.taxonomy import Material, WorkType, works_for_material
 
 MANUAL_ID_START = 9_000_000_000_000
 AdminStatus = Literal["unbound", "ml", "confirmed", "all"]
@@ -19,6 +20,15 @@ def to_brief(p: Product) -> ProductBrief:
     return ProductBrief(
         id=p.id, sku=p.sku, name=p.name, url_key=p.url_key, picture_url=p.picture_url, brand=p.brand_name,
         unit=p.unit, result_price=p.result_price, currency=p.currency or "RUB", in_stock=p.in_stock,
+    )
+
+
+def has_flags(p: Product, b: ProductBinding, required: Sequence[str]) -> bool:
+    flags = b.flags or {}
+    found = signals(p, b)
+    return all(
+        flags.get(f) or found.get(f, 0) >= 1 or (f == "moisture_resistant" and not moisture_rejected(p))
+        for f in required
     )
 
 
@@ -82,21 +92,29 @@ class CatalogRepo:
             select(Product, ProductBinding)
             .join(ProductBinding, ProductBinding.product_id == Product.id)
             .where(ProductBinding.material == material.value)
-            .where(Product.status.isnot(False), Product.result_price.isnot(None))
+            .where(Product.status.isnot(False), Product.result_price.isnot(None), Product.result_price > 0)
             .where(or_(ProductBinding.confirmed.is_(True), ProductBinding.confidence >= min_confidence))
         )
         if in_stock_only:
             stmt = stmt.where(Product.in_stock.isnot(False))
         rows = [(p, b) for p, b in self.session.execute(stmt.limit(limit * 5))]
         if work_type is not None:
-            rows = [(p, b) for p, b in rows if work_type.value in (b.work_types or [])]
-        rows = [(p, b) for p, b in rows if all((b.flags or {}).get(f) for f in required_flags)]
+            # Old manually reviewed bindings may predate work-type persistence. Keep those usable
+            # only when the authoritative material taxonomy confirms compatibility. Automatic
+            # category/material-only bindings remain excluded from specific estimate slots.
+            compatible_legacy = work_type in works_for_material(material)
+            rows = [(p, b) for p, b in rows if work_type.value in (b.work_types or [])
+                    or (b.confirmed and not (b.work_types or []) and compatible_legacy)]
+        if required_flags:
+            rows = [(p, b) for p, b in rows if has_flags(p, b, required_flags)]
         return rows[:limit]
 
     def set_binding(
         self, product_id: int, data: BindingIn, source: str, confidence: float | None, confirmed: bool
     ) -> ProductBinding:
         b = self.binding(product_id) or ProductBinding(product_id=product_id)
+        if data.product_category is not None:
+            b.product_category = data.product_category.value
         b.material = data.material.value
         b.work_types = [w.value for w in data.work_types]
         b.room_types = [r.value for r in data.room_types]
@@ -110,17 +128,19 @@ class CatalogRepo:
         rows = [
             {
                 "product_id": pid,
+                "product_category": s.product_category.value if s.product_category else None,
                 "material": s.material.value,
                 "work_types": [w.value for w in s.work_types],
                 "room_types": [r.value for r in s.room_types],
                 "flags": dict(s.flags),
-                "source": "ml",
+                "source": "gigachat" if s.flags.get("gigachat_validated") else "ml",
                 "confidence": s.confidence,
                 "confirmed": False,
             }
             for pid, s in pairs
         ]
-        upsert(self.session, ProductBinding, rows, ["product_id"])
+        # Classification only fills missing bindings; it must never replace manual/confirmed data.
+        upsert(self.session, ProductBinding, rows, ["product_id"], update=False)
         self.session.commit()
 
     def admin_list(self, status: AdminStatus = "unbound", q: str | None = None, limit: int = 50,

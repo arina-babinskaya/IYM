@@ -9,14 +9,15 @@ from app.api.deps import get_classifier
 from app.config import get_settings
 from app.db import get_sessionmaker
 from app.main import app
-from app.ml.baseline import KeywordClassifier
-from app.ml.tfidf import ClassifierArtifactError, TfidfClassifier, prediction_to_suggestion, product_to_input
+from app.ml.tfidf import ClassifierArtifactError, TfidfClassifier, prediction_to_suggestion, product_to_input, publishable
 from app.models import Product
+from app.schemas import Suggestion
+from app.taxonomy import Material, ProductCategory, WorkType
 from ml_workspace.ml_api import ProductInput, load_model, predict
 from ml_workspace.ml_api.types import Prediction
 
 
-ARTIFACT = Path(__file__).parents[1] / "ml_workspace/data/experiments_v3/tfidf_logreg/model"
+ARTIFACT = Path(__file__).parents[1] / "ml_workspace/model/tfidf_logreg/model"
 
 
 @pytest.fixture(scope="module")
@@ -57,6 +58,20 @@ def test_product_conversion_handles_missing_fields():
     assert item.characteristics == {} and item.price is None
 
 
+def test_wallpaper_category_translation_uses_direct_product_evidence():
+    prediction = Prediction(product_id=77, labels=["wallpapering"], status="predicted", domain_label="renovation",
+        product_category="other_renovation_material", work_types=["wallpapering"],
+        dimension_scores={"domain": {"renovation": .95},
+                          "product_category": {"other_renovation_material": .9}},
+        scores={"wallpapering": .88})
+    product = Product(id=77, name="Обои виниловые на флизелиновой основе",
+                      categories={"1": "Обои"})
+    result = prediction_to_suggestion(prediction, product)
+    assert result.material == Material.wallpaper
+    assert result.work_types == [WorkType.wallpapering]
+    assert publishable(result, .7)
+
+
 def test_adapter_batch_and_backend_schema(model):
     classifier = TfidfClassifier(ARTIFACT)
     products = [
@@ -72,12 +87,64 @@ def test_adapter_batch_and_backend_schema(model):
     assert all(item.model_dump(mode="json") for item in suggestions)
 
 
-def test_unsupported_labels_are_explicit_not_silently_dropped():
+def test_lighting_is_supported_consistently():
     raw = Prediction(1, ["lighting_install"], {"lighting_install": 0.91}, "predicted",
-                     work_types=["lighting_install"])
+                     domain_label="renovation", product_category="lighting", work_types=["lighting_install"],
+                     dimension_scores={"domain": {"renovation": .96}, "product_category": {"lighting": .94}})
     suggestion = prediction_to_suggestion(raw, Product(id=1, name="Светильник"))
-    assert suggestion.work_types == []
-    assert suggestion.flags["unsupported_work_type__lighting_install"] is True
+    assert suggestion.material.value == "lighting"
+    assert suggestion.work_types == ["lighting_install"]
+    assert suggestion.confidence == .94
+
+
+def test_material_confidence_does_not_drop_to_zero_without_work_type():
+    raw = Prediction(1, [], {"lighting_install": .2}, "predicted", domain_label="renovation",
+                     product_category="lighting", dimension_scores={
+                         "domain": {"renovation": .93}, "product_category": {"lighting": .91}})
+    suggestion = prediction_to_suggestion(raw, Product(id=1, name="Светильник потолочный"))
+    assert suggestion.material.value == "lighting"
+    assert suggestion.confidence == .91
+    assert suggestion.work_types == ["lighting_install"]
+    assert suggestion.flags["work_type_inferred"] is True
+
+
+def test_backend_product_categories_exactly_match_model(model):
+    assert {item.value for item in ProductCategory} == set(model.task_classes["product_category"])
+
+
+def test_category_scoped_hints_prevent_cross_category_assignments():
+    cable_tie = Prediction(1, [], {}, "predicted", domain_label="renovation",
+                           product_category="construction_mix", dimension_scores={
+                               "domain": {"renovation": .8}, "product_category": {"construction_mix": .75}})
+    result = prediction_to_suggestion(cable_tie, Product(id=1, name="Стяжка кабельная нейлоновая"))
+    assert result.material.value == "construction_mix"
+
+    handle = Prediction(2, ["door_window_install"], {"door_window_install": .8}, "predicted",
+                        domain_label="renovation", product_category="other_renovation_material",
+                        work_types=["door_window_install"], dimension_scores={
+                            "domain": {"renovation": .8},
+                            "product_category": {"other_renovation_material": .7}})
+    result = prediction_to_suggestion(handle, Product(id=2, name="Ручка дверная на розетке"))
+    assert result.material.value == "other"
+    assert result.product_category.value == "other_renovation_material"
+    assert not publishable(result, .7)
+
+
+def test_default_operating_threshold_is_point_seven(monkeypatch):
+    monkeypatch.delenv("RC_AUTOBIND_MIN_CONFIDENCE", raising=False)
+    get_settings.cache_clear()
+    try:
+        assert get_settings().autobind_min_confidence == .7
+    finally:
+        get_settings.cache_clear()
+
+
+def test_publication_uses_configurable_boundary():
+    suggestion = Suggestion(product_category=ProductCategory.paint, material=Material.paint,
+                            confidence=.6, flags={"domain_renovation": True})
+    assert publishable(suggestion, .6)
+    assert not publishable(suggestion.model_copy(update={"confidence": .599}), .6)
+    assert not publishable(suggestion, .7)
 
 
 def test_invalid_artifact_path_has_meaningful_error(tmp_path):
@@ -85,12 +152,18 @@ def test_invalid_artifact_path_has_meaningful_error(tmp_path):
         TfidfClassifier(tmp_path / "missing")
 
 
-def test_baseline_is_default_and_cached(monkeypatch):
+def test_trained_is_default_and_cached(monkeypatch):
+    if not ARTIFACT.is_dir():
+        pytest.skip("local selected v3 artifact is unavailable")
     monkeypatch.delenv("RC_ML_CLASSIFIER_BACKEND", raising=False)
+    monkeypatch.delenv("RC_ML_CLASSIFIER_ARTIFACT_PATH", raising=False)
     get_classifier.cache_clear(); get_settings.cache_clear()
-    first = get_classifier()
-    assert isinstance(first, KeywordClassifier)
-    assert get_classifier() is first
+    try:
+        first = get_classifier()
+        assert isinstance(first, TfidfClassifier)
+        assert get_classifier() is first
+    finally:
+        get_classifier.cache_clear(); get_settings.cache_clear()
 
 
 def test_trained_backend_name_loads_selected_v3_artifact(monkeypatch):
@@ -118,7 +191,7 @@ def test_real_admin_endpoint_with_tfidf(monkeypatch, ingested):
             response = client.get("/api/v1/admin/products/96617/suggest")
         assert response.status_code == 200
         body = response.json()
-        assert set(body) == {"material", "work_types", "work_scores", "room_types", "flags", "confidence", "model"}
+        assert set(body) == {"product_category", "material", "work_types", "work_scores", "room_types", "flags", "confidence", "model"}
         assert body["model"] == "tfidf-logreg-taxonomy-v2"
     finally:
         monkeypatch.delenv("RC_ML_CLASSIFIER_BACKEND", raising=False)
@@ -153,7 +226,7 @@ def test_admin_suggestion_with_complete_and_minimal_metadata(monkeypatch, ingest
         assert minimal_response.status_code == 200
         for response in (complete_response, minimal_response):
             body = response.json()
-            assert set(body) == {"material", "work_types", "work_scores", "room_types",
+            assert set(body) == {"product_category", "material", "work_types", "work_scores", "room_types",
                                  "flags", "confidence", "model"}
             assert body["model"] == "tfidf-logreg-taxonomy-v2"
             assert isinstance(body["work_types"], list)

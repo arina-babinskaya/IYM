@@ -6,6 +6,7 @@ import pytest
 os.environ["RC_DATABASE_URL"] = os.environ.get("RC_TEST_DATABASE_URL", "sqlite:///./.pytest.sqlite")
 os.environ["RC_OLLAMA_URL"] = "http://127.0.0.1:9"
 os.environ["RC_LLM_RETRIES"] = "0"
+os.environ["RC_ML_CLASSIFIER_BACKEND"] = "baseline"
 
 from app.catalog.loader import load_catalog
 from app.db import Base, get_engine, get_sessionmaker, init_db

@@ -2,12 +2,31 @@ import re
 
 from app.models import Product, ProductBinding
 from app.schemas import RoomInput, RoomType, Suggestion
-from app.taxonomy import Material, WorkType, works_for_material
+from app.taxonomy import Material, ProductCategory, WorkType, works_for_material
 
 WET = [RoomType.bathroom, RoomType.kitchen, RoomType.utility_room]
 DRY = [RoomType.living_room, RoomType.bedroom, RoomType.dining_room, RoomType.home_office, RoomType.hallway,
        RoomType.general_indoor]
 ALL = WET + DRY + [RoomType.balcony]
+
+PRODUCT_CATEGORY_BY_MATERIAL = {
+    Material.primer: ProductCategory.primer, Material.paint: ProductCategory.paint,
+    Material.putty: ProductCategory.putty, Material.plaster: ProductCategory.plaster,
+    Material.drywall: ProductCategory.drywall, Material.tile: ProductCategory.tile,
+    Material.tile_adhesive: ProductCategory.adhesive, Material.wallpaper_glue: ProductCategory.adhesive,
+    Material.mounting_adhesive: ProductCategory.adhesive, Material.grout: ProductCategory.installation_accessories,
+    Material.laminate: ProductCategory.floor_covering, Material.linoleum: ProductCategory.floor_covering,
+    Material.underlay: ProductCategory.installation_accessories, Material.skirting: ProductCategory.installation_accessories,
+    Material.waterproofing: ProductCategory.waterproofing_material, Material.sealant: ProductCategory.sealant,
+    Material.fasteners: ProductCategory.fasteners, Material.plumbing: ProductCategory.plumbing,
+    Material.pipes: ProductCategory.plumbing, Material.electrical_goods: ProductCategory.electrical_goods,
+    Material.cable: ProductCategory.electrical_goods, Material.socket: ProductCategory.electrical_goods,
+    Material.switch: ProductCategory.electrical_goods, Material.lighting: ProductCategory.lighting,
+    Material.lamps: ProductCategory.lighting, Material.ventilation: ProductCategory.ventilation,
+    Material.heating: ProductCategory.heating_climate, Material.doors: ProductCategory.doors_windows,
+    Material.windows: ProductCategory.doors_windows, Material.decorative: ProductCategory.decorative_materials,
+    Material.painting_tools: ProductCategory.hand_tools, Material.demolition_tools: ProductCategory.hand_tools,
+}
 
 RULES: list[tuple[str, Material]] = [
     (r"автоматическ\w* выключател|\bузо\b|дифавтомат|щит(ок|ки)? \w*(распредел|электр)|щит\w* для автомат", Material.circuit_breakers),
@@ -87,7 +106,8 @@ class KeywordClassifier:
         found, confidence = _materials(name), 0.9
         if not found:
             found, confidence = _materials(cats), 0.7
-        flags = {"moisture_resistant": bool(MOISTURE.search(text)), "washable": bool(WASHABLE.search(text))}
+        flags = {"moisture_resistant": bool(MOISTURE.search(text)), "washable": bool(WASHABLE.search(text)),
+                 "domain_renovation": True}
         if not found:
             return Suggestion(material=Material.other, confidence=0.1, flags=flags, model=self.name)
         material = found[0]
@@ -99,6 +119,7 @@ class KeywordClassifier:
         if flags["moisture_resistant"]:
             rooms = list(dict.fromkeys([*rooms, *WET]))
         return Suggestion(
+            product_category=PRODUCT_CATEGORY_BY_MATERIAL.get(material, ProductCategory.other_renovation_material),
             material=material,
             work_types=works,
             work_scores={w: confidence for w in works},
