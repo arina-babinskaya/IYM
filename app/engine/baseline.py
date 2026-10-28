@@ -362,6 +362,10 @@ def _piece_need(material: Material, room: RoomInput, area: Decimal) -> tuple[Dec
         return perimeter * 2, "м"
     if hasattr(Material, "cable_channel") and material == Material.cable_channel:
         return perimeter, "м"
+    if hasattr(Material, "skirting") and material == Material.skirting:
+        return perimeter, "м"
+    if hasattr(Material, "damper_tape") and material == Material.damper_tape:
+        return perimeter, "м"
     if material == Material.socket:
         # СП 256.1325800.2016: на кухне повышенное количество электроточек
         if room.room_type == RoomType.kitchen:
@@ -377,10 +381,6 @@ def _piece_need(material: Material, room: RoomInput, area: Decimal) -> tuple[Dec
         return Decimal(max(1, _ceil(floor / 10))), "шт"
     if material == Material.profile or (hasattr(Material, "beacons") and material == Material.beacons):
         return Decimal(_ceil(area / Decimal("1.5"))), "шт"
-    if hasattr(Material, "skirting") and material == Material.skirting:
-        return Decimal(_ceil(perimeter / Decimal("2.5"))), "шт"
-    if hasattr(Material, "damper_tape") and material == Material.damper_tape:
-        return Decimal(_ceil(perimeter / 25)), "рул."
     if material == Material.fasteners or (
         hasattr(Material, "tile_leveling") and material == Material.tile_leveling
     ):
@@ -471,7 +471,32 @@ class BaselineEngine:
         piece = _piece_need(material, room, area)
         if piece:
             need, unit = piece
-            n = _ceil(need)
+            if unit in ("м", "пог. м", "п.м"):
+                pack_len = _spec(p, "pack_length_m") or _spec(p, "length_m")
+                if not pack_len and p.name:
+                    m_len = re.search(r"(?<![\dх×x*])(\d+(?:[.,]\d+)?)\s*м(?:етр\w*)?(?![а-яa-z2²\d])", p.name, re.IGNORECASE)
+                    if m_len:
+                        try:
+                            val = Decimal(m_len.group(1).replace(",", "."))
+                            if val >= 1:
+                                pack_len = val
+                        except Exception:
+                            pass
+                if not pack_len:
+                    if hasattr(Material, "cable_channel") and material == Material.cable_channel:
+                        pack_len = Decimal("2.0")
+                    elif hasattr(Material, "skirting") and material == Material.skirting:
+                        pack_len = Decimal("2.5")
+                    elif hasattr(Material, "damper_tape") and material == Material.damper_tape:
+                        pack_len = Decimal("25.0")
+
+                p_unit = (p.unit or "").lower()
+                if pack_len and pack_len > 0 and p_unit not in ("м", "м.", "пог. м", "пог.м"):
+                    n = _ceil(need / pack_len)
+                else:
+                    n = _ceil(need)
+            else:
+                n = _ceil(need)
             reason = "влагостойкий, т.к. высокая влажность" if wet else None
         else:
             reserve = RESERVE.get(material, Decimal(5))
@@ -700,41 +725,6 @@ class BaselineEngine:
         sources_set.add("СП 256.1325800.2016 «Электроустановки жилых и общественных зданий»")
         resp.sources = sorted(sources_set)
 
-        try:
-            from app.llm.client import get_llm
-
-            llm = get_llm()
-            renov_title = RENOVATION_TITLES.get(req.renovation_type, req.renovation_type.value)
-            rooms_summary = ", ".join(
-                f"{r.room.name or ROOM_TITLES[r.room.room_type]} ({r.floor_area_m2:.1f} м²)"
-                for r in resp.rooms
-                if r.floor_area_m2 > 0
-            )
-            context_text = "\n".join(
-                f"- {d['text']} (Источник: {d['source']})" for d in matched_docs[:8]
-            )
-
-            prompt = (
-                f"Ты — профессиональный инженер-сметчик. Дай краткое экспертное обоснование сметы "
-                f"для типа ремонта «{renov_title}» (помещения: {rooms_summary}).\n\n"
-                f"Используй подтверждённые строительные нормы:\n{context_text}\n\n"
-                f"Требования к ответу:\n"
-                f"1. Объясни, почему выбраны данные материалы и технологии.\n"
-                f"2. Укажи поправочные коэффициенты запаса (на подрезку плитки, раппорт обоев, слои краски).\n"
-                f"3. Для мокрых зон ({', '.join(high_humidity_rooms) or 'нет'}) подчеркни требования СП по гидроизоляции и влагостойкости.\n"
-                f"4. Не придумывай несуществующие нормы; пиши лаконично (3-5 абзацев)."
-            )
-
-            explanation = await llm.chat(
-                [{"role": "user", "content": prompt}],
-                temperature=0.1,
-                max_tokens=600,
-            )
-            if explanation and len(explanation.strip()) > 20:
-                resp.explanation = explanation.strip()
-                return resp
-        except Exception as e:
-            log.info("LLM недоступен для explain, используется детерминированный RAG: %s", e)
 
         paragraphs: list[str] = []
         renov_title = RENOVATION_TITLES.get(req.renovation_type, req.renovation_type.value)
