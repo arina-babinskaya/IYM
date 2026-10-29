@@ -15,6 +15,36 @@ from app.taxonomy import Material, WorkType, works_for_material
 MANUAL_ID_START = 9_000_000_000_000
 AdminStatus = Literal["unbound", "ml", "confirmed", "all"]
 
+# A persisted work label describes where the classifier saw the strongest evidence; it is not an
+# exhaustive list of every estimate slot in which an auxiliary material can be used.  These narrow
+# relations are consulted only when an exact candidate pool is empty.  Material identity remains
+# exact, so (for example) a paint product can never enter a primer slot.
+COMPATIBLE_WORK_FALLBACKS: dict[tuple[Material, WorkType], frozenset[WorkType]] = {
+    (Material.primer, WorkType.waterproofing): frozenset({WorkType.priming}),
+    (Material.primer, WorkType.floor_screed): frozenset({WorkType.priming}),
+    (Material.primer, WorkType.tiling): frozenset({WorkType.priming}),
+    (Material.primer, WorkType.wall_plastering): frozenset({WorkType.priming}),
+    (Material.primer, WorkType.wall_putty): frozenset({WorkType.priming}),
+    (Material.primer, WorkType.wall_painting): frozenset({WorkType.priming}),
+    (Material.primer, WorkType.wallpapering): frozenset({WorkType.priming}),
+    (Material.electrical_boxes, WorkType.lighting_install): frozenset({
+        WorkType.electrical_wiring, WorkType.electrical_fittings,
+    }),
+}
+
+
+def fallback_binding(binding: ProductBinding, work_type: WorkType, tier: str) -> ProductBinding:
+    """Create a detached ranking view with auditable fallback provenance."""
+    flags = dict(binding.flags or {})
+    flags[f"candidate_{tier}_fallback"] = True
+    flags[f"candidate_requested_work__{work_type.value}"] = True
+    return ProductBinding(
+        product_id=binding.product_id, product_category=binding.product_category,
+        material=binding.material, work_types=list(binding.work_types or []),
+        room_types=list(binding.room_types or []), flags=flags, source=binding.source,
+        confidence=binding.confidence, confirmed=binding.confirmed,
+    )
+
 
 def to_brief(p: Product) -> ProductBrief:
     return ProductBrief(
@@ -103,8 +133,25 @@ class CatalogRepo:
             # only when the authoritative material taxonomy confirms compatibility. Automatic
             # category/material-only bindings remain excluded from specific estimate slots.
             compatible_legacy = work_type in works_for_material(material)
-            rows = [(p, b) for p, b in rows if work_type.value in (b.work_types or [])
-                    or (b.confirmed and not (b.work_types or []) and compatible_legacy)]
+            exact = [(p, b) for p, b in rows if work_type.value in (b.work_types or [])
+                     or (b.confirmed and not (b.work_types or []) and compatible_legacy)]
+            if exact:
+                rows = exact
+            else:
+                related = COMPATIBLE_WORK_FALLBACKS.get((material, work_type), frozenset())
+                compatible = [
+                    (p, fallback_binding(b, work_type, "compatible")) for p, b in rows
+                    if any(item.value in (b.work_types or []) for item in related)
+                ]
+                if compatible:
+                    rows = compatible
+                elif compatible_legacy:
+                    # Automatic material-only rows are usable only when the authoritative material
+                    # taxonomy supports the requested work and no stronger tier exists.
+                    rows = [(p, fallback_binding(b, work_type, "material_only")) for p, b in rows
+                            if not (b.work_types or [])]
+                else:
+                    rows = []
         if required_flags:
             rows = [(p, b) for p, b in rows if has_flags(p, b, required_flags)]
         return rows[:limit]

@@ -145,6 +145,151 @@ def test_automatic_circuit_breaker_is_not_mapped_to_wall_switch():
     assert publishable(suggestion, .7)
 
 
+def _renovation_prediction(product_id: int, category: str = "other_renovation_material",
+                           work_types: list[str] | None = None, confidence: float = .9) -> Prediction:
+    works = work_types or []
+    return Prediction(product_id, works, {work: confidence for work in works}, "predicted",
+                      domain_label="renovation", product_category=category, work_types=works,
+                      dimension_scores={"domain": {"renovation": .95},
+                                        "product_category": {category: confidence}})
+
+
+@pytest.mark.parametrize("name,category", [
+    ("Подложка пробковая AMORIM 3мм рулон 10м2", "Подложка пробковая"),
+    ("Подложка СОЛИД 3мм XPS 10м2", "Подложка пластиковая"),
+    ("Подложка хвойная 5мм 7м2", "Подложка пробковая"),
+    ("Подложка под SPC PLANKER 1,5мм EVA", "Подложка пластиковая"),
+])
+def test_standalone_floor_underlays_are_specialized_and_publishable(name, category):
+    suggestion = prediction_to_suggestion(
+        _renovation_prediction(8126, "other_renovation_material"),
+        Product(id=8126, name=name, categories={"730": category}),
+    )
+    assert suggestion.material == Material.underlay
+    assert suggestion.work_types == [WorkType.floor_covering_install]
+    assert suggestion.flags["adapter_rule__standalone_floor_underlay"] is True
+    assert publishable(suggestion, .7)
+
+
+@pytest.mark.parametrize("name", [
+    "Плитка SPC ROYCE Ultima 1200х180х5мм 2,16м2 с подложкой",
+    "SPC напольное покрытие со встроенной подложкой",
+    "Кварц-винил дуб с акустической подложкой",
+])
+def test_flooring_with_incidental_underlay_reference_is_not_underlay(name):
+    suggestion = prediction_to_suggestion(
+        _renovation_prediction(102747, "floor_covering", ["floor_covering_install"]),
+        Product(id=102747, name=name, categories={"748": "Плитка SPC"}),
+    )
+    assert suggestion.material == Material.floor_covering
+    assert suggestion.material != Material.underlay
+    assert suggestion.flags["adapter_rule__spc_flooring_object"] is True
+
+
+def test_laminate_with_attached_underlay_reference_remains_laminate():
+    suggestion = prediction_to_suggestion(
+        _renovation_prediction(9, "floor_covering", ["floor_covering_install"]),
+        Product(id=9, name="Ламинат дуб 33 класс со встроенной подложкой",
+                categories={"1": "Ламинат"}),
+    )
+    assert suggestion.material == Material.laminate
+    assert suggestion.material != Material.underlay
+
+
+def test_actual_electrical_box_excludes_accessories_and_gets_supported_works():
+    raw = _renovation_prediction(11718, "installation_accessories")
+    actual = prediction_to_suggestion(raw, Product(
+        id=11718, name="подрозетник концевой ЭРА UniPost 68х45мм",
+        categories={"2630": "Коробки монтажные"},
+    ))
+    assert actual.material == Material.electrical_boxes
+    assert actual.work_types == [WorkType.electrical_wiring, WorkType.electrical_fittings]
+    assert publishable(actual, .7)
+    for product in (
+        Product(id=2, name="крышка для установочной коробки ЭРА D68", categories={"2630": "Коробки монтажные"}),
+        Product(id=3, name="соединитель для подрозетников пластик", categories={"2630": "Коробки монтажные"}),
+        Product(id=4, name="комплект шаблонов для подрозетников", categories={"2626": "Шаблоны"}),
+    ):
+        assert prediction_to_suggestion(raw, product).material != Material.electrical_boxes
+
+
+def test_breaker_serpyanka_and_floor_skirting_direct_evidence():
+    breaker = prediction_to_suggestion(
+        _renovation_prediction(476, "electrical_goods"),
+        Product(id=476, name="выключатель автоматический IEK 2Р 50А",
+                categories={"4138": "Автоматы защиты"}),
+    )
+    assert breaker.material == Material.circuit_breakers
+    assert breaker.work_types == [WorkType.electrical_wiring]
+
+    mesh = prediction_to_suggestion(
+        _renovation_prediction(4403, "other_renovation_material"),
+        Product(id=4403, name="лента стекловолоконная (серпянка) Folsen 48 мм x 45м",
+                categories={"1038": "Сетки малярные, серпянка"}),
+    )
+    assert mesh.material == Material.reinforcing_mesh
+    assert mesh.work_types == [WorkType.wall_plastering, WorkType.drywall_install, WorkType.wall_putty]
+
+    for pid, name, category in (
+        (1405, "плинтус ПВХ SALAG Lima 2500мм", "Плинтусы на основе ПВХ"),
+        (17653, "плинтус МДФ Smartprofile 2400мм", "Плинтусы на основе МДФ"),
+        (26561, "плинтус напольный керамический KERAMA MARAZZI", "Декоры и бордюры для керамогранита"),
+    ):
+        result = prediction_to_suggestion(
+            _renovation_prediction(pid), Product(id=pid, name=name, categories={"1": category})
+        )
+        assert result.material == Material.skirting
+        assert result.work_types == [WorkType.floor_covering_install]
+        assert publishable(result, .7)
+
+
+def test_floor_skirting_rule_rejects_other_plinth_families_and_accessories():
+    raw = _renovation_prediction(1)
+    for name, category in (
+        ("плинтус потолочный СОЛИД 60х58мм", "Плинтусы потолочные"),
+        ("плинтус для столешниц SALAG", "Плинтусы для столешниц"),
+        ("угол наружный для плинтуса LIDER", "Комплектующие к плинтусам"),
+        ("заглушка для плинтуса ПВХ", "Комплектующие к плинтусам"),
+    ):
+        assert prediction_to_suggestion(
+            raw, Product(id=1, name=name, categories={"1": category})
+        ).material != Material.skirting
+
+
+@pytest.mark.parametrize("pid,name,category,material,works,rule", [
+    (3484, "ровнитель FORMAN 31 базовый 20кг", "Смеси для выравнивания полов гипсовые",
+     Material.screed_mix, [WorkType.floor_screed], "floor_screed_mix_object"),
+    (52778, "лента демпферная НПЭ с фартуком рулон 15000х100х10мм", "Пенополиэтилен",
+     Material.damper_tape, [WorkType.floor_screed], "floor_damper_tape_object"),
+    (35051, "профиль маячковый KNAUF 3000х6х0,6мм", "Профили и аксессуары для гипсокартона",
+     Material.beacons, [WorkType.floor_screed, WorkType.wall_plastering], "screed_plaster_beacon_object"),
+    (1525, "система для выравнивания плитки Зажим 1мм 50шт + клин 50шт",
+     "Системы выравнивания плитки", Material.tile_leveling, [WorkType.tiling], "tile_leveling_object"),
+])
+def test_direct_evidence_recovers_common_missing_materials(pid, name, category, material, works, rule):
+    result = prediction_to_suggestion(
+        _renovation_prediction(pid, "other_renovation_material", confidence=.2),
+        Product(id=pid, name=name, categories={"1": category}),
+    )
+    assert result.material == material
+    assert result.work_types == works
+    assert result.flags[f"adapter_rule__{rule}"] is True
+    assert publishable(result, .7)
+
+
+def test_narrow_recovery_rules_reject_semantic_lookalikes():
+    raw = _renovation_prediction(1, "other_renovation_material")
+    products = [
+        Product(id=1, name="стяжка кабельная нейлоновая", categories={"1": "Стяжки кабельные"}),
+        Product(id=2, name="демпфер для мебели накладной", categories={"1": "Толкатели и амортизаторы"}),
+        Product(id=3, name="крепления для маяков под штукатурку", categories={"1": "Крепления, проушины"}),
+        Product(id=4, name="маяки для наливного пола TLS", categories={"1": "Системы выравнивания плитки"}),
+    ]
+    forbidden = [Material.screed_mix, Material.damper_tape, Material.beacons, Material.tile_leveling]
+    for product, material in zip(products, forbidden, strict=True):
+        assert prediction_to_suggestion(raw, product).material != material
+
+
 def test_default_operating_threshold_is_point_seven(monkeypatch):
     monkeypatch.delenv("RC_AUTOBIND_MIN_CONFIDENCE", raising=False)
     get_settings.cache_clear()

@@ -50,7 +50,8 @@ MATERIAL_HINTS: tuple[tuple[str, Material], ...] = (
     (r"жидк\w* гвозд|монтажн\w* клей", Material.mounting_adhesive),
     (r"затирк|фуг", Material.grout),
     (r"монтажн\w* пен", Material.mounting_foam),
-    (r"подрозетник|установочн\w* короб|распаечн\w* короб", Material.electrical_boxes),
+    (r"^(?:подрозетник\b|коробка\s+(?:монтажная|установочная|приборная)\b|"
+     r"распаечная\s+коробка\b)", Material.electrical_boxes),
     (r"кабель[- ]канал|гофротруб|гофрированн\w* труб", Material.cable_channel),
     # Product names use both "автоматический выключатель" and "выключатель автоматический".
     # Match protection devices before the generic switch hint below.
@@ -63,9 +64,6 @@ MATERIAL_HINTS: tuple[tuple[str, Material], ...] = (
     (r"гипсокартон|\bгкл[впо]?\b", Material.drywall),
     (r"демпферн\w* лент", Material.damper_tape),
     (r"маяк", Material.beacons),
-    (r"серпянк|армирующ\w* сетк|стеклосетк", Material.reinforcing_mesh),
-    (r"подложк", Material.underlay),
-    (r"плинтус|порожек", Material.skirting),
     (r"герметик", Material.sealant),
     (r"\bламп[аы]\b|светодиодн\w* ламп", Material.lamps),
     (r"оконн\w* (блок|рама)|стеклопакет|\bокно\b", Material.windows),
@@ -100,6 +98,104 @@ HINT_CATEGORIES: dict[Material, frozenset[str]] = {
     Material.windows: frozenset({"doors_windows"}),
     Material.pipes: frozenset({"plumbing"}),
 }
+
+DIRECT_RULE_CATEGORY: dict[str, ProductCategory] = {
+    "spc_flooring_object": ProductCategory.floor_covering,
+    "standalone_floor_underlay": ProductCategory.floor_covering,
+    "electrical_box_object": ProductCategory.installation_accessories,
+    "circuit_breaker_object": ProductCategory.electrical_goods,
+    "reinforcing_mesh_object": ProductCategory.installation_accessories,
+    "floor_skirting_object": ProductCategory.floor_covering,
+    "floor_screed_mix_object": ProductCategory.construction_mix,
+    "floor_damper_tape_object": ProductCategory.installation_accessories,
+    "screed_plaster_beacon_object": ProductCategory.installation_accessories,
+    "tile_leveling_object": ProductCategory.installation_accessories,
+}
+DIRECT_EVIDENCE_CONFIDENCE = .95
+
+# These product families occur mostly inside broad renovation categories.  They need object-level
+# evidence: an incidental phrase (for example, SPC flooring "с подложкой") must never define the
+# material.  Rules are deliberately anchored and source-category constrained where ambiguity is
+# common.  They specialize the renovation classifier output; the independent catalog classifier is
+# not read here.
+UNDERLAY_SOURCE = re.compile(r"^подложка (?:пробковая|пластиковая|пробково-битумная)$", re.I)
+FLOOR_SKIRTING_SOURCE = re.compile(
+    r"^(?:плинтусы на основе (?:пвх|мдф)|плинтусы напольные|"
+    r"декоры и бордюры для керамогранита)$", re.I
+)
+ELECTRICAL_BOX_SOURCE = re.compile(r"^коробки монтажные$", re.I)
+BREAKER_SOURCE = re.compile(r"^автоматы защиты$", re.I)
+MESH_SOURCE = re.compile(r"^сетки малярные, серпянка$", re.I)
+SCREED_SOURCE = re.compile(r"^смеси для выравнивания полов (?:цементные|гипсовые)$", re.I)
+DAMPER_SOURCE = re.compile(r"^пенополиэтилен$", re.I)
+BEACON_SOURCE = re.compile(r"^профили и аксессуары для гипсокартона$", re.I)
+TILE_LEVELING_SOURCE = re.compile(r"^системы выравнивания плитки$", re.I)
+
+
+def _evidence_text(product: Product) -> tuple[str, list[str]]:
+    return (product.name or "").strip().lower(), [
+        str(value).strip().lower() for value in (product.categories or {}).values() if value
+    ]
+
+
+def _direct_material(product: Product) -> tuple[Material | None, tuple[WorkType, ...], str | None]:
+    """Return a material only for unambiguous product-identity evidence."""
+    name, categories = _evidence_text(product)
+
+    # Attached underlay is a feature of the floor board, not the object being sold.
+    if re.match(r"^(?:плитка\s+spc|spc\b|кварц[- ]?винил)", name):
+        return Material.floor_covering, (), "spc_flooring_object"
+
+    if re.match(r"^подложка\b", name) and not re.match(r"^подложка\s+под\s+ков[её]р", name):
+        if any(UNDERLAY_SOURCE.match(category) for category in categories) or re.search(
+            r"\b(?:пробков|хвойн|xps|ппэ|ппк|эва|eva|джутов|пенополистирол)", name
+        ):
+            return Material.underlay, (WorkType.floor_covering_install,), "standalone_floor_underlay"
+
+    box_object = re.match(
+        r"^(?:подрозетник\b|коробка\s+(?:монтажная|установочная|приборная)\b)", name
+    )
+    if box_object and any(ELECTRICAL_BOX_SOURCE.match(category) for category in categories):
+        return Material.electrical_boxes, (WorkType.electrical_wiring, WorkType.electrical_fittings), \
+            "electrical_box_object"
+
+    if (re.match(r"^(?:автомат(?:ический)?\b|выключатель\s+автоматический\b|узо\b|дифавтомат\b)", name)
+            and any(BREAKER_SOURCE.match(category) for category in categories)):
+        return Material.circuit_breakers, (WorkType.electrical_wiring,), "circuit_breaker_object"
+
+    if (re.match(r"^(?:серпянка\b|лента\s+стекловолоконная\s*\(серпянка\))", name)
+            and any(MESH_SOURCE.match(category) for category in categories)):
+        return Material.reinforcing_mesh, (
+            WorkType.wall_plastering, WorkType.drywall_install, WorkType.wall_putty,
+        ), "reinforcing_mesh_object"
+
+    # The head noun must be the actual floor skirting. Accessories start with угол/заглушка/etc.;
+    # ceiling, countertop and decorative mouldings are explicitly outside this material.
+    if (re.match(r"^плинтус\b", name)
+            and not re.search(r"\b(?:потолочн|для столешниц|столешниц[ыа]|декоративн)\b", name)
+            and any(FLOOR_SKIRTING_SOURCE.match(category) for category in categories)):
+        return Material.skirting, (WorkType.floor_covering_install,), "floor_skirting_object"
+
+    if (any(SCREED_SOURCE.match(category) for category in categories)
+            and re.match(r"^(?:пол наливной\b|ровнитель\b|выравниватель для пола\b|смесь для пола\b)", name)):
+        return Material.screed_mix, (WorkType.floor_screed,), "floor_screed_mix_object"
+
+    if (re.match(r"^лента демпферная\b", name)
+            and any(DAMPER_SOURCE.match(category) for category in categories)
+            and re.search(r"\b(?:нпэ|ппэ|пенополиэтилен)", name)):
+        return Material.damper_tape, (WorkType.floor_screed,), "floor_damper_tape_object"
+
+    if (re.match(r"^профиль (?:маячковый|выравнивающий\b.*\bмаячок)\b", name)
+            and any(BEACON_SOURCE.match(category) for category in categories)):
+        return Material.beacons, (WorkType.floor_screed, WorkType.wall_plastering), \
+            "screed_plaster_beacon_object"
+
+    if (any(TILE_LEVELING_SOURCE.match(category) for category in categories)
+            and "наливного пола" not in name
+            and re.search(r"\b(?:выравниван\w* плитк|зажим|клин|подков|прижимн\w* гайк)", name)):
+        return Material.tile_leveling, (WorkType.tiling,), "tile_leveling_object"
+
+    return None, (), None
 
 
 class ClassifierArtifactError(RuntimeError):
@@ -138,6 +234,9 @@ def _floor_work(prediction: Prediction, product: Product) -> WorkType | None:
 
 
 def _material(prediction: Prediction, product: Product) -> Material:
+    direct, _, _ = _direct_material(product)
+    if direct is not None:
+        return direct
     text = f"{product.name} {' '.join((product.categories or {}).values())}".lower()
     for pattern, material in MATERIAL_HINTS:
         if prediction.product_category in HINT_CATEGORIES.get(material, frozenset()) and re.search(pattern, text):
@@ -201,6 +300,22 @@ def prediction_to_suggestion(prediction: Prediction, product: Product) -> Sugges
         **{f"unsupported_room_type__{label}": True for label in unsupported_rooms},
     }
     material = _material(prediction, product)
+    direct_material, direct_works, direct_rule = _direct_material(product)
+    if direct_material is not None:
+        material = direct_material
+        if direct_works:
+            mapped = list(direct_works)
+            flags["work_type_inferred"] = True
+        flags["direct_material_evidence"] = True
+        flags[f"adapter_rule__{direct_rule}"] = True
+        # Exact object name + compatible Maxidom source category is stronger evidence for this
+        # narrow material decision than the model's deliberately broad category.  Keep the normal
+        # publication threshold, but identify the deterministic decision and its supporting
+        # renovation category explicitly.
+        flags["domain_renovation"] = True
+        flags["domain_furnishing"] = False
+        flags["domain_non_renovation"] = False
+        flags["ml_unknown"] = False
     plausible = works_for_material(material) if material != Material.other else []
     incompatible = bool(mapped) and bool(plausible) and not any(work in plausible for work in mapped)
     if incompatible:
@@ -220,9 +335,12 @@ def prediction_to_suggestion(prediction: Prediction, product: Product) -> Sugges
     # Backward-compatible ``confidence`` now represents the binding/material decision, not merely
     # the optional work-type decision. Old artifacts without dimension scores retain work score.
     confidence = material_confidence or work_confidence
+    if direct_rule is not None:
+        confidence = max(confidence, DIRECT_EVIDENCE_CONFIDENCE)
     flags["material_confident"] = confidence >= 0.7
     flags["work_type_missing"] = not mapped
-    category = ProductCategory(prediction.product_category) if prediction.product_category else None
+    category = (DIRECT_RULE_CATEGORY[direct_rule] if direct_rule is not None
+                else ProductCategory(prediction.product_category) if prediction.product_category else None)
     return Suggestion(product_category=category, material=material, work_types=mapped, work_scores=scores, room_types=rooms,
                       flags=flags, confidence=confidence, model="tfidf-logreg-taxonomy-v2")
 
