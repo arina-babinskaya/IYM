@@ -12,6 +12,10 @@ ml_workspace/outputs/gigachat_matching_experiment/manual_annotations_completed.c
 .venv-ml/
 __pycache__/
 data/
+ml_workspace/catalog_matching/data/
+ml_workspace/catalog_matching/data/**/
+ml_workspace/catalog_matching/data/**/.gitkeep
+ml_workspace/catalog_matching/data/**/*.json
 ml_workspace/artifacts/models/
 repaircalc.zip
 repaircalc_local.sqlite
