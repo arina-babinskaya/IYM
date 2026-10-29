@@ -31,8 +31,6 @@ python -m scripts.backfill_bindings --apply
 python -m scripts.ingest --file data/catalog.json        # загрузить файл (JSON или YML, формат определяется сам)
 python -m scripts.ingest --file data/catalog.json --limit 2000
 python -m scripts.ingest --download                      # скачать YML по ссылке организаторов и загрузить
-python -m scripts.profile_characteristics                # какие характеристики есть в каталоге
-python -m scripts.export_dataset --out data/products.jsonl   # датасет для ML
 python -m scripts.evaluate_matching --gold mock_catalog/sample_gold.jsonl   # micro/macro-F1
 ```
 
@@ -66,7 +64,6 @@ docker compose down                          # остановить (данны�
 | POST | `/api/v1/admin/autobind` | Автопривязка TF-IDF от `RC_AUTOBIND_MIN_CONFIDENCE` (по умолчанию 0.7) и ограниченный GigaChat fallback; порог не является вероятностью корректности |
 | GET | `/api/v1/admin/stats` | Доля автопривязанных товаров |
 | GET | `/health` | БД и нейросеть |
-| POST | `/internal/llm/chat`, `/internal/llm/embed` | Нейросеть и эмбеддинги для команды |
 
 Живая документация с примерами: http://localhost:8000/docs
 
