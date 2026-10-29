@@ -152,8 +152,8 @@
     </form>
     <div class="flex flex-col sm:flex-row justify-between items-center gap-4 mb-4">
       <div class="flex bg-gray-100 p-1 rounded-lg h-[42px] items-center" id="admin-filter">
-        <button data-status="unbound" class="px-4 py-1.5 rounded-md text-sm font-medium bg-white shadow-sm text-brand-red h-full transition-all">Без привязки</button>
-        <button data-status="ml" class="px-4 py-1.5 rounded-md text-sm font-medium text-gray-600 hover:text-gray-900 h-full transition-all">ML</button>
+        <button data-status="unbound" class="px-4 py-1.5 rounded-md text-sm font-medium text-gray-600 hover:text-gray-900 h-full transition-all">Без привязки</button>
+        <button data-status="ml" class="px-4 py-1.5 rounded-md text-sm font-medium bg-white shadow-sm text-brand-red h-full transition-all">ML</button>
         <button data-status="confirmed" class="px-4 py-1.5 rounded-md text-sm font-medium text-gray-600 hover:text-gray-900 h-full transition-all">Подтверждённые</button>
         <button data-status="all" class="px-4 py-1.5 rounded-md text-sm font-medium text-gray-600 hover:text-gray-900 h-full transition-all">Все</button>
       </div>
@@ -568,45 +568,54 @@ document.getElementById("run-calc").onclick = async () => {
   } catch (e) { out.innerHTML = `<div class="warn">Ошибка: ${esc(e.message)}</div>`; }
 };
 
-let adminStatus = "unbound", adminRows = [];
+let adminStatus = "ml", adminRows = [];
+let catalogTaxonomy = null;
+const catalogCategoryNames = {};
 const flagTitles = { moisture_resistant: "влагостойкий", washable: "моющийся" };
 const describe = x => x.material === "other" && !x.work_types.length ? `<b class="text-gray-400">Не распознан</b><div class="text-xs text-gray-400 mt-0.5">не похож на товар для ремонта — при необходимости «Изменить»</div>` : `<b class="text-gray-900">${esc(T.materials[x.material])}</b><div class="text-xs text-gray-500 mt-0.5">${x.work_types.map(w => esc(T.works[w])).join(", ") || "работы не указаны"}</div>`;
 
+async function ensureCatalogTaxonomy() {
+  if (catalogTaxonomy) return catalogTaxonomy;
+  catalogTaxonomy = await api("/api/v1/admin/catalog/taxonomy");
+  catalogTaxonomy.categories.forEach(c => catalogCategoryNames[c.id] = c.name);
+  return catalogTaxonomy;
+}
+
 async function loadAdmin() {
+  await ensureCatalogTaxonomy();
   const q = document.getElementById("admin-q").value.trim();
-  const [stats, rows] = await Promise.all([api("/api/v1/admin/stats"), api(`/api/v1/admin/products?status=${adminStatus}&limit=100${q ? `&q=${encodeURIComponent(q)}` : ""}`)]);
+  const [stats, rows] = await Promise.all([
+    api("/api/v1/admin/catalog/stats"),
+    api(`/api/v1/admin/catalog/products?assignment_status=${adminStatus}&limit=100${q ? `&q=${encodeURIComponent(q)}` : ""}`)
+  ]);
   adminRows = rows;
-  document.getElementById("admin-stats").innerHTML = `Всего: <b>${stats.products_total}</b> · Вручную: <b>${stats.bound_manual}</b> · ML: <b class="text-brand-blue">${stats.bound_ml}</b> · Без привязки: <b class="text-brand-red">${stats.unbound}</b> · Автопривязка: <b class="text-green-600">${Math.round(stats.auto_bound_share * 100)}%</b>`;
+  document.getElementById("admin-stats").innerHTML = `Всего: <b>${stats.products_total}</b> · Вручную: <b>${stats.manual_confirmed}</b> · ML: <b class="text-brand-blue">${stats.model_suggestions}</b> · Без привязки: <b class="text-brand-red">${stats.unassigned}</b> · На проверку: <b class="text-brand-yellow">${stats.needs_review}</b> · Автопривязка: <b class="text-green-600">${Math.round(stats.coverage * 100)}%</b>`;
   document.getElementById("admin-table").innerHTML = rows.length ? `<thead class="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider border-b border-gray-200"><tr><th class="px-4 py-3 font-semibold">Товар</th><th class="px-4 py-3 font-semibold">Подсказка ML</th><th class="px-4 py-3 font-semibold">Текущая привязка</th><th class="px-4 py-3 font-semibold">Действия</th></tr></thead><tbody>${rows.map(r => {
-      const s = r.suggestion, b = r.binding;
-      const flags = Object.entries(s.flags).filter(([, v]) => v).map(([k]) => `<span class="pill">${esc(flagTitles[k] || k)}</span>`).join("");
-      const bound = !b ? '<span class="text-gray-400 italic">нет</span>' : `<span class="pill ${b.confirmed ? "ok" : ""}">${b.confirmed ? "✓ подтверждено" : "ML"}</span>${describe(b)}`;
-      const cleanName = capitalize(r.product.name.replace(/,\s*арт\.\s*\d+/gi, '').replace(/\s*арт\.\s*\d+/gi, '').trim());
-      const article = r.product.name.match(/арт\.\s*(\d+)/i)?.[1] || r.product.sku || String(r.product.id).padStart(6, '0');
-      return `<tr data-id="${r.product.id}" class="border-b border-gray-100 hover:bg-gray-50 transition-colors"><td class="px-4 py-4 whitespace-normal"><div class="font-medium text-gray-900 max-w-xs leading-snug">${esc(cleanName)}</div>${article ? `<div class="text-[11px] text-gray-400 mt-1">Арт. ${esc(article)}</div>` : ''}<div class="text-xs text-gray-500 mt-1.5">${[esc(r.category || ""), r.manual ? '<span class="text-brand-yellow font-bold">Ручной</span>' : ""].filter(Boolean).join(" · ")}</div></td><td class="px-4 py-4 whitespace-normal">${describe(s)}<div class="text-xs font-semibold ${s.confidence > 0.8 ? 'text-green-600' : 'text-brand-yellow'} mt-1">Уверенность: ${Math.round(s.confidence * 100)}%</div><div class="mt-1">${flags}</div></td><td class="px-4 py-4">${bound}</td><td class="px-4 py-4" data-cell>${actionButtons(r)}</td></tr>`;
-    }).join("")}</tbody>` : `<tbody><tr><td class="p-8 text-center text-gray-500 italic" colspan="4">Здесь пусто. Добавьте товары или нажмите ML-привязку.</td></tr></tbody>`;
-  bindRowButtons();
+    const a = r.assignment;
+    const cleanName = capitalize(r.product.name.replace(/,\s*арт\.\s*\d+/gi, '').replace(/\s*арт\.\s*\d+/gi, '').trim());
+    const article = r.product.name.match(/арт\.\s*(\d+)/i)?.[1] || r.product.sku || String(r.product.id).padStart(6, '0');
+    const suggestion = a?.top_3?.length ? a.top_3.map((x, i) => `<div class="${i ? "text-xs text-gray-500" : "font-semibold text-gray-900"}">${i ? `${i + 1}. ` : ""}${esc(x.category_name)} <span class="text-xs">${(x.score * 100).toFixed(1)}%</span></div>`).join("") : '<span class="text-gray-400 italic">нет подсказки — нажмите ML-привязку</span>';
+    const bound = !a ? '<span class="text-gray-400 italic">нет</span>' : `<span class="pill ${a.source === "manual" ? "ok" : ""}">${a.source === "manual" ? "✓ подтверждено" : (a.status === "needs_review" ? "ML · проверить" : "ML")}</span><div class="font-semibold text-gray-900 mt-1">${esc(a.category_name)}</div><div class="text-xs text-gray-500">${esc(a.category_id)}</div>`;
+    return `<tr data-id="${r.product.id}" class="border-b border-gray-100 hover:bg-gray-50 transition-colors"><td class="px-4 py-4 whitespace-normal"><div class="font-medium text-gray-900 max-w-xs leading-snug">${esc(cleanName)}</div>${article ? `<div class="text-[11px] text-gray-400 mt-1">Арт. ${esc(article)}</div>` : ''}<div class="text-xs text-gray-500 mt-1.5">${[esc(r.source_category || ""), r.manual ? '<span class="text-brand-yellow font-bold">Ручной</span>' : ""].filter(Boolean).join(" · ")}</div></td><td class="px-4 py-4 whitespace-normal">${suggestion}</td><td class="px-4 py-4 whitespace-normal">${bound}</td><td class="px-4 py-4" data-cell>${catalogActionButtons(r)}</td></tr>`;
+  }).join("")}</tbody>` : `<tbody><tr><td class="p-8 text-center text-gray-500 italic" colspan="4">Здесь пусто. Выберите другой фильтр или нажмите ML-привязку.</td></tr></tbody>`;
+  bindCatalogRowButtons();
 }
 
-function actionButtons(r) {
-  const confirmed = r.binding && r.binding.confirmed;
-  const nothing = !r.binding && r.suggestion.material === "other";
-  return `<div class="flex gap-2">${confirmed || nothing ? "" : '<button class="bg-brand-red hover:bg-red-900 text-white text-xs font-semibold py-1.5 px-3 rounded-lg transition-colors shadow-sm" data-confirm>✓ Подтвердить</button>'}<button class="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 text-xs font-semibold py-1.5 px-3 rounded-lg transition-colors" data-edit>Изменить</button>${r.manual ? '<button class="text-red-500 hover:text-red-700 text-xs font-semibold py-1.5 px-2 transition-colors" data-delete title="Удалить">Удалить</button>' : ""}</div>`;
+function catalogActionButtons(r) {
+  return `<div class="flex gap-2">${r.assignment?.source === "ml" ? '<button class="bg-brand-red hover:bg-red-900 text-white text-xs font-semibold py-1.5 px-3 rounded-lg shadow-sm" data-confirm>✓ Подтвердить</button>' : ""}<button class="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 text-xs font-semibold py-1.5 px-3 rounded-lg" data-edit>Изменить</button>${r.manual ? '<button class="text-red-500 hover:text-red-700 text-xs font-semibold py-1.5 px-2" data-delete>Удалить</button>' : ""}</div>`;
 }
 
-function bindRowButtons() {
+function bindCatalogRowButtons() {
   document.querySelectorAll("#admin-table tr[data-id]").forEach(tr => {
     const r = adminRows.find(x => String(x.product.id) === tr.dataset.id);
     const cell = tr.querySelector("[data-cell]");
-    const save = async body => { await api(`/api/v1/admin/products/${r.product.id}/binding`, { method: "PUT", body: JSON.stringify(body) }); document.getElementById("admin-msg").textContent = `Сохранено: ${r.product.name}`; loadAdmin(); };
-    const src = r.binding || r.suggestion;
-    tr.querySelector("[data-confirm]")?.addEventListener("click", () => save({ material: src.material, work_types: src.work_types, room_types: src.room_types, flags: src.flags }));
+    const save = async category_id => { await api(`/api/v1/admin/catalog/products/${r.product.id}/category`, { method: "PUT", body: JSON.stringify({category_id}) }); document.getElementById("admin-msg").textContent = `Сохранено: ${r.product.name} → ${catalogCategoryNames[category_id]}`; loadAdmin(); };
+    tr.querySelector("[data-confirm]")?.addEventListener("click", () => save(r.assignment.category_id));
     tr.querySelector("[data-delete]")?.addEventListener("click", async () => { if (!confirm(`Удалить «${r.product.name}»?`)) return; await api(`/api/v1/admin/products/${r.product.id}`, { method: "DELETE" }); document.getElementById("admin-msg").textContent = `Удалён: ${r.product.name}`; loadAdmin(); });
     tr.querySelector("[data-edit]").addEventListener("click", () => {
-      const chosen = new Set(src.work_types);
-      cell.innerHTML = `<div class="flex flex-col gap-2 bg-white p-3 border border-brand-blue rounded-xl shadow-lg absolute z-10 right-10 w-64"><select data-m class="w-full bg-gray-50 border border-gray-300 rounded p-1.5 text-xs outline-none">${opts(T.materials, src.material)}</select><div class="max-h-40 overflow-y-auto grid gap-1">${Object.entries(T.works).map(([id, title]) => `<label class="flex items-center gap-2 text-xs cursor-pointer hover:bg-gray-50 p-1 rounded"><input type="checkbox" value="${id}" ${chosen.has(id) ? "checked" : ""} class="rounded text-brand-blue">${esc(title)}</label>`).join("")}</div><div class="flex gap-2 mt-1"><button class="flex-1 bg-brand-red text-white text-xs font-bold py-1.5 rounded" data-save>ОК</button><button class="flex-1 bg-gray-200 text-gray-700 text-xs font-bold py-1.5 rounded" data-cancel>Отмена</button></div></div>`;
-      cell.querySelector("[data-cancel]").onclick = () => { cell.innerHTML = actionButtons(r); bindRowButtons(); };
-      cell.querySelector("[data-save]").onclick = () => save({ material: cell.querySelector("[data-m]").value, work_types: [...cell.querySelectorAll("input:checked")].map(c => c.value), room_types: src.room_types, flags: src.flags });
+      cell.innerHTML = `<div class="flex flex-col gap-2 bg-white p-3 border border-brand-blue rounded-xl shadow-lg absolute z-10 right-10 w-72"><select data-category class="w-full bg-gray-50 border border-gray-300 rounded p-1.5 text-xs">${catalogTaxonomy.categories.map(c => `<option value="${esc(c.id)}" ${r.assignment?.category_id === c.id ? "selected" : ""}>${esc(c.parent_name)} — ${esc(c.name)}</option>`).join("")}</select><div class="flex gap-2"><button class="flex-1 bg-brand-red text-white text-xs font-bold py-1.5 rounded" data-save>ОК</button><button class="flex-1 bg-gray-200 text-gray-700 text-xs font-bold py-1.5 rounded" data-cancel>Отмена</button></div></div>`;
+      cell.querySelector("[data-cancel]").onclick = () => { cell.innerHTML = catalogActionButtons(r); bindCatalogRowButtons(); };
+      cell.querySelector("[data-save]").onclick = () => save(cell.querySelector("[data-category]").value);
     });
   });
 }
@@ -629,26 +638,36 @@ addForm.onsubmit = async e => {
   const text = k => (f.get(k) || "").trim() || null;
   const characteristics = (f.get("characteristics") || "").split("\n").map(l => l.split(":")).filter(p => p.length >= 2 && p[0].trim() && p.slice(1).join(":").trim()).map(p => ({ name: p[0].trim(), value: p.slice(1).join(":").trim() }));
   try {
-    const row = await api("/api/v1/admin/products", { method: "POST", body: JSON.stringify({ name: text("name"), price: num("price"), unit: text("unit"), category: text("category"), brand: text("brand"), package_area: num("package_area"), quantity_in_package: num("quantity_in_package"), characteristics }) });
+    const row = await api("/api/v1/admin/catalog/products", { method: "POST", body: JSON.stringify({ name: text("name"), price: num("price"), unit: text("unit"), category: text("category"), brand: text("brand"), package_area: num("package_area"), quantity_in_package: num("quantity_in_package"), characteristics }) });
     addForm.reset(); addForm.hidden = true; adminStatus = "unbound";
-    document.querySelectorAll("#admin-filter button").forEach(x => { const isUnbound = x.dataset.status === "unbound"; x.classList.toggle("bg-white", isUnbound); x.classList.toggle("shadow-sm", isUnbound); x.classList.toggle("text-brand-red", isUnbound); x.classList.toggle("text-gray-600", !isUnbound); });
+    document.querySelectorAll("#admin-filter button").forEach(x => { const selected = x.dataset.status === "unbound"; x.classList.toggle("bg-white", selected); x.classList.toggle("shadow-sm", selected); x.classList.toggle("text-brand-red", selected); x.classList.toggle("text-gray-600", !selected); });
     document.getElementById("admin-q").value = "";
     await loadAdmin();
-    document.getElementById("admin-msg").textContent = `Добавлен «${row.product.name}». ML предлагает: ${T.materials[row.suggestion.material]} — проверьте и подтвердите.`;
+    document.getElementById("admin-msg").textContent = `Добавлен «${row.product.name}». Нажмите «Привязать (ML)» для назначения категории.`;
   } catch (err) { document.getElementById("admin-msg").textContent = `Не удалось добавить: ${err.message}`; }
 };
 
 document.getElementById("autobind").onclick = async () => {
   const btn = document.getElementById("autobind");
   const info = document.getElementById("admin-stats");
-  btn.disabled = true;
-  btn.innerHTML = `<svg class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Привязываю...`;
+  btn.disabled = true; btn.textContent = "Привязываю...";
   try {
-    const before = await api("/api/v1/admin/stats");
-    const after = await api("/api/v1/admin/autobind", { method: "POST" });
+    let job = await api("/api/v1/admin/catalog/categorize", {method:"POST"});
+    while (job.status === "running") {
+      info.innerHTML = `<b class="text-brand-blue">Каталог ML · ${esc(job.phase)}</b> · Обработано ${job.processed} из ${job.total || "?"} · Категоризировано ${job.categorized} · Новых ${job.inserted} · Обновлено ${job.updated} · Без изменений ${job.unchanged} · Ручных сохранено ${job.manual_preserved} · На проверку ${job.needs_review} · Ошибок ${job.errors} · ${(job.elapsed_ms/1000).toFixed(1)} с`;
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      job = await api("/api/v1/admin/catalog/categorize/status");
+    }
+    if (job.status !== "completed") throw new Error(job.error || `операция завершилась: ${job.status}`);
     await loadAdmin();
-    info.innerHTML = `<span class="text-green-600 font-bold">Новых привязок: ${after.bound_ml - before.bound_ml}.</span> ` + info.innerHTML;
-  } catch (e) { info.innerHTML = `<span class="text-red-500 font-bold">Ошибка привязки: ${e.message}</span>`; } finally { btn.disabled = false; btn.innerHTML = `Привязать (ML)`; }
+    document.getElementById("admin-msg").textContent = job.inserted
+      ? `ML-привязка завершена: проверено ${job.processed} из ${job.total}, новых ${job.inserted}, уже привязано ${job.unchanged}, на проверку ${job.needs_review}, ошибок ${job.errors}.`
+      : `Каталог уже категоризирован: проверено ${job.processed} товаров, существующих привязок ${job.unchanged}, новых не требуется, на проверку ${job.needs_review}, ошибок ${job.errors}.`;
+  } catch (e) {
+    document.getElementById("admin-msg").textContent = `Ошибка категоризации каталога: ${e.message}`;
+  } finally {
+    btn.disabled = false; btn.textContent = "Привязать (ML)";
+  }
 };
 
 api("/api/v1/taxonomy").then(t => {

@@ -36,6 +36,7 @@ def create_app() -> FastAPI:
         CORSMiddleware, allow_origins=get_settings().cors_origins, allow_methods=["*"], allow_headers=["*"]
     )
     app.include_router(routes.router)
+    app.include_router(catalog_admin.router)
     app.include_router(picker.router)
     app.include_router(routes.health_router)
 

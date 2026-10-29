@@ -15,6 +15,36 @@ from app.taxonomy import Material, WorkType, works_for_material
 MANUAL_ID_START = 9_000_000_000_000
 AdminStatus = Literal["unbound", "ml", "confirmed", "all"]
 
+# A persisted work label describes where the classifier saw the strongest evidence; it is not an
+# exhaustive list of every estimate slot in which an auxiliary material can be used.  These narrow
+# relations are consulted only when an exact candidate pool is empty.  Material identity remains
+# exact, so (for example) a paint product can never enter a primer slot.
+COMPATIBLE_WORK_FALLBACKS: dict[tuple[Material, WorkType], frozenset[WorkType]] = {
+    (Material.primer, WorkType.waterproofing): frozenset({WorkType.priming}),
+    (Material.primer, WorkType.floor_screed): frozenset({WorkType.priming}),
+    (Material.primer, WorkType.tiling): frozenset({WorkType.priming}),
+    (Material.primer, WorkType.wall_plastering): frozenset({WorkType.priming}),
+    (Material.primer, WorkType.wall_putty): frozenset({WorkType.priming}),
+    (Material.primer, WorkType.wall_painting): frozenset({WorkType.priming}),
+    (Material.primer, WorkType.wallpapering): frozenset({WorkType.priming}),
+    (Material.electrical_boxes, WorkType.lighting_install): frozenset({
+        WorkType.electrical_wiring, WorkType.electrical_fittings,
+    }),
+}
+
+
+def fallback_binding(binding: ProductBinding, work_type: WorkType, tier: str) -> ProductBinding:
+    """Create a detached ranking view with auditable fallback provenance."""
+    flags = dict(binding.flags or {})
+    flags[f"candidate_{tier}_fallback"] = True
+    flags[f"candidate_requested_work__{work_type.value}"] = True
+    return ProductBinding(
+        product_id=binding.product_id, product_category=binding.product_category,
+        material=binding.material, work_types=list(binding.work_types or []),
+        room_types=list(binding.room_types or []), flags=flags, source=binding.source,
+        confidence=binding.confidence, confirmed=binding.confirmed,
+    )
+
 
 def to_brief(p: Product) -> ProductBrief:
     return ProductBrief(
@@ -145,7 +175,7 @@ class CatalogRepo:
         self._candidates.clear()
         return b
 
-    def save_ml_bindings(self, pairs: Sequence[tuple[int, Suggestion]]) -> None:
+    def save_ml_bindings(self, pairs: Sequence[tuple[int, Suggestion]]) -> int:
         rows = [
             {
                 "product_id": pid,
@@ -161,7 +191,7 @@ class CatalogRepo:
             for pid, s in pairs
         ]
         # Classification only fills missing bindings; it must never replace manual/confirmed data.
-        upsert(self.session, ProductBinding, rows, ["product_id"], update=False)
+        inserted = upsert(self.session, ProductBinding, rows, ["product_id"], update=False)
         self.session.commit()
         self._candidates.clear()
 

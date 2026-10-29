@@ -1,0 +1,2422 @@
+source_category_id,source_category_name,target_category_id,mapping_status,labeling_rule_id,product_count
+10,% Аксессуары для бассейнов,outdoor.leisure,confident,source.outdoor.leisure,5
+20,% Гамаки и подставки,outdoor.furniture,confident,source.outdoor.furniture,1
+15,% Заборы садовые,outdoor.structures,confident,source.outdoor.structures,1
+21,% Зонты и подставки от солнца,review.unresolved,unmapped,fallback.review,6
+3954,"% Керамическая плитка, керамогранит",tile.floor_porcelain,confident,source.tile.floor,24
+95,% Комплектующие для столешниц,furniture.kitchen,confident,source.furniture.kitchen,1
+23,% Мебель садовая пластиковая,furniture.home,confident,source.furniture.home,4
+22,% Металлическая и комбинированная мебель,review.unresolved,ambiguous,fallback.review,2
+3951,% Покрытия напольные,review.unresolved,unmapped,fallback.review,1
+113,% Полотна дверные межкомнатные,review.unresolved,unmapped,fallback.review,1
+176,"% Розетки, выключатели",electrical.switch_socket,confident,source.electrical.switch,1
+28,"% Садовые качели, подвесные кресла",review.unresolved,ambiguous,fallback.review,1
+31,% Сейфы,review.unresolved,unmapped,fallback.review,1
+4,"% Триммеры, электрокосы, газонокосилки",garden.machinery,confident,source.garden.machinery,1
+27,"% Шезлонги, лежаки, матрасы",outdoor.furniture,confident,source.outdoor.furniture,5
+12,% Шланги,garden.watering,confident,source.garden.watering,2
+4140,Cветильники подвесные,review.unresolved,unmapped,fallback.review,507
+2710,DIN рейки,building.lumber,confident,source.building.lumber,7
+2845,Disco лампы с цоколем E27,review.unresolved,unmapped,fallback.review,6
+2844,Disco проекторы светодиодные,review.unresolved,unmapped,fallback.review,8
+4204,Wi-fi и сетевое оборудование,review.unresolved,unmapped,fallback.review,1
+2913,Абажуры универсальные,review.unresolved,unmapped,fallback.review,54
+1538,"Аварийные, временные ограждения",outdoor.structures,confident,source.outdoor.structures,1
+1585,Автоматика,auto.accessories,confident,source.auto,2
+3766,Автоматические карандаши,auto.accessories,confident,source.auto,7
+4138,Автоматы защиты,review.unresolved,ambiguous,fallback.review,274
+2924,Адаптеры для монтажа светильников подвесных,lighting.indoor,confident,source.lighting.indoor,20
+3620,"Адаптеры, ленты для щеток стеклоочистителя автомобиля",auto.accessories,confident,source.auto,10
+4201,"Адаптеры, переходники и соединители",review.unresolved,unmapped,fallback.review,6
+3788,Акварель,review.unresolved,unmapped,fallback.review,13
+3629,Аккумуляторы автомобильные,review.unresolved,ambiguous,fallback.review,10
+3541,Аккумуляторы внешние,electrical.power,confident,source.electrical.power,4
+284,Аккумуляторы для садовой техники,review.unresolved,ambiguous,fallback.review,14
+1678,Аккумуляторы для электроинструмента,review.unresolved,ambiguous,fallback.review,44
+656,Аккумуляторы холода,electrical.power,confident,source.electrical.power,8
+2727,"Аккумуляторы, зарядные устройства",electrical.power,confident,source.electrical.power,18
+2728,"Аккумуляторы, зарядные устройства",electrical.power,confident,source.electrical.power,9
+2186,Аксессуары декоративные,home.decor,confident,source.home.decor,63
+3242,Аксессуары для ванны и душа,plumbing.bath_shower,confident,source.plumbing.shower,8
+993,Аксессуары для гидроизоляции,building.insulation,confident,source.building.insulation,19
+3078,Аксессуары для дома,review.unresolved,unmapped,fallback.review,3
+3203,Аксессуары для зубных щеток,review.unresolved,unmapped,fallback.review,3
+3596,Аксессуары для комфорта в салоне автомобиля,auto.accessories,confident,source.auto,9
+3621,Аксессуары для кузова автомобиля,auto.accessories,confident,source.auto,27
+4187,Аксессуары для кухонной техники,review.unresolved,unmapped,fallback.review,37
+962,Аксессуары для монтажа окон,review.unresolved,unmapped,fallback.review,7
+4168,Аксессуары для обуви,review.unresolved,unmapped,fallback.review,52
+2512,Аксессуары для приготовления коктейлей,review.unresolved,unmapped,fallback.review,7
+4190,Аксессуары для пылесосов,kitchen.appliances,confident,source.kitchen.appliances,50
+874,Аксессуары для сайдинга,building.facade,confident,source.building.facade,66
+3424,Аксессуары для стиральных машин,review.unresolved,unmapped,fallback.review,10
+1344,Аксессуары для теплого пола,heating.radiators,confident,source.heating.radiators,6
+3489,Аксессуары для утюгов,review.unresolved,unmapped,fallback.review,1
+875,Аксессуары для фасадных панелей,building.facade,confident,source.building.facade,14
+882,Аксессуары и комплектующие к потолкам,review.unresolved,unmapped,fallback.review,20
+239,Аксессуары к карнавальным костюмам,review.unresolved,unmapped,fallback.review,3
+312,Аксессуары к насосам,review.unresolved,unmapped,fallback.review,33
+3978,Аксессуары к прудам,review.unresolved,unmapped,fallback.review,5
+433,"Аксессуары к секаторам, сучкорезам",garden.tools,confident,source.garden.tools,1
+3977,Аксессуары к фонтанам,review.unresolved,unmapped,fallback.review,1
+3723,Альбомы для рисования,review.unresolved,unmapped,fallback.review,14
+1906,Анкеры,hardware.fasteners,confident,source.hardware.fasteners,165
+1907,Анкеры химические,hardware.fasteners,confident,source.hardware.fasteners,21
+4198,Антенны,review.unresolved,unmapped,fallback.review,24
+3673,Антигравии,review.unresolved,unmapped,fallback.review,1
+3679,Антидождь,review.unresolved,unmapped,fallback.review,5
+3680,Антизапотеватели,review.unresolved,unmapped,fallback.review,4
+367,Антимоскитные свечи и факелы,review.unresolved,ambiguous,fallback.review,7
+365,Антимоскитные сетки,doors_windows.windows,confident,source.doors.windows,20
+1520,Антиобледенение для крыш и водостоков,building.roofing,confident,source.building.roofing,18
+1049,Антисептики грунтовочные,finishing.coatings,confident,source.finishing.coatings,26
+489,Антисептики для бассейнов,review.unresolved,ambiguous,fallback.review,14
+1047,Антисептики защитно-декоративные,review.unresolved,ambiguous,fallback.review,298
+1048,Антисептики огнебиозащитные,finishing.coatings,confident,source.finishing.coatings,35
+3110,Антистатики для белья,review.unresolved,unmapped,fallback.review,4
+3712,"Антифризы, тосолы",review.unresolved,unmapped,fallback.review,28
+3660,Аптечки автомобильные,auto.accessories,confident,source.auto,3
+2027,"Аптечки, ключницы",review.unresolved,unmapped,fallback.review,8
+569,Арки для цветов и растений,review.unresolved,unmapped,fallback.review,5
+910,Арки межкомнатные,review.unresolved,unmapped,fallback.review,1
+2627,Арматура для монтажа СИП кабеля,electrical.cable,confident,source.electrical.cable,12
+1481,Арматура композитная,review.unresolved,unmapped,fallback.review,11
+1482,Арматура стальная,review.unresolved,unmapped,fallback.review,21
+3194,Аромадиффузоры,review.unresolved,unmapped,fallback.review,125
+3193,Ароматизаторы,review.unresolved,unmapped,fallback.review,35
+3610,Ароматизаторы бумажные,review.unresolved,unmapped,fallback.review,33
+3611,Ароматизаторы жидкие,review.unresolved,unmapped,fallback.review,30
+3612,Ароматизаторы под сиденье,review.unresolved,unmapped,fallback.review,4
+3613,Ароматизаторы твердые и гелевые,review.unresolved,unmapped,fallback.review,8
+3614,Ароматизаторы-клипсы,review.unresolved,unmapped,fallback.review,7
+1157,Аэраторы,review.unresolved,unmapped,fallback.review,27
+265,Аэраторы для газона,review.unresolved,unmapped,fallback.review,10
+3379,Аэрогрили,outdoor.grill,confident,source.outdoor.grill,11
+3166,Аэрозоли,review.unresolved,unmapped,fallback.review,38
+2767,Бpa,review.unresolved,unmapped,fallback.review,429
+641,Баки водонагревательные для печей,heating.boilers,confident,source.heating.boilers,3
+1255,Баки расширительные,review.unresolved,unmapped,fallback.review,4
+1203,Баки расширительные для систем отопления,heating.radiators,confident,source.heating.radiators,3
+392,"Баки, бочки",review.unresolved,unmapped,fallback.review,19
+1563,Баллоны газовые композитные,review.unresolved,unmapped,fallback.review,9
+1562,Баллоны газовые стальные,review.unresolved,unmapped,fallback.review,6
+3246,Бальзамы для губ,review.unresolved,unmapped,fallback.review,6
+3281,Бальзамы и кондиционеры для волос,review.unresolved,unmapped,fallback.review,49
+938,Бамперы дверные,review.unresolved,unmapped,fallback.review,24
+2159,Банкетки,review.unresolved,unmapped,fallback.review,1
+2151,Банкетки для прихожей,review.unresolved,unmapped,fallback.review,13
+2491,Банки для консервирования,review.unresolved,unmapped,fallback.review,26
+2545,"Банки, емкости в наборах",review.unresolved,unmapped,fallback.review,5
+2544,"Банки, емкости для сыпучих продуктов",review.unresolved,unmapped,fallback.review,118
+487,Бассейны,outdoor.leisure,confident,source.outdoor.leisure,48
+2726,Батарейки,review.unresolved,ambiguous,fallback.review,151
+559,Батуты,review.unresolved,unmapped,fallback.review,9
+1087,Бачки смывные скрытого монтажа для систем инсталляции,plumbing.sanitary,confident,source.plumbing.sanitary,1
+2479,Безмены механические,review.unresolved,unmapped,fallback.review,2
+3376,Безмены электронные,review.unresolved,unmapped,fallback.review,3
+3750,Бейджи,review.unresolved,unmapped,fallback.review,2
+275,Бензопилы,tools.hand,confident,source.tools.hand,24
+2667,Беспроводные звонки,electrical.cable,confident,source.electrical.cable,48
+997,Бетонконтакт,review.unresolved,unmapped,fallback.review,20
+1647,Бетоносмесители электрические,plumbing.faucets,confident,source.plumbing.faucets,5
+3974,Биотуалеты,review.unresolved,unmapped,fallback.review,4
+2688,Бирки для маркировки кабеля,electrical.cable,confident,source.electrical.cable,1
+1686,Биты,tools.accessories,confident,source.tools.accessories,141
+4183,Блендеры,review.unresolved,unmapped,fallback.review,50
+229,Блестки,review.unresolved,unmapped,fallback.review,1
+3381,Блинницы электрические,review.unresolved,unmapped,fallback.review,1
+3719,Блок-кубики и боксы,review.unresolved,unmapped,fallback.review,1
+2008,Блоки для троса,review.unresolved,unmapped,fallback.review,13
+2605,Блоки комбинированные встраиваемые,plumbing.bath_shower,confident,source.plumbing.shower,26
+4128,Блоки комбинированные накладные,plumbing.bath_shower,confident,source.plumbing.shower,34
+3587,Блоки питания,review.unresolved,unmapped,fallback.review,6
+210,Блоки питания и системы соединений для электрических гирлянд,lighting.decorative,confident,source.lighting.decorative,1
+3783,Блокноты и записные книжки,doors_windows.windows,confident,source.doors.windows,34
+2393,Блюда,review.unresolved,unmapped,fallback.review,90
+2460,Блюда фигурные большие и средние без ножки,review.unresolved,unmapped,fallback.review,26
+2459,"Блюда, вазы, конфетницы на ножке",home.decor,confident,source.home.decor,21
+2398,Блюдца,review.unresolved,unmapped,fallback.review,24
+2435,Бокалы,kitchen.tableware,confident,source.kitchen.tableware,51
+2436,Бокалы в наборах,kitchen.tableware,confident,source.kitchen.tableware,163
+1832,"Бокорезы, кусачки",review.unresolved,unmapped,fallback.review,21
+2687,Боксы для защиты кабельных соединений,electrical.cable,confident,source.electrical.cable,15
+1833,Болторезы,hardware.fasteners,confident,source.hardware.fasteners,3
+1905,"Болты, гайки, винты, шайбы",hardware.fasteners,confident,source.hardware.fasteners,517
+2768,Бра LED,lighting.indoor,confident,source.lighting.indoor,232
+2839,Бра для детских,lighting.indoor,confident,source.lighting.indoor,3
+3307,Бритвы электрические,review.unresolved,unmapped,fallback.review,16
+1367,Брус,building.lumber,confident,source.building.lumber,34
+1703,Бруски абразивные,building.lumber,confident,source.building.lumber,1
+387,Букеты и праздничные композиции,seasonal.holiday,confident,source.seasonal,6
+2301,Бумага для выпечки в листах,review.unresolved,unmapped,fallback.review,6
+2300,Бумага для выпечки в рулонах,review.unresolved,unmapped,fallback.review,10
+3722,Бумага для офисной техники,review.unresolved,unmapped,fallback.review,2
+3725,Бумага для рисования,review.unresolved,unmapped,fallback.review,2
+3727,Бумага маштабно-коордиционная,review.unresolved,unmapped,fallback.review,1
+4175,Бумага туалетная,review.unresolved,unmapped,fallback.review,60
+3250,Бумага туалетная и полотенца для диспенсеров в рулонах,home.textiles,confident,source.home.textiles,7
+3251,Бумага туалетная и полотенца для диспенсеров листовые,home.textiles,confident,source.home.textiles,13
+1029,Бумага шлифовальная,review.unresolved,unmapped,fallback.review,65
+3881,"Бумага, целлофан, фольга, полисилк",review.unresolved,unmapped,fallback.review,82
+3260,Бумажные носовые платки,review.unresolved,unmapped,fallback.review,6
+3262,Бумажные покрытия для унитаза,plumbing.sanitary,confident,source.plumbing.sanitary,1
+3253,Бумажные полотенца,home.textiles,confident,source.home.textiles,20
+1691,Буры,review.unresolved,unmapped,fallback.review,156
+203,Бусы новогодние,seasonal.holiday,confident,source.seasonal,8
+4121,Бутыли для консервирования,review.unresolved,unmapped,fallback.review,12
+2547,Бутылки для напитков,review.unresolved,unmapped,fallback.review,7
+2261,Бутылочницы,review.unresolved,unmapped,fallback.review,26
+4064,Вагонка,building.lumber,confident,source.building.lumber,9
+1366,Вагонка для бани,building.lumber,confident,source.building.lumber,2
+2204,Вазы,home.decor,confident,source.home.decor,93
+3385,Вакуумные упаковщики,review.unresolved,unmapped,fallback.review,6
+1016,Валики,review.unresolved,unmapped,fallback.review,155
+1018,Валики игольчатые,review.unresolved,unmapped,fallback.review,5
+1020,Валики прижимные,review.unresolved,unmapped,fallback.review,8
+1017,Валики с ручкой,review.unresolved,unmapped,fallback.review,100
+266,Валики садовые,review.unresolved,unmapped,fallback.review,1
+1019,Валики фактурные,review.unresolved,unmapped,fallback.review,11
+1022,Ванночки для краски,finishing.paint,confident,source.finishing.paint,10
+4017,Ванны акриловые,plumbing.bath_shower,confident,source.plumbing.shower,79
+1058,Ванны из искусственного камня,plumbing.bath_shower,confident,source.plumbing.shower,4
+1059,Ванны отдельностоящие,plumbing.bath_shower,confident,source.plumbing.shower,2
+1056,Ванны стальные,plumbing.bath_shower,confident,source.plumbing.shower,8
+1057,Ванны чугунные,plumbing.bath_shower,confident,source.plumbing.shower,6
+1269,Вантузы,review.unresolved,unmapped,fallback.review,5
+3475,Варочные поверхности газовые,review.unresolved,unmapped,fallback.review,51
+3477,Варочные поверхности индукционные,review.unresolved,unmapped,fallback.review,45
+3476,Варочные поверхности электрические,review.unresolved,unmapped,fallback.review,50
+628,Вары садовые,review.unresolved,unmapped,fallback.review,7
+4069,Вата минеральная,review.unresolved,unmapped,fallback.review,28
+4176,Ватная продукция,review.unresolved,unmapped,fallback.review,34
+2450,Ведра,review.unresolved,unmapped,fallback.review,1
+1024,Ведра для краски,finishing.paint,confident,source.finishing.paint,6
+2982,Ведра круглые,review.unresolved,unmapped,fallback.review,15
+2983,Ведра прямоугольные и овальные,review.unresolved,unmapped,fallback.review,7
+391,Ведра садовые,review.unresolved,unmapped,fallback.review,6
+2052,Велокрепления,review.unresolved,unmapped,fallback.review,6
+558,Велосипеды,review.unresolved,unmapped,fallback.review,8
+2994,Веники для уборки с короткой ручкой,review.unresolved,unmapped,fallback.review,3
+648,"Веники, массажеры для бани и сауны",review.unresolved,unmapped,fallback.review,20
+191,Венки новогодние,seasonal.holiday,confident,source.seasonal,1
+4046,Вентиляторы вытяжные,heating.ventilation,confident,source.heating.ventilation,176
+1300,"Вентиляционные анемостаты, диффузоры и клапаны",heating.ventilation,confident,source.heating.ventilation,16
+4049,Вентиляционные решетки,heating.ventilation,confident,source.heating.ventilation,107
+4048,Вентиляционные соединители,heating.ventilation,confident,source.heating.ventilation,130
+1299,Вентиляционные фланцы,heating.ventilation,confident,source.heating.ventilation,39
+2337,Венчики,review.unresolved,unmapped,fallback.review,17
+2000,"Веревки, канаты, шнуры натуральные",review.unresolved,unmapped,fallback.review,33
+2001,"Веревки, канаты, шнуры синтетические",review.unresolved,unmapped,fallback.review,88
+1791,Верстаки,review.unresolved,unmapped,fallback.review,7
+2009,Вертлюги,review.unresolved,unmapped,fallback.review,4
+577,Вертушки и украшения на ножке,review.unresolved,unmapped,fallback.review,25
+197,Верхушки елочные,seasonal.holiday,confident,source.seasonal,8
+4186,Весы кухонные электронные,review.unresolved,unmapped,fallback.review,28
+3309,Весы напольные,review.unresolved,unmapped,fallback.review,30
+192,Ветки новогодние,seasonal.holiday,confident,source.seasonal,2
+2161,Вешалки гардеробные,home.storage,confident,source.home.storage,20
+2169,Вешалки для одежды,home.storage,confident,source.home.storage,9
+2168,Вешалки для одежды,home.storage,confident,source.home.storage,24
+2167,Вешалки для сушки белья,home.storage,confident,source.home.storage,8
+2166,Вешалки для сушки белья,home.storage,confident,source.home.storage,13
+2165,Вешалки для сушки белья,home.storage,confident,source.home.storage,15
+2560,Вешалки и крючки кухонные,home.storage,confident,source.home.storage,14
+2162,Вешалки костюмные,home.storage,confident,source.home.storage,10
+2163,Вешалки напольные,home.storage,confident,source.home.storage,20
+2164,Вешалки настенные,home.storage,confident,source.home.storage,83
+1653,Вибраторы глубинные,review.unresolved,unmapped,fallback.review,2
+1652,Виброплиты,review.unresolved,unmapped,fallback.review,2
+2614,Вилки и розетки бытовые,electrical.switch_socket,confident,source.electrical.switch,48
+2616,Вилки и розетки для электроплит,electrical.switch_socket,confident,source.electrical.switch,17
+2615,Вилки и розетки промышленные,electrical.switch_socket,confident,source.electrical.switch,29
+421,Вилки посадочные,review.unresolved,unmapped,fallback.review,6
+2338,Вилки разделочные,seasonal.holiday,confident,source.seasonal,1
+2402,Вилки столовые,review.unresolved,unmapped,fallback.review,50
+420,Вилы,garden.tools,confident,source.garden.tools,9
+3431,Винные шкафы,furniture.home,confident,source.furniture.home,13
+1771,Влагомеры,review.unresolved,unmapped,fallback.review,2
+3010,"Водоcгоны, скребки для очистки стекол",review.unresolved,unmapped,fallback.review,6
+395,Водонагреватели дачные,heating.boilers,confident,source.heating.boilers,3
+1210,Водонагреватели накопительные электрические,heating.boilers,confident,source.heating.boilers,113
+1211,Водонагреватели проточные электрические,heating.boilers,confident,source.heating.boilers,15
+3647,Водосгоны,review.unresolved,unmapped,fallback.review,6
+4071,Водостоки,building.roofing,confident,source.building.roofing,190
+4047,Воздуховоды,heating.ventilation,confident,source.heating.ventilation,57
+3403,Воздухоочистители,review.unresolved,unmapped,fallback.review,6
+2373,Воронки,review.unresolved,unmapped,fallback.review,12
+3636,Воронки автомобильные,auto.accessories,confident,source.auto,3
+1862,Воротки,review.unresolved,unmapped,fallback.review,1
+2183,Воск для ремонта мебели,review.unresolved,unmapped,fallback.review,23
+3344,Вспениватели,review.unresolved,unmapped,fallback.review,3
+3484,Встраиваемые вытяжки,review.unresolved,unmapped,fallback.review,74
+3436,Встраиваемые посудомоечные машины,review.unresolved,unmapped,fallback.review,48
+2645,Вызывные панели для домофонов,review.unresolved,unmapped,fallback.review,1
+2572,Выключатели встраиваемые,electrical.switch_socket,confident,source.electrical.switch,374
+2573,Выключатели встраиваемые сенсорные,electrical.switch_socket,confident,source.electrical.switch,5
+2939,Выключатели для лент светодиодных,electrical.switch_socket,confident,source.electrical.switch,6
+2724,Выключатели нагрузки и рубильники,electrical.switch_socket,confident,source.electrical.switch,3
+2570,Выключатели накладные,electrical.switch_socket,confident,source.electrical.switch,103
+2571,Выключатели накладные влагозащищенные,electrical.switch_socket,confident,source.electrical.switch,13
+2702,Выключатели-клавиши для удлинителей,electrical.switch_socket,confident,source.electrical.switch,10
+2575,Выключатели-кнопки для бра и светильников,review.unresolved,ambiguous,fallback.review,8
+2576,Выключатели-цепочки для бра и светильников,review.unresolved,ambiguous,fallback.review,7
+3306,Выпрямители для волос,review.unresolved,unmapped,fallback.review,12
+1278,Выпуски для раковин и кухонных моек,plumbing.sanitary,confident,source.plumbing.sanitary,33
+274,Высоторезы,review.unresolved,unmapped,fallback.review,3
+1488,Газобетонные блоки,building.masonry,confident,source.building.masonry,3
+1212,Газовые колонки,review.unresolved,unmapped,fallback.review,7
+3958,Газонокосилки,garden.machinery,confident,source.garden.machinery,71
+4075,Газосварочное оборудование,review.unresolved,unmapped,fallback.review,34
+1656,Гайковерты аккумуляторные,review.unresolved,ambiguous,fallback.review,20
+1657,Гайковерты сетевые,hardware.fasteners,confident,source.hardware.fasteners,2
+1546,"Гайковерты, дрели пневматические",review.unresolved,ambiguous,fallback.review,5
+240,Галстуки и бабочки карнавальные,review.unresolved,unmapped,fallback.review,2
+1990,Галтели,review.unresolved,unmapped,fallback.review,2
+539,Гамаки для дачи,outdoor.furniture,confident,source.outdoor.furniture,17
+3576,Гарнитуры для компьютера,review.unresolved,unmapped,fallback.review,1
+1903,Гвозди,hardware.fasteners,confident,source.hardware.fasteners,200
+607,Гели водные,review.unresolved,unmapped,fallback.review,1
+3219,Гели для душа,review.unresolved,unmapped,fallback.review,137
+3283,Гели и воски для волос,review.unresolved,unmapped,fallback.review,1
+1583,Генераторы,review.unresolved,unmapped,fallback.review,39
+1412,Геотекстиль,home.textiles,confident,source.home.textiles,16
+1436,Герметики,finishing.adhesive_sealant,confident,source.finishing.adhesive,187
+3692,Герметики автомобильные,review.unresolved,ambiguous,fallback.review,17
+4039,Гибкие подводки для воды,review.unresolved,unmapped,fallback.review,70
+1253,Гибкие подводки для газа,review.unresolved,unmapped,fallback.review,44
+992,Гидроизоляция полимерная,building.insulation,confident,source.building.insulation,19
+1788,Гидроуровни,tools.hand,confident,source.tools.hand,5
+994,Гидрофобизатор,review.unresolved,unmapped,fallback.review,6
+1386,Гипс строительный,review.unresolved,unmapped,fallback.review,10
+1359,Гипсокартон,building.sheet_materials,confident,source.building.sheet,21
+193,Гирлянды еловые,lighting.decorative,confident,source.lighting.decorative,1
+352,Гирлянды и свечи садовые,review.unresolved,ambiguous,fallback.review,37
+3956,Гирлянды электрические,lighting.decorative,confident,source.lighting.decorative,71
+940,Глазки дверные,review.unresolved,unmapped,fallback.review,18
+1820,Головки магнитные,review.unresolved,unmapped,fallback.review,4
+1819,Головки торцевые,review.unresolved,unmapped,fallback.review,64
+241,Головные уборы карнавальные,review.unresolved,unmapped,fallback.review,4
+3861,Гольфы,review.unresolved,unmapped,fallback.review,8
+669,Горелки газовые,review.unresolved,unmapped,fallback.review,13
+2397,Горки,review.unresolved,unmapped,fallback.review,8
+3988,Горшки для рассады,garden.seeds,confident,source.garden.seeds,50
+1338,Горшки и ванночки детские,garden.pots,confident,source.garden.pots,5
+2298,Горшочки для запекания,review.unresolved,unmapped,fallback.review,8
+3810,Готовальни,review.unresolved,unmapped,fallback.review,5
+2216,Готовые комплекты кухонь,review.unresolved,unmapped,fallback.review,49
+584,Готовые парники и теплицы,outdoor.structures,confident,source.outdoor.structures,14
+3987,Готовые почвогрунты,garden.soils,confident,source.garden.soils,70
+419,Грабли веерные,garden.tools,confident,source.garden.tools,25
+418,Грабли прямые,garden.tools,confident,source.garden.tools,30
+2443,Графины и штофы,review.unresolved,unmapped,fallback.review,5
+498,"Грили, барбекю",outdoor.grill,confident,source.outdoor.grill,9
+3526,Грозозащита,review.unresolved,unmapped,fallback.review,1
+996,Грунтовка,finishing.primer,confident,source.finishing.primer,80
+3686,Грунты автомобильные,review.unresolved,ambiguous,fallback.review,11
+995,Грунты по металлу,garden.soils,confident,source.garden.soils,11
+754,Грязезащитные напольные покрытия готовые,review.unresolved,unmapped,fallback.review,13
+753,Грязезащитные напольные покрытия мерные,review.unresolved,unmapped,fallback.review,48
+3789,Гуашь,review.unresolved,unmapped,fallback.review,7
+3648,Губки для мойки автомобиля,review.unresolved,ambiguous,fallback.review,7
+3143,Губки для обуви,cleaning.equipment,confident,source.cleaning.equipment,36
+1034,Губки и блоки,cleaning.equipment,confident,source.cleaning.equipment,30
+2980,Губки и мочалки абразивные,cleaning.equipment,confident,source.cleaning.equipment,14
+3212,Губки и мочалки для тела,cleaning.equipment,confident,source.cleaning.equipment,27
+2981,Губки меламиновые,cleaning.equipment,confident,source.cleaning.equipment,3
+2977,Губки поролоновые,cleaning.equipment,confident,source.cleaning.equipment,34
+2978,Губки целлюлозные,cleaning.equipment,confident,source.cleaning.equipment,7
+4062,ДВП,building.sheet_materials,confident,source.building.sheet,19
+4061,ДСП,building.sheet_materials,confident,source.building.sheet,28
+1767,Дальномеры лазерные,review.unresolved,unmapped,fallback.review,21
+2648,"Датчики движения, фотоблоки",electrical.smart_security,confident,source.electrical.security,16
+905,Двери входные,doors_windows.doors,confident,source.doors.doors,122
+4011,Двери для бани и сауны,doors_windows.doors,confident,source.doors.doors,11
+2087,Двери для шкафов-купе,review.unresolved,ambiguous,fallback.review,86
+1075,Двери душевые,review.unresolved,ambiguous,fallback.review,13
+4009,Двери межкомнатные,doors_windows.doors,confident,source.doors.doors,572
+907,Двери складные,doors_windows.doors,confident,source.doors.doors,2
+4042,Дверцы ревизионные,review.unresolved,unmapped,fallback.review,82
+4174,Дезодоранты для тела,review.unresolved,unmapped,fallback.review,87
+2444,Декантеры,review.unresolved,unmapped,fallback.review,4
+2960,Декоративные наволочки,home.decor,confident,source.home.decor,26
+860,Декоративные стеновые панели,review.unresolved,ambiguous,fallback.review,94
+866,Декоративные элементы для оформления углов,home.decor,confident,source.home.decor,10
+865,Декоративные элементы для стен,home.decor,confident,source.home.decor,11
+4007,Декоративные элементы и комплектующие для карнизов,home.decor,confident,source.home.decor,503
+572,Декорации,home.decor,confident,source.home.decor,10
+485,Декорации для прудов,home.decor,confident,source.home.decor,5
+675,Декоры и бордюры для керамогранита,review.unresolved,ambiguous,fallback.review,16
+3664,Демпферы и отбойники,review.unresolved,unmapped,fallback.review,15
+2559,Держатели для бумажных полотенец,review.unresolved,ambiguous,fallback.review,16
+1130,Держатели для душа,review.unresolved,unmapped,fallback.review,22
+2451,Держатели для зубочисток,review.unresolved,unmapped,fallback.review,1
+2266,Держатели для кухни,review.unresolved,unmapped,fallback.review,5
+2033,Держатели для систем хранения Джокер,home.storage,confident,source.home.storage,60
+3554,Держатели для телефонов в автомобиль,auto.accessories,confident,source.auto,25
+1325,Держатели для туалетной бумаги,review.unresolved,unmapped,fallback.review,65
+322,Держатели для шлангов,garden.watering,confident,source.garden.watering,4
+818,Держатели для штор,home.textiles,confident,source.home.textiles,49
+1688,Держатели и адаптеры для бит,review.unresolved,unmapped,fallback.review,32
+1669,Держатели насадок для мини-дрелей,tools.power,confident,source.tools.power,1
+2050,Держатели специальные гаражные,review.unresolved,unmapped,fallback.review,1
+4084,Детекторы,review.unresolved,unmapped,fallback.review,8
+949,Детская безопасность,review.unresolved,unmapped,fallback.review,39
+2153,Диваны,review.unresolved,unmapped,fallback.review,77
+1166,Диверторы,review.unresolved,unmapped,fallback.review,3
+2577,Диммеры встраиваемые,review.unresolved,unmapped,fallback.review,56
+2940,Диммеры для лент светодионых,review.unresolved,unmapped,fallback.review,6
+1700,Диски отрезные абразивные,tools.accessories,confident,source.tools.accessories,46
+1701,Диски отрезные алмазные,tools.accessories,confident,source.tools.accessories,112
+1702,Диски отрезные универсальные,tools.accessories,confident,source.tools.accessories,15
+3462,"Диски, рассекатели для плит",review.unresolved,unmapped,fallback.review,8
+1322,Диспенсеры,review.unresolved,unmapped,fallback.review,4
+1321,Диспенсеры,review.unresolved,unmapped,fallback.review,2
+3716,"Дистиллированная вода, электролит",plumbing.bath_shower,confident,source.plumbing.shower,8
+3780,Дневники,review.unresolved,unmapped,fallback.review,7
+1394,Добавки к смесям сухим специальные,review.unresolved,unmapped,fallback.review,5
+998,Добавки специальные,review.unresolved,unmapped,fallback.review,8
+934,Доводчики,doors_windows.hardware,confident,source.doors.hardware,49
+328,Дождеватели,garden.watering,confident,source.garden.watering,37
+3972,Дождевики,review.unresolved,unmapped,fallback.review,28
+204,Дождик новогодний,seasonal.holiday,confident,source.seasonal,9
+4056,Дозаторы,review.unresolved,unmapped,fallback.review,110
+3218,Дозаторы для жидкого мыла,review.unresolved,unmapped,fallback.review,3
+2487,Дозаторы для жидкого мыла и моющих средств,review.unresolved,unmapped,fallback.review,7
+3850,Домики для животных,pets.supplies,confident,source.pets,3
+3638,Домкраты,review.unresolved,unmapped,fallback.review,15
+1372,Доска для полков,building.lumber,confident,source.building.lumber,3
+3030,Доски гладильные,building.lumber,confident,source.building.lumber,33
+3817,Доски магнитно-маркерные и пробковые,building.lumber,confident,source.building.lumber,1
+2374,Доски разделочные,review.unresolved,ambiguous,fallback.review,49
+2375,Доски разделочные в наборах,review.unresolved,ambiguous,fallback.review,12
+2466,Доски сервировочные,building.lumber,confident,source.building.lumber,8
+4065,Доски строганые,building.lumber,confident,source.building.lumber,47
+2733,Драйверы,review.unresolved,unmapped,fallback.review,122
+1592,Дрели-шуруповерты аккумуляторные,review.unresolved,ambiguous,fallback.review,124
+1593,Дрели-шуруповерты сетевые,review.unresolved,ambiguous,fallback.review,13
+606,Дренаж садовый,review.unresolved,unmapped,fallback.review,5
+280,Дровоколы,review.unresolved,unmapped,fallback.review,1
+3790,Другие краски,finishing.paint,confident,source.finishing.paint,1
+586,Дуги для парников,outdoor.structures,confident,source.outdoor.structures,9
+2376,Дуршлаги,review.unresolved,unmapped,fallback.review,17
+3472,Духовые шкафы электрические,furniture.home,confident,source.furniture.home,87
+1124,Душевые гарнитуры,plumbing.bath_shower,confident,source.plumbing.shower,32
+1072,Душевые кабины без гидромассажа,plumbing.bath_shower,confident,source.plumbing.shower,20
+1071,Душевые кабины с гидромассажем,plumbing.bath_shower,confident,source.plumbing.shower,1
+1133,Душевые наборы,plumbing.bath_shower,confident,source.plumbing.shower,21
+1134,Душевые панели,plumbing.bath_shower,confident,source.plumbing.shower,1
+1076,Душевые перегородки,plumbing.bath_shower,confident,source.plumbing.shower,13
+4023,Душевые системы,plumbing.bath_shower,confident,source.plumbing.shower,126
+1127,Души верхние,review.unresolved,unmapped,fallback.review,11
+396,Души дачные,review.unresolved,unmapped,fallback.review,1
+1880,Дыроколы,review.unresolved,unmapped,fallback.review,2
+3731,Дыроколы канцелярские,review.unresolved,unmapped,fallback.review,1
+1901,Дюбели,hardware.fasteners,confident,source.hardware.fasteners,256
+1902,Дюбели,hardware.fasteners,confident,source.hardware.fasteners,17
+4070,Еврошифер,review.unresolved,unmapped,fallback.review,26
+3955,Елки искусственные,review.unresolved,unmapped,fallback.review,22
+2536,Емкости для масла и уксуса,review.unresolved,unmapped,fallback.review,11
+2548,Емкости для специй,review.unresolved,unmapped,fallback.review,24
+2462,Емкости сервировочные с крышками,review.unresolved,unmapped,fallback.review,12
+2551,Емкости специализированные фигурные,plumbing.bath_shower,confident,source.plumbing.shower,17
+4073,Емкости строительные,review.unresolved,unmapped,fallback.review,40
+4055,Ерши и гарнитуры для туалета,review.unresolved,unmapped,fallback.review,121
+4002,Жалюзи,review.unresolved,unmapped,fallback.review,76
+1431,Жалюзийные двери,doors_windows.doors,confident,source.doors.doors,26
+2333,Жаровни,review.unresolved,unmapped,fallback.review,4
+3898,Железные дороги,review.unresolved,unmapped,fallback.review,3
+3703,Жидкие ключи,tools.hand,confident,source.tools.hand,34
+3714,Жидкости для гидроусилителя руля,review.unresolved,unmapped,fallback.review,3
+509,Жидкости для розжига,review.unresolved,unmapped,fallback.review,11
+3713,Жидкости тормозные,review.unresolved,unmapped,fallback.review,5
+3657,Жилеты и светоотражающие аксессуары,review.unresolved,unmapped,fallback.review,14
+347,Заборчики и ограды для клумб,outdoor.structures,confident,source.outdoor.structures,45
+929,Завертки,review.unresolved,unmapped,fallback.review,98
+1939,Завертки,review.unresolved,unmapped,fallback.review,1
+1913,Заглушки,review.unresolved,unmapped,fallback.review,153
+930,Заглушки для дверных ручек,doors_windows.hardware,confident,source.doors.hardware,3
+2942,Заглушки для лент светодиодных,review.unresolved,unmapped,fallback.review,3
+2035,Заглушки и втулки для систем хранения Джокер,home.storage,confident,source.home.storage,18
+2934,Заглушки и соединители для трековых систем,review.unresolved,unmapped,fallback.review,28
+2472,Зажигалки,review.unresolved,unmapped,fallback.review,2
+3746,Зажимы для бумаг,review.unresolved,unmapped,fallback.review,2
+2010,Зажимы троса,review.unresolved,unmapped,fallback.review,31
+692,Закладки для плитки металлические,review.unresolved,unmapped,fallback.review,62
+693,Закладки для плитки пластиковые,review.unresolved,unmapped,fallback.review,66
+1914,Заклепки,review.unresolved,unmapped,fallback.review,38
+1866,Заклепочники,review.unresolved,unmapped,fallback.review,12
+922,Замки врезные,doors_windows.hardware,confident,source.doors.hardware,92
+921,Замки навесные,review.unresolved,ambiguous,fallback.review,66
+923,Замки накладные,doors_windows.hardware,confident,source.doors.hardware,33
+1978,Замки почтовые и мебельные,review.unresolved,ambiguous,fallback.review,26
+926,Замки тросовые и цепные,doors_windows.hardware,confident,source.doors.hardware,14
+4052,Занавески для ванной,outdoor.structures,confident,source.outdoor.structures,137
+1339,Запасные элементы к аксессуарам для ванной комнаты,plumbing.accessories,confident,source.plumbing.accessories,11
+1244,Запорная арматура для бытовой техники,review.unresolved,ambiguous,fallback.review,30
+1243,Запорная арматура для газопроводов,review.unresolved,ambiguous,fallback.review,15
+4037,Запорная арматура для трубопроводов,review.unresolved,ambiguous,fallback.review,110
+3536,Зарядные устройства,review.unresolved,unmapped,fallback.review,6
+1679,Зарядные устройства для аккумуляторов,electrical.power,confident,source.electrical.power,22
+942,Засовы воротные,review.unresolved,unmapped,fallback.review,11
+705,Затирки для плитки керамической и керамогранита,tile.installation,confident,source.tile.installation,200
+1846,"Захваты, держатели, браслеты магнитные",review.unresolved,unmapped,fallback.review,27
+935,Защелки дверные,review.unresolved,unmapped,fallback.review,92
+2334,Защита от брызг,review.unresolved,unmapped,fallback.review,7
+2071,Защитные чехлы для матрасов,review.unresolved,unmapped,fallback.review,13
+2187,Зеркала,home.decor,confident,source.home.decor,98
+2189,Зеркала,home.decor,confident,source.home.decor,23
+2188,Зеркала,home.decor,confident,source.home.decor,20
+3597,Зеркала автомобильные,review.unresolved,ambiguous,fallback.review,4
+4022,Зеркала в ванную,home.decor,confident,source.home.decor,152
+4057,Зеркала косметические подвесные,home.decor,confident,source.home.decor,2
+3661,Знаки аварийной остановки,review.unresolved,unmapped,fallback.review,4
+3656,"Знаки, наклейки на автомобиль",review.unresolved,ambiguous,fallback.review,12
+3925,"Значки, брелки, наклейки",review.unresolved,ambiguous,fallback.review,6
+450,Зонты,review.unresolved,unmapped,fallback.review,28
+451,Зонты детские,review.unresolved,unmapped,fallback.review,2
+542,Зонты садовые,review.unresolved,unmapped,fallback.review,17
+1839,Зубила,review.unresolved,unmapped,fallback.review,7
+1732,"Зубила, пики",review.unresolved,unmapped,fallback.review,38
+3275,Зубные пасты детские,review.unresolved,unmapped,fallback.review,18
+3274,Зубные щетки детские,review.unresolved,unmapped,fallback.review,12
+3210,"Зубочистки, флостики",review.unresolved,unmapped,fallback.review,9
+3890,Иголки,review.unresolved,unmapped,fallback.review,2
+3907,Игровые наборы для ролевой игры,review.unresolved,unmapped,fallback.review,1
+3901,Игрушечное оружие,review.unresolved,unmapped,fallback.review,10
+3830,Игрушки для кошек,pets.supplies,confident,source.pets,11
+3831,Игрушки для собак,pets.supplies,confident,source.pets,18
+201,Игрушки елочные в наборах,seasonal.holiday,confident,source.seasonal,11
+200,Игрушки елочные одиночные,seasonal.holiday,confident,source.seasonal,110
+237,Игры и развлечения для карнавала,review.unresolved,unmapped,fallback.review,1
+3921,Игры-развлечения,review.unresolved,unmapped,fallback.review,28
+1501,"Известь строительная негашеная, керамзит, щебень",review.unresolved,unmapped,fallback.review,1
+1160,Изливы,review.unresolved,unmapped,fallback.review,17
+2358,Измельчители,review.unresolved,unmapped,fallback.review,10
+3361,Измельчители электрические,review.unresolved,unmapped,fallback.review,10
+2623,Изолента,review.unresolved,unmapped,fallback.review,53
+2622,Изоляторы декоративные,home.decor,confident,source.home.decor,14
+1415,Изоляция для труб из пенополиэтилена,review.unresolved,unmapped,fallback.review,17
+564,Инвентарь для зимнего спорта,outdoor.leisure,confident,source.outdoor.leisure,1
+560,Инвентарь для спорта,outdoor.leisure,confident,source.outdoor.leisure,26
+2625,Индикаторы напряжения,review.unresolved,unmapped,fallback.review,7
+1084,Инсталляции для унитазов,plumbing.sanitary,confident,source.plumbing.sanitary,29
+1893,Инструмент для фиксации арматуры,tools.hand,confident,source.tools.hand,2
+299,Инструмент заточный,tools.hand,confident,source.tools.hand,8
+2642,Инструмент электромонтажный,tools.hand,confident,source.tools.hand,13
+1884,Инструменты для работы с напольными покрытиями,tools.hand,confident,source.tools.hand,7
+3245,Инструменты по уходу за ногтями и кожей,tools.hand,confident,source.tools.hand,27
+2306,Инструменты специальные для выпечки,tools.hand,confident,source.tools.hand,3
+3920,"Интерактивные, заводные и электронные игрушки",review.unresolved,unmapped,fallback.review,3
+2054,Информационные таблички,review.unresolved,unmapped,fallback.review,38
+3322,Ирригаторы,review.unresolved,unmapped,fallback.review,1
+751,Искусственная трава мерная с низким ворсом до 10 мм,review.unresolved,unmapped,fallback.review,6
+750,Искусственная трава мерная со средним ворсом от 10 до 35 мм,review.unresolved,unmapped,fallback.review,7
+2699,Источники бесперебойного питания,review.unresolved,unmapped,fallback.review,1
+2885,Источники резервного освещения,review.unresolved,unmapped,fallback.review,7
+3380,Йогуртницы,review.unresolved,unmapped,fallback.review,1
+4206,Кабели,electrical.cable,confident,source.electrical.cable,106
+4133,Кабель акустический,electrical.cable,confident,source.electrical.cable,16
+4134,Кабель готовый со штекером (вилкой),electrical.cable,confident,source.electrical.cable,67
+4132,Кабель для интернета и телефонии,electrical.cable,confident,source.electrical.cable,26
+4131,Кабель телевизионный,electrical.cable,confident,source.electrical.cable,26
+2670,Кабель электрический в бухтах,electrical.cable,confident,source.electrical.cable,338
+2671,Кабель электрический мерный,electrical.cable,confident,source.electrical.cable,13
+2628,Кабельные каналы,electrical.cable,confident,source.electrical.cable,56
+467,Кабины туалетные,review.unresolved,unmapped,fallback.review,2
+2330,Казаны,kitchen.cookware,confident,source.kitchen.cookware,9
+3876,Календари,review.unresolved,unmapped,fallback.review,6
+4208,Калькуляторы,review.unresolved,unmapped,fallback.review,2
+4189,Камины электрические,review.unresolved,unmapped,fallback.review,41
+571,"Камни декоративные, ракушки, стразы",home.decor,confident,source.home.decor,2
+1530,Камни для бани и сауны,review.unresolved,unmapped,fallback.review,5
+349,"Камни, галька, крошка натуральные",review.unresolved,unmapped,fallback.review,21
+390,Канистры,review.unresolved,unmapped,fallback.review,13
+3635,Канистры автомобильные,auto.accessories,confident,source.auto,15
+298,Канистры и масленки,review.unresolved,unmapped,fallback.review,2
+3087,Капсулы и таблетки для посудомоечных машин,review.unresolved,unmapped,fallback.review,42
+2011,Карабины,review.unresolved,unmapped,fallback.review,43
+1780,Карандаши разметочные,review.unresolved,unmapped,fallback.review,8
+1062,Каркасы для ванн,review.unresolved,unmapped,fallback.review,68
+2219,Каркасы для кухонных тумб,furniture.kitchen,confident,source.furniture.kitchen,187
+2221,Каркасы для навесных шкафов,review.unresolved,ambiguous,fallback.review,220
+3592,Карманы в багажник на липучках,review.unresolved,unmapped,fallback.review,3
+4006,Карнизы,review.unresolved,unmapped,fallback.review,155
+4053,Карнизы для ванной комнаты,review.unresolved,unmapped,fallback.review,24
+2190,Картины модульные,home.decor,confident,source.home.decor,4
+3729,Картон,review.unresolved,unmapped,fallback.review,34
+1158,Картриджи для смесителей,plumbing.faucets,confident,source.plumbing.faucets,16
+4077,"Каски, шлемы, щитки защитные",tools.workwear,confident,source.tools.workwear,11
+612,Кассеты для рассады,garden.seeds,confident,source.garden.seeds,33
+3405,"Кассеты, фильтры для увлажнителей воздуха",review.unresolved,unmapped,fallback.review,3
+4109,Кастрюли,kitchen.cookware,confident,source.kitchen.cookware,195
+2329,Кастрюли и ковши в наборах,kitchen.cookware,confident,source.kitchen.cookware,10
+4136,Катушки и рамки для удлинителей,electrical.power,confident,source.electrical.power,10
+321,Катушки и тележки для шлангов,garden.watering,confident,source.garden.watering,15
+554,Качели детские,outdoor.furniture,confident,source.outdoor.furniture,5
+514,Качели для дачи,outdoor.furniture,confident,source.outdoor.furniture,33
+3990,"Кашпо, вазоны уличные",garden.pots,confident,source.garden.pots,20
+3989,"Кашпо, горшки для комнатных растений",garden.pots,confident,source.garden.pots,807
+1684,Кейсы для электроинструментов,tools.power,confident,source.tools.power,11
+1027,Кельмы,review.unresolved,unmapped,fallback.review,24
+1502,Керамзит строительный,review.unresolved,unmapped,fallback.review,3
+3992,Керамогранит напольный,tile.floor_porcelain,confident,source.tile.floor,951
+3353,Кипятильники,review.unresolved,unmapped,fallback.review,5
+1494,Кирпич,building.masonry,confident,source.building.masonry,3
+2292,Кисти кулинарные,review.unresolved,unmapped,fallback.review,14
+4016,Кисти малярные,review.unresolved,unmapped,fallback.review,212
+3791,"Кисти, наборы кистей",review.unresolved,unmapped,fallback.review,10
+1837,Киянки,review.unresolved,unmapped,fallback.review,4
+4203,Клавиатуры и комплекты,review.unresolved,unmapped,fallback.review,5
+1089,Клавиши для систем инсталляции и бачков,plumbing.sanitary,confident,source.plumbing.sanitary,45
+1625,Клеевые пистолеты сетевые,review.unresolved,unmapped,fallback.review,8
+3693,Клеи автомобильные,auto.accessories,confident,source.auto,7
+704,Клеи для плитки керамической и керамогранита,tile.floor_porcelain,confident,source.tile.floor,55
+703,Клеи и затирки для искусственного камня,tile.installation,confident,source.tile.installation,6
+3736,Клей ПВА,finishing.adhesive_sealant,confident,source.finishing.adhesive,7
+781,"Клей ПВА, клей для дерева",finishing.adhesive_sealant,confident,source.finishing.adhesive,25
+779,Клей для напольных покрытий,finishing.adhesive_sealant,confident,source.finishing.adhesive,20
+780,Клей для напольных покрытий,finishing.adhesive_sealant,confident,source.finishing.adhesive,2
+1449,"Клей для стиропора, пенопласта, пробки",finishing.adhesive_sealant,confident,source.finishing.adhesive,9
+1450,Клей и средства для монтажа столешниц,review.unresolved,ambiguous,fallback.review,3
+1444,Клей моментальный,finishing.adhesive_sealant,confident,source.finishing.adhesive,26
+871,Клей монтажный,finishing.adhesive_sealant,confident,source.finishing.adhesive,72
+3734,Клей силикатный,finishing.adhesive_sealant,confident,source.finishing.adhesive,2
+1445,Клей специальный,finishing.adhesive_sealant,confident,source.finishing.adhesive,11
+1443,Клей универсальный,finishing.adhesive_sealant,confident,source.finishing.adhesive,18
+1446,Клей эпоксидный,finishing.adhesive_sealant,confident,source.finishing.adhesive,19
+800,"Клей, средства для обоев",finishing.adhesive_sealant,confident,source.finishing.adhesive,44
+3735,Клей-карандаш,finishing.adhesive_sealant,confident,source.finishing.adhesive,13
+1439,Клей-пены,finishing.adhesive_sealant,confident,source.finishing.adhesive,17
+3721,Клейкие закладки,review.unresolved,ambiguous,fallback.review,12
+3737,Клейкие ленты,review.unresolved,ambiguous,fallback.review,2
+3630,"Клеммы аккумуляторные, ареометры, электроразъемы фаркопа",electrical.power,confident,source.electrical.power,5
+2612,"Клеммы, зажимы",review.unresolved,unmapped,fallback.review,171
+1830,Клещи,review.unresolved,unmapped,fallback.review,26
+714,Клещи для СВП,review.unresolved,unmapped,fallback.review,2
+1895,Клещи для электропроводки,electrical.cable,confident,source.electrical.cable,13
+3993,Клинкерная и фасадная плитка,building.facade,confident,source.building.facade,60
+2638,Клипсы для труб и гофры,review.unresolved,unmapped,fallback.review,29
+2381,Клипсы и зажимы,review.unresolved,unmapped,fallback.review,8
+3642,"Ключи балонные и свечные, шприцы",tools.hand,confident,source.tools.hand,8
+1662,Ключи для патрона,tools.hand,confident,source.tools.hand,2
+1667,Ключи и гайки для УШМ,review.unresolved,ambiguous,fallback.review,8
+1811,Ключи комбинированные,review.unresolved,ambiguous,fallback.review,9
+1810,Ключи разводные,tools.hand,confident,source.tools.hand,22
+1815,Ключи рожковые,tools.hand,confident,source.tools.hand,13
+1817,Ключи свечные,tools.hand,confident,source.tools.hand,5
+1813,Ключи специальные,tools.hand,confident,source.tools.hand,15
+1812,Ключи торцевые,tools.hand,confident,source.tools.hand,11
+1816,Ключи шестигранные,tools.hand,confident,source.tools.hand,5
+1814,Ключи-трещотки,tools.hand,confident,source.tools.hand,17
+2196,Ключницы,review.unresolved,unmapped,fallback.review,12
+3873,Книги,review.unresolved,unmapped,fallback.review,101
+3745,Кнопки,review.unresolved,unmapped,fallback.review,3
+2668,Кнопки для звонков,review.unresolved,unmapped,fallback.review,9
+2031,Кованые элементы,review.unresolved,unmapped,fallback.review,130
+3598,Коврики в салон автомобиля,auto.accessories,confident,source.auto,7
+4098,Коврики декоративные,home.decor,confident,source.home.decor,43
+4054,Коврики для ванной и туалета,review.unresolved,unmapped,fallback.review,97
+3562,Коврики для мышек,review.unresolved,unmapped,fallback.review,4
+2555,Коврики для продуктов,review.unresolved,unmapped,fallback.review,7
+2563,Коврики для сушки посуды,review.unresolved,unmapped,fallback.review,8
+2293,Коврики для теста,review.unresolved,unmapped,fallback.review,8
+4059,Коврики и наклейки антискользящие для ванной,review.unresolved,ambiguous,fallback.review,20
+662,Коврики пляжные,review.unresolved,unmapped,fallback.review,2
+3080,Коврики припороговые без резиновой основы,review.unresolved,unmapped,fallback.review,23
+3081,Коврики припороговые на резиновой основе,review.unresolved,unmapped,fallback.review,67
+3082,Коврики припороговые резиновые,review.unresolved,unmapped,fallback.review,8
+3602,Коврики противоскользящие,review.unresolved,unmapped,fallback.review,5
+663,Коврики туристические,review.unresolved,unmapped,fallback.review,13
+664,Коврики универсальные,review.unresolved,unmapped,fallback.review,1
+3991,"Коврики, шапочки, рукавицы, тапочки",review.unresolved,unmapped,fallback.review,35
+745,Ковровые дорожки мерные с низким ворсом до 5 мм,review.unresolved,unmapped,fallback.review,25
+744,Ковровые дорожки мерные со средним ворсом от 5 до 10 мм,review.unresolved,unmapped,fallback.review,7
+740,Ковролин безворсовый,flooring.carpet,confident,source.flooring.carpet,1
+737,Ковролин с высоким ворсом более 10 мм,flooring.carpet,confident,source.flooring.carpet,3
+739,Ковролин с низким ворсом до 5 мм,flooring.carpet,confident,source.flooring.carpet,60
+738,Ковролин со средним ворсом от 5 до 10 мм,flooring.carpet,confident,source.flooring.carpet,23
+4097,Ковры,home.rugs,confident,source.home.rugs,303
+2180,Ковры детские,home.rugs,confident,source.home.rugs,9
+4110,Ковши,review.unresolved,unmapped,fallback.review,51
+1023,Ковши для краски,finishing.paint,confident,source.finishing.paint,4
+2520,Ковши пластмассовые,review.unresolved,unmapped,fallback.review,4
+3840,"Когтерезы, щетки",review.unresolved,unmapped,fallback.review,8
+3849,Когтеточки,review.unresolved,unmapped,fallback.review,1
+906,Козырьки для входных дверей,review.unresolved,unmapped,fallback.review,2
+2299,Кокотницы,review.unresolved,unmapped,fallback.review,5
+2425,Колбы для френч-прессов,review.unresolved,unmapped,fallback.review,2
+3862,Колготки,review.unresolved,unmapped,fallback.review,70
+1341,Коллекторные группы для теплых полов,heating.radiators,confident,source.heating.radiators,3
+4135,Колодки для удлинителей,electrical.power,confident,source.electrical.power,62
+3503,Колонки,review.unresolved,unmapped,fallback.review,6
+3626,Колпаки на колеса автомобиля,auto.accessories,confident,source.auto,5
+1312,Кольца для занавесок,outdoor.structures,confident,source.outdoor.structures,9
+1673,Кольца переходные для пильных дисков,review.unresolved,unmapped,fallback.review,6
+2020,Кольца такелажные,review.unresolved,unmapped,fallback.review,2
+2074,Комоды для спальни,furniture.home,confident,source.furniture.home,79
+1117,Комплект мебели для ванной комнаты,review.unresolved,unmapped,fallback.review,1
+1287,Комплектующие для вентиляторов,heating.ventilation,confident,source.heating.ventilation,31
+1214,Комплектующие для водонагревателей электрических,heating.boilers,confident,source.heating.boilers,22
+1080,Комплектующие для душевых поддонов,plumbing.bath_shower,confident,source.plumbing.shower,14
+331,Комплектующие для капельного полива,garden.watering,confident,source.garden.watering,46
+515,Комплектующие для качелей,outdoor.furniture,confident,source.outdoor.furniture,4
+3402,Комплектующие для кондиционеров,review.unresolved,unmapped,fallback.review,4
+1201,Комплектующие для котлов,review.unresolved,unmapped,fallback.review,12
+503,Комплектующие для мангалов и грилей,outdoor.grill,confident,source.outdoor.grill,25
+1113,Комплектующие для мебели в ванную комнату,hardware.furniture,confident,source.hardware.furniture,34
+4010,Комплектующие для межкомнатных дверей,doors_windows.hardware,confident,source.doors.hardware,395
+2239,Комплектующие для моек,review.unresolved,unmapped,fallback.review,13
+4030,Комплектующие для радиаторов,heating.radiators,confident,source.heating.radiators,102
+1257,Комплектующие для расширительных баков,review.unresolved,unmapped,fallback.review,4
+2944,Комплектующие для светильников для растений,lighting.indoor,confident,source.lighting.indoor,16
+1517,Комплектующие для систем теплых полов,heating.radiators,confident,source.heating.radiators,7
+1683,Комплектующие для строительных пылесосов,kitchen.appliances,confident,source.kitchen.appliances,2
+3417,Комплектующие для теплового оборудования,review.unresolved,unmapped,fallback.review,13
+2089,Комплектующие для шкафов-купе,furniture.home,confident,source.furniture.home,25
+890,Комплектующие для экранов,review.unresolved,unmapped,fallback.review,25
+304,Комплектующие и расходные материалы для садовой техники,garden.machinery,confident,source.garden.machinery,18
+1564,Комплектующие к баллонам,review.unresolved,unmapped,fallback.review,2
+1792,Комплектующие к верстакам,review.unresolved,unmapped,fallback.review,1
+1073,Комплектующие к душевым кабинам,plumbing.bath_shower,confident,source.plumbing.shower,13
+4008,Комплектующие к панелям,review.unresolved,unmapped,fallback.review,148
+766,Комплектующие к плинтусам,flooring.accessories,confident,source.flooring.accessories,657
+3463,Комплектующие к плитам,review.unresolved,unmapped,fallback.review,5
+4033,Комплектующие к полотенцесушителям,home.textiles,confident,source.home.textiles,51
+1505,"Комплектующие к сеткам, секциям заборным",outdoor.structures,confident,source.outdoor.structures,12
+340,Комплектующие к тачкам садовым,review.unresolved,unmapped,fallback.review,15
+1841,Комплектующие к топорам и молоткам,tools.hand,confident,source.tools.hand,9
+2947,"Комплекты 1,5-спальные",review.unresolved,unmapped,fallback.review,123
+2948,Комплекты 2-спальные,review.unresolved,unmapped,fallback.review,118
+2951,Комплекты Дуэт,review.unresolved,unmapped,fallback.review,60
+2949,Комплекты Евро,review.unresolved,unmapped,fallback.review,128
+2654,Комплекты видеонаблюдения,electrical.smart_security,confident,source.electrical.security,6
+2952,Комплекты детские,review.unresolved,unmapped,fallback.review,18
+1518,Комплекты для обогрева труб,review.unresolved,unmapped,fallback.review,72
+946,Комплекты для раздвижных дверей,review.unresolved,unmapped,fallback.review,4
+3184,Комплекты для сауны,review.unresolved,unmapped,fallback.review,11
+2969,Комплекты кухонных полотенец,home.textiles,confident,source.home.textiles,41
+408,Комплекты ремонтные для садовых опрыскивателей,garden.watering,confident,source.garden.watering,4
+448,Комплекты садового инструмента,review.unresolved,ambiguous,fallback.review,6
+3982,Комплекты садовой мебели,outdoor.furniture,confident,source.outdoor.furniture,44
+2964,Комплекты столового белья,review.unresolved,unmapped,fallback.review,5
+2797,Комплекты трековых светильников,lighting.indoor,confident,source.lighting.indoor,4
+551,Комплекты туристической мебели,review.unresolved,unmapped,fallback.review,3
+194,Композиции искусственные новогодние,seasonal.holiday,confident,source.seasonal,1
+217,Композиции новогодние,seasonal.holiday,confident,source.seasonal,20
+393,Компостеры,review.unresolved,unmapped,fallback.review,8
+1541,Компрессоры,review.unresolved,unmapped,fallback.review,15
+3639,Компрессоры автомобильные,auto.accessories,confident,source.auto,18
+4202,Компьютерные мыши,review.unresolved,unmapped,fallback.review,9
+2128,Компьютерные столы,furniture.home,confident,source.furniture.home,7
+3410,Конвекторы электрические,heating.radiators,confident,source.heating.radiators,54
+4188,Кондиционеры,review.unresolved,unmapped,fallback.review,28
+2639,Коннекторы,review.unresolved,unmapped,fallback.review,15
+2937,Коннекторы для светодиодной ленты,lighting.decorative,confident,source.lighting.decorative,22
+2935,Коннекторы для трековых систем,review.unresolved,unmapped,fallback.review,37
+2926,"Коннекторы, крепления для линейных светодиодных светильников",lighting.indoor,confident,source.lighting.indoor,4
+2040,Консоли декоративные,home.decor,confident,source.home.decor,38
+2039,Консоли силовые,review.unresolved,unmapped,fallback.review,24
+2038,"Консоли складные, регулируемые",review.unresolved,unmapped,fallback.review,9
+2042,Консоли скрытые,review.unresolved,unmapped,fallback.review,1
+2041,Консоли универсальные,review.unresolved,unmapped,fallback.review,44
+3916,Конструкторы,review.unresolved,unmapped,fallback.review,10
+2549,Контейнеры для СВЧ и холодильника,review.unresolved,ambiguous,fallback.review,121
+2550,Контейнеры для СВЧ и холодильника в наборах,review.unresolved,ambiguous,fallback.review,14
+4160,Контейнеры для мусора,home.storage,confident,source.home.storage,37
+2556,Контейнеры для организации холодильника,review.unresolved,ambiguous,fallback.review,9
+3043,Контейнеры для порошка стирального,home.storage,confident,source.home.storage,5
+3022,Контейнеры для раздельного сбора мусора,home.storage,confident,source.home.storage,2
+3847,Контейнеры для хранения корма,home.storage,confident,source.home.storage,1
+389,Контейнеры и баки для мусора,home.storage,confident,source.home.storage,10
+3045,"Контейнеры, корзинки, ящики для хранения",home.storage,confident,source.home.storage,117
+2938,Контроллеры светодиодные,review.unresolved,unmapped,fallback.review,17
+422,Конусы посадочные и лункообразователи,review.unresolved,unmapped,fallback.review,11
+497,Коптильни,outdoor.grill,confident,source.outdoor.grill,9
+4164,Корзины для белья,home.storage,confident,source.home.storage,28
+3023,Корзины для бумаг,home.storage,confident,source.home.storage,7
+3046,"Корзины для покупок, сумки пластиковые",home.storage,confident,source.home.storage,1
+3048,Корзины плетеные,home.storage,confident,source.home.storage,28
+657,Корзины плетеные и корзины для пикника,review.unresolved,ambiguous,fallback.review,7
+394,"Корзины, ящики, сетки для работы в саду",home.storage,confident,source.home.storage,13
+3822,Корм для грызунов,review.unresolved,unmapped,fallback.review,5
+3821,Корм для кошек,pets.supplies,confident,source.pets,82
+3823,Корм для птиц,review.unresolved,unmapped,fallback.review,2
+3824,Корм для рыб,review.unresolved,unmapped,fallback.review,1
+3820,Корм для собак,pets.supplies,confident,source.pets,20
+427,Корнеудалители и видеры,review.unresolved,unmapped,fallback.review,7
+3058,Короба складные,review.unresolved,unmapped,fallback.review,31
+3880,Коробки,review.unresolved,unmapped,fallback.review,78
+2546,Коробки для продуктов,review.unresolved,unmapped,fallback.review,1
+1535,Коробки картонные,review.unresolved,unmapped,fallback.review,6
+2630,Коробки монтажные,review.unresolved,unmapped,fallback.review,54
+2631,Коробки монтажные подъемные,review.unresolved,unmapped,fallback.review,11
+2632,Коробки распределительные без клемм,review.unresolved,unmapped,fallback.review,75
+2633,Коробки распределительные с клеммами,review.unresolved,unmapped,fallback.review,9
+3047,"Коробки, кофры, чехлы для одеял и белья",home.textiles,confident,source.home.textiles,22
+1694,Коронки,tools.accessories,confident,source.tools.accessories,208
+2086,Корпуса для шкафов-купе,furniture.home,confident,source.furniture.home,121
+3738,Корректирующая жидкость,review.unresolved,unmapped,fallback.review,5
+3739,Корректирующая лента,review.unresolved,unmapped,fallback.review,4
+3740,Корректирующие карандаши,review.unresolved,unmapped,fallback.review,2
+3691,Корректоры автомобильные,auto.accessories,confident,source.auto,7
+1871,Корщетки,review.unresolved,unmapped,fallback.review,4
+1719,Корщетки для УШМ,review.unresolved,unmapped,fallback.review,33
+1718,Корщетки для дрелей,tools.power,confident,source.tools.power,21
+3065,Косметички,review.unresolved,unmapped,fallback.review,2
+440,"Косовища, крепления",review.unresolved,unmapped,fallback.review,2
+438,"Косы, наборы косца",review.unresolved,unmapped,fallback.review,8
+4031,Котлы отопления,heating.radiators,confident,source.heating.radiators,4
+2012,Коуши,review.unresolved,unmapped,fallback.review,13
+2427,Кофеварки,review.unresolved,unmapped,fallback.review,6
+3340,Кофеварки капельные,review.unresolved,unmapped,fallback.review,19
+3341,Кофеварки капсульные,review.unresolved,unmapped,fallback.review,4
+3339,Кофеварки эспрессо,review.unresolved,unmapped,fallback.review,12
+2426,Кофейники,review.unresolved,unmapped,fallback.review,2
+3338,Кофемашины,review.unresolved,unmapped,fallback.review,16
+3345,Кофемолки электрические,review.unresolved,unmapped,fallback.review,18
+1159,Кран-буксы,review.unresolved,unmapped,fallback.review,13
+1184,Краны для фильтров,review.unresolved,unmapped,fallback.review,3
+329,Краны садовые,review.unresolved,unmapped,fallback.review,4
+1781,Краска разметочная,finishing.paint,confident,source.finishing.paint,2
+977,Краски аэрозольные,finishing.paint,confident,source.finishing.paint,101
+978,Краски аэрозольные,finishing.paint,confident,source.finishing.paint,48
+979,Краски аэрозольные,finishing.paint,confident,source.finishing.paint,13
+981,"Краски для мебели, окон и дверей",finishing.paint,confident,source.finishing.paint,42
+3145,Краски для обуви,finishing.paint,confident,source.finishing.paint,17
+986,Краски для пола,finishing.paint,confident,source.finishing.paint,45
+976,Краски для стен и потолков,finishing.paint,confident,source.finishing.paint,427
+988,Краски масляные,finishing.paint,confident,source.finishing.paint,20
+982,Краски по металлу и ржавчине,finishing.paint,confident,source.finishing.paint,233
+987,Краски специальные,finishing.paint,confident,source.finishing.paint,18
+4014,Краски термостойкие,finishing.paint,confident,source.finishing.paint,27
+983,Краски фасадные,review.unresolved,ambiguous,fallback.review,174
+3689,"Краски, эмали автомобильные",review.unresolved,ambiguous,fallback.review,40
+1649,Краскопульты,finishing.paint,confident,source.finishing.paint,14
+1650,Краскопульты аккумуляторные,review.unresolved,ambiguous,fallback.review,3
+1543,Краскораспылители пневматические,finishing.paint,confident,source.finishing.paint,5
+3273,Кремы детские,review.unresolved,unmapped,fallback.review,3
+412,Кремы и бальзамы для садоводов,review.unresolved,unmapped,fallback.review,2
+3146,Кремы и воски для обуви,review.unresolved,unmapped,fallback.review,25
+3236,Кремы и лосьоны для тела,review.unresolved,unmapped,fallback.review,8
+3161,Кремы от сезонных насекомых,review.unresolved,unmapped,fallback.review,2
+1301,Крепеж для вентиляционных систем,heating.ventilation,confident,source.heating.ventilation,3
+576,Крепеж для опор и шпалер,review.unresolved,unmapped,fallback.review,8
+1102,Крепеж и принадлежности для раковин,plumbing.sanitary,confident,source.plumbing.sanitary,11
+1091,Крепеж и принадлежности для систем инсталляции,plumbing.sanitary,confident,source.plumbing.sanitary,1
+1090,Крепеж и принадлежности для унитазов,plumbing.sanitary,confident,source.plumbing.sanitary,16
+2051,Крепление для качелей,outdoor.furniture,confident,source.outdoor.furniture,2
+1459,Крепления,review.unresolved,unmapped,fallback.review,1
+540,Крепления для гамаков,outdoor.furniture,confident,source.outdoor.furniture,1
+1974,Крепления для ножек мебельных,furniture.home,confident,source.furniture.home,12
+1409,Крепления для теплоизоляции,building.insulation,confident,source.building.insulation,1
+1915,"Крепления, проушины",review.unresolved,unmapped,fallback.review,146
+4095,Кресла,furniture.home,confident,source.furniture.home,68
+4093,Кресла офисные,furniture.home,confident,source.furniture.home,75
+530,Кресла плетеные,furniture.home,confident,source.furniture.home,14
+513,Кресла подвесные,furniture.home,confident,source.furniture.home,11
+715,Крестики для кафельной плитки,tile.wall,confident,source.tile.wall,39
+2059,Кровати детские,review.unresolved,unmapped,fallback.review,5
+4090,Кровати для спальни,review.unresolved,unmapped,fallback.review,46
+665,Кровати надувные,review.unresolved,unmapped,fallback.review,18
+2064,Кровати-раскладушки,review.unresolved,unmapped,fallback.review,6
+1462,Кровельная вентиляция,heating.ventilation,confident,source.heating.ventilation,14
+2273,Кромочная лента для столешниц,furniture.kitchen,confident,source.furniture.kitchen,114
+3470,Кронштейны для СВЧ,review.unresolved,unmapped,fallback.review,6
+3936,Кронштейны для огнетушителей,review.unresolved,unmapped,fallback.review,6
+623,Кронштейны и крепления ящиков балконных и емкостей,review.unresolved,unmapped,fallback.review,2
+4199,"Кронштейны, подставки для аудио, видео и бытовой техники",kitchen.appliances,confident,source.kitchen.appliances,85
+1709,Круги для точил,review.unresolved,unmapped,fallback.review,9
+1711,Круги лепестковые для УШМ,review.unresolved,unmapped,fallback.review,23
+1710,Круги лепестковые для дрелей,tools.power,confident,source.tools.power,16
+1714,Круги полировальные,review.unresolved,unmapped,fallback.review,31
+1707,Круги фибровые с центральным отверстием,review.unresolved,unmapped,fallback.review,3
+1708,Круги шлифовальные для УШМ,review.unresolved,unmapped,fallback.review,37
+1706,Круги шлифовальные для орбитальных шлифмашин,tools.accessories,confident,source.tools.accessories,57
+4116,Кружки,kitchen.tableware,confident,source.kitchen.tableware,385
+2529,Кружки детские,kitchen.tableware,confident,source.kitchen.tableware,3
+2439,Кружки и бокалы для пива,kitchen.tableware,confident,source.kitchen.tableware,13
+2473,Крышки вакуумные,review.unresolved,unmapped,fallback.review,4
+2474,Крышки для СВЧ,review.unresolved,unmapped,fallback.review,2
+2494,Крышки для банок,review.unresolved,unmapped,fallback.review,17
+2335,Крышки для кастрюль и сковород,kitchen.cookware,confident,source.kitchen.cookware,53
+2049,Крюки настенные,review.unresolved,unmapped,fallback.review,28
+2048,Крюки потолочные,review.unresolved,unmapped,fallback.review,8
+2013,Крюки такелажные,review.unresolved,unmapped,fallback.review,14
+943,Крючки дверные,review.unresolved,unmapped,fallback.review,9
+1308,Крючки для ванной комнаты,review.unresolved,unmapped,fallback.review,91
+206,"Крючки, зажимы и подставки для новогодних украшений",seasonal.holiday,confident,source.seasonal,3
+1836,Кувалды,review.unresolved,unmapped,fallback.review,12
+2442,Кувшины,review.unresolved,unmapped,fallback.review,26
+2514,Кувшины пластмассовые,review.unresolved,unmapped,fallback.review,6
+3909,Куклы,review.unresolved,unmapped,fallback.review,9
+3960,Культиваторы,garden.machinery,confident,source.garden.machinery,15
+445,Культиваторы и рыхлители,garden.machinery,confident,source.garden.machinery,34
+575,Кустодержатели,review.unresolved,unmapped,fallback.review,11
+3961,Кусторезы,review.unresolved,unmapped,fallback.review,9
+3360,Кухонные комбайны,review.unresolved,unmapped,fallback.review,4
+2218,Кухонные тумбы,furniture.kitchen,confident,source.furniture.kitchen,255
+2154,Кухонные уголки,review.unresolved,unmapped,fallback.review,2
+3688,Лаки автомобильные,review.unresolved,ambiguous,fallback.review,4
+3284,Лаки для волос,finishing.coatings,confident,source.finishing.coatings,6
+1041,Лаки паркетные,review.unresolved,ambiguous,fallback.review,34
+1042,Лаки специальные,finishing.coatings,confident,source.finishing.coatings,71
+1043,Лаки тонирующие,finishing.coatings,confident,source.finishing.coatings,38
+3827,Лакомства для грызунов,review.unresolved,unmapped,fallback.review,1
+3826,Лакомства для кошек,pets.supplies,confident,source.pets,16
+3828,Лакомства для птиц,review.unresolved,unmapped,fallback.review,2
+3825,Лакомства для собак,pets.supplies,confident,source.pets,28
+719,Ламинат 31 класса,flooring.laminate,confident,source.flooring.laminate,3
+720,Ламинат 32 класса,flooring.laminate,confident,source.flooring.laminate,55
+721,Ламинат 33 класса,flooring.laminate,confident,source.flooring.laminate,182
+722,Ламинат 34 класса,flooring.laminate,confident,source.flooring.laminate,46
+4149,Лампы галогенные,lighting.bulbs,confident,source.lighting.bulbs,29
+4150,Лампы для бытовой техники,kitchen.appliances,confident,source.kitchen.appliances,14
+4152,Лампы для растений,review.unresolved,unmapped,fallback.review,30
+3627,Лампы для фар автомобиля,auto.accessories,confident,source.auto,40
+400,"Лампы керосиновые, аксессуары",review.unresolved,unmapped,fallback.review,2
+4148,Лампы линейные,review.unresolved,unmapped,fallback.review,53
+2832,Лампы люминесцентные,lighting.bulbs,confident,source.lighting.bulbs,4
+4146,Лампы накаливания,lighting.bulbs,confident,source.lighting.bulbs,33
+2773,Лампы настольные,lighting.indoor,confident,source.lighting.indoor,184
+2770,Лампы настольные,lighting.indoor,confident,source.lighting.indoor,57
+2771,Лампы настольные,lighting.indoor,confident,source.lighting.indoor,17
+2772,Лампы настольные,lighting.indoor,confident,source.lighting.indoor,14
+2774,Лампы настольные,lighting.indoor,confident,source.lighting.indoor,13
+2779,Лампы настольные LED,lighting.indoor,confident,source.lighting.indoor,38
+2775,Лампы настольные LED,lighting.indoor,confident,source.lighting.indoor,91
+2776,Лампы настольные LED,lighting.indoor,confident,source.lighting.indoor,19
+2780,Лампы настольные LED,lighting.indoor,confident,source.lighting.indoor,1
+2777,Лампы настольные LED,lighting.indoor,confident,source.lighting.indoor,8
+2859,Лампы настольные для растений,lighting.indoor,confident,source.lighting.indoor,14
+4145,Лампы светодиодные,lighting.bulbs,confident,source.lighting.bulbs,536
+4147,Лампы филаментные,review.unresolved,unmapped,fallback.review,104
+3807,Ластики,review.unresolved,unmapped,fallback.review,27
+1897,Лебедки ручные,review.unresolved,unmapped,fallback.review,6
+1637,Лебедки электрические,review.unresolved,unmapped,fallback.review,1
+336,Ледорубы,review.unresolved,unmapped,fallback.review,5
+3851,Лежаки для животных,pets.supplies,confident,source.pets,1
+1854,Лезвия для ножей,review.unresolved,unmapped,fallback.review,17
+3743,Лезвия для ножей канцелярских,review.unresolved,unmapped,fallback.review,2
+3967,Лейки,garden.watering,confident,source.garden.watering,37
+1126,Лейки для гигиенического душа,garden.watering,confident,source.garden.watering,13
+1125,Лейки для душа,garden.watering,confident,source.garden.watering,67
+1030,Лента шлифовальная,review.unresolved,unmapped,fallback.review,3
+4210,"Лента, банты и упаковочные аксессуары",review.unresolved,unmapped,fallback.review,61
+346,Ленты бордюрные,review.unresolved,unmapped,fallback.review,20
+1427,Ленты кромочные для щитов и полок,review.unresolved,unmapped,fallback.review,32
+3167,Ленты липкие от мух,review.unresolved,unmapped,fallback.review,8
+1039,"Ленты малярные, клейкие",review.unresolved,ambiguous,fallback.review,147
+2641,Ленты монтажные спиральные,review.unresolved,unmapped,fallback.review,4
+2848,Ленты светодиодные готовые комплекты,review.unresolved,unmapped,fallback.review,27
+1712,Ленты шлифовальные бесконечные,review.unresolved,unmapped,fallback.review,22
+1063,Ленты-бордюр для ванн,review.unresolved,unmapped,fallback.review,19
+288,Лески для триммеров и кос,garden.machinery,confident,source.garden.machinery,52
+1475,Лестницы двухсекционные,home.household,confident,source.home.household,2
+971,Лестницы межэтажные готовые,home.household,confident,source.home.household,18
+972,Лестницы межэтажные деревянные сборные,home.household,confident,source.home.household,70
+1474,Лестницы односекционные,home.household,confident,source.home.household,2
+1476,Лестницы трехсекционные,home.household,confident,source.home.household,12
+970,Лестницы чердачные,home.household,confident,source.home.household,5
+1477,Лестницы четырехсекционные,home.household,confident,source.home.household,9
+2448,"Лимонадники, банки с краником",review.unresolved,unmapped,fallback.review,2
+3801,Линейки,review.unresolved,unmapped,fallback.review,30
+1778,"Линейки, метры, направляющие",review.unresolved,unmapped,fallback.review,7
+4153,Линейные светильники,lighting.indoor,confident,source.lighting.indoor,49
+3995,Линолеум,flooring.linoleum,confident,source.flooring.linoleum,408
+1987,Листы,review.unresolved,unmapped,fallback.review,39
+1713,Листы шлифовальные для плоскошлифовальных машин,pets.supplies,confident,source.pets,2
+1527,Литье каминное,review.unresolved,unmapped,fallback.review,13
+1590,Лобзики аккумуляторные,review.unresolved,ambiguous,fallback.review,10
+1589,Лобзики сетевые,tools.power,confident,source.tools.power,20
+1850,"Лобзики, наборы для выпиливания",tools.power,confident,source.tools.power,3
+366,Ловушки и отпугиватели насекомых,review.unresolved,unmapped,fallback.review,8
+2403,Ложки десертные,review.unresolved,unmapped,fallback.review,9
+2340,Ложки для приготовления пищи,review.unresolved,unmapped,fallback.review,26
+4111,Ложки для специализированных продуктов,plumbing.bath_shower,confident,source.plumbing.shower,4
+2404,Ложки кофейные,review.unresolved,unmapped,fallback.review,1
+2341,Ложки мерные,review.unresolved,unmapped,fallback.review,2
+2405,Ложки столовые,review.unresolved,unmapped,fallback.review,40
+2406,Ложки чайные,review.unresolved,unmapped,fallback.review,43
+2475,Ложки-подставки,review.unresolved,unmapped,fallback.review,15
+1838,"Ломы, гвоздодеры",hardware.fasteners,confident,source.hardware.fasteners,11
+2345,Лопатки,garden.tools,confident,source.garden.tools,59
+3646,Лопаты автомобильные,review.unresolved,ambiguous,fallback.review,7
+566,Лопаты детские для снега,garden.tools,confident,source.garden.tools,2
+333,Лопаты для снега,garden.tools,confident,source.garden.tools,30
+415,Лопаты совковые,garden.tools,confident,source.garden.tools,14
+416,Лопаты туристические,garden.tools,confident,source.garden.tools,6
+414,Лопаты штыковые,garden.tools,confident,source.garden.tools,31
+2263,Лотки для столовых приборов,kitchen.tableware,confident,source.kitchen.tableware,15
+2262,Лотки для столовых приборов,kitchen.tableware,confident,source.kitchen.tableware,13
+1802,"Лотки, крышки, вставки для ящиков и органайзеров",home.storage,confident,source.home.storage,22
+3083,"Лотки, поддоны",plumbing.bath_shower,confident,source.plumbing.shower,2
+381,Луковичные овощные культуры,garden.seeds,confident,source.garden.seeds,34
+380,Луковичные цветы,garden.seeds,confident,source.garden.seeds,710
+4209,Лупы,review.unresolved,unmapped,fallback.review,5
+1889,Лупы специальные,review.unresolved,unmapped,fallback.review,5
+2738,Люстры подвесные,lighting.indoor,confident,source.lighting.indoor,392
+2836,Люстры подвесные для детских,lighting.indoor,confident,source.lighting.indoor,5
+2739,Люстры подвесные светодиодные,lighting.indoor,confident,source.lighting.indoor,157
+2736,Люстры потолочные,lighting.indoor,confident,source.lighting.indoor,803
+2737,Люстры потолочные светодиодные,lighting.indoor,confident,source.lighting.indoor,516
+4028,Магистральные фильтры,review.unresolved,unmapped,fallback.review,23
+1961,Магнитные защелки,review.unresolved,unmapped,fallback.review,11
+1015,"Макловица, ракля, маховая",review.unresolved,unmapped,fallback.review,29
+496,Мангалы,outdoor.grill,confident,source.outdoor.grill,42
+1271,Манжеты для унитаза,plumbing.sanitary,confident,source.plumbing.sanitary,15
+3641,Манометры автомобильные,auto.accessories,confident,source.auto,4
+2182,Маркеры для ремонта мебели,review.unresolved,unmapped,fallback.review,8
+1779,Маркеры разметочные,review.unresolved,unmapped,fallback.review,38
+3773,Маркеры-краски,finishing.paint,confident,source.finishing.paint,2
+3232,Маски для лица и тела,review.unresolved,unmapped,fallback.review,27
+242,Маски карнавальные,review.unresolved,unmapped,fallback.review,1
+3335,"Маски, комбинезоны",review.unresolved,unmapped,fallback.review,3
+4078,"Маски, очки сварочные",review.unresolved,unmapped,fallback.review,24
+3706,Масла для двухтактных двигателей,review.unresolved,unmapped,fallback.review,8
+3707,Масла для четырехтактных двигателей минеральные,review.unresolved,unmapped,fallback.review,2
+3708,Масла для четырехтактных двигателей полусинтетические,review.unresolved,unmapped,fallback.review,28
+3709,Масла для четырехтактных двигателей синтетические,review.unresolved,unmapped,fallback.review,61
+1050,Масла древозащитные,review.unresolved,unmapped,fallback.review,70
+647,"Масла, запарки, ароматизаторы",review.unresolved,unmapped,fallback.review,15
+2452,Масленки,review.unresolved,unmapped,fallback.review,18
+3272,Масло детское,review.unresolved,unmapped,fallback.review,1
+297,Масло для бензопил,review.unresolved,unmapped,fallback.review,14
+1548,Масло для пневмооборудования,review.unresolved,unmapped,fallback.review,6
+3690,"Мастики битумные, резина жидкая",review.unresolved,unmapped,fallback.review,2
+990,Мастики и праймеры,review.unresolved,unmapped,fallback.review,60
+1715,Материалы полировальные,review.unresolved,unmapped,fallback.review,3
+490,"Матраcы надувные, плоты",review.unresolved,unmapped,fallback.review,34
+2066,Матрасы беспружинные,review.unresolved,unmapped,fallback.review,5
+2067,Матрасы ватные,review.unresolved,unmapped,fallback.review,6
+2069,Матрасы с независимым пружинным блоком,review.unresolved,unmapped,fallback.review,42
+1161,Маховики,review.unresolved,unmapped,fallback.review,16
+2353,Мачете,review.unresolved,unmapped,fallback.review,2
+3311,Машинки для стрижки электрические,review.unresolved,unmapped,fallback.review,13
+2495,Машинки закаточные,review.unresolved,unmapped,fallback.review,4
+3494,Машинки от катышков,review.unresolved,unmapped,fallback.review,10
+1600,Машины виброшлифовальные аккумуляторные,electrical.power,confident,source.electrical.power,3
+3897,Машины игрушечные,review.unresolved,unmapped,fallback.review,9
+1607,Машины полировальные аккумуляторные,electrical.power,confident,source.electrical.power,1
+3434,Машины посудомоечные,review.unresolved,unmapped,fallback.review,10
+1598,Машины углошлифовальные,review.unresolved,unmapped,fallback.review,74
+1609,Машины фрезерные,review.unresolved,unmapped,fallback.review,10
+1544,Машины шлифовальные пневматические,review.unresolved,unmapped,fallback.review,3
+650,Мебель и предметы интерьера из массива дерева для бани,furniture.home,confident,source.furniture.home,48
+552,Мебель садовая детская,furniture.home,confident,source.furniture.home,11
+1968,Мебельные крючки,furniture.home,confident,source.furniture.home,148
+1965,Мебельные направляющие,review.unresolved,ambiguous,fallback.review,50
+1967,Мебельные петли,review.unresolved,ambiguous,fallback.review,56
+1966,Мебельные ручки,review.unresolved,ambiguous,fallback.review,548
+3792,Мел школьный,review.unresolved,unmapped,fallback.review,2
+3793,Мелки восковые,review.unresolved,unmapped,fallback.review,10
+2535,Мельницы для специй,review.unresolved,unmapped,fallback.review,11
+2396,Менажницы,review.unresolved,unmapped,fallback.review,20
+2521,Менажницы пластмассовые,review.unresolved,unmapped,fallback.review,2
+2045,Металлические стеллажи,review.unresolved,unmapped,fallback.review,30
+1452,"Металлочерепица, профнастил",building.roofing,confident,source.building.roofing,119
+3507,Метеостанции,review.unresolved,unmapped,fallback.review,6
+2996,Метлы для уборки с длинной ручкой,review.unresolved,unmapped,fallback.review,3
+441,"Метлы, щетки",review.unresolved,unmapped,fallback.review,30
+1863,"Метчики, плашки, клуппы",review.unresolved,unmapped,fallback.review,14
+813,Механизмы и крепления рулонных штор,home.textiles,confident,source.home.textiles,15
+3760,Мешки для обуви,review.unresolved,unmapped,fallback.review,10
+3038,Мешки для стирки,review.unresolved,unmapped,fallback.review,10
+1726,Мешки для строительных пылесосов,kitchen.appliances,confident,source.kitchen.appliances,27
+2294,Мешки и шприцы кондитерские,review.unresolved,unmapped,fallback.review,6
+230,Мешки новогодние,seasonal.holiday,confident,source.seasonal,4
+1534,"Мешки, средства для уборки строительного мусора",review.unresolved,unmapped,fallback.review,12
+3466,Микроволновые печи,kitchen.appliances,confident,source.kitchen.appliances,29
+3767,Микрогрифели графитные,review.unresolved,unmapped,fallback.review,3
+601,Микроэлементы,review.unresolved,unmapped,fallback.review,16
+4182,Миксеры,review.unresolved,unmapped,fallback.review,21
+2447,Минибары,review.unresolved,unmapped,fallback.review,1
+585,Минипарники для рассады,review.unresolved,ambiguous,fallback.review,11
+3846,Миски для животных,pets.supplies,confident,source.pets,18
+382,Мицелий грибов,review.unresolved,unmapped,fallback.review,12
+205,Мишура новогодняя,seasonal.holiday,confident,source.seasonal,17
+1632,Многофункциональный инструмент аккумуляторный,review.unresolved,ambiguous,fallback.review,12
+1631,Многофункциональный инструмент сетевой,tools.hand,confident,source.tools.hand,7
+4205,Модули памяти,review.unresolved,unmapped,fallback.review,6
+1526,Модульные дымоходы без изоляции,review.unresolved,unmapped,fallback.review,68
+1525,Модульные дымоходы с изоляцией,review.unresolved,unmapped,fallback.review,25
+3996,Модульные напольные покрытия,review.unresolved,unmapped,fallback.review,16
+348,Модульные покрытия для сада,review.unresolved,unmapped,fallback.review,31
+253,Мойки высокого давления,review.unresolved,unmapped,fallback.review,19
+4103,Мойки из искусственного камня,plumbing.sinks,confident,source.plumbing.sinks,253
+4102,Мойки из нержавеющей стали,review.unresolved,unmapped,fallback.review,93
+867,Молдинги,finishing.decor,confident,source.finishing.decor,231
+1835,Молотки,tools.hand,confident,source.tools.hand,11
+2359,Молотки для мяса,tools.hand,confident,source.tools.hand,9
+3555,Моноподы,review.unresolved,unmapped,fallback.review,1
+1051,Морилки,finishing.coatings,confident,source.finishing.coatings,28
+3429,Морозильные камеры,review.unresolved,unmapped,fallback.review,13
+3430,Морозильные лари,review.unresolved,unmapped,fallback.review,7
+279,Мотобуры и ледорубы,review.unresolved,unmapped,fallback.review,6
+313,Мотопомпы,review.unresolved,unmapped,fallback.review,2
+424,"Мотыги, полольники",review.unresolved,unmapped,fallback.review,14
+425,Мотыжки и тяпки ручные,garden.tools,confident,source.garden.tools,17
+4185,Мультиварки,review.unresolved,unmapped,fallback.review,15
+3643,Мультиинструменты,tools.hand,confident,source.tools.hand,5
+4085,Мультиметры,review.unresolved,unmapped,fallback.review,28
+3362,Мультирезки,review.unresolved,unmapped,fallback.review,5
+605,"Мульча, примеси, субстратные компоненты",garden.soils,confident,source.garden.soils,58
+3285,"Муссы, пены, спреи и жидкости для укладки",review.unresolved,unmapped,fallback.review,5
+3168,Мухобойки,review.unresolved,unmapped,fallback.review,2
+3214,Мыло в банках,review.unresolved,unmapped,fallback.review,4
+3215,Мыло жидкое,review.unresolved,unmapped,fallback.review,71
+3217,Мыло жидкое в канистрах,review.unresolved,unmapped,fallback.review,16
+3216,Мыло жидкое для диспенсеров,review.unresolved,unmapped,fallback.review,1
+3213,Мыло кусковое,review.unresolved,unmapped,fallback.review,88
+4050,Мыльницы,plumbing.accessories,confident,source.plumbing.accessories,163
+2476,Мыльницы и подставки для губок,plumbing.accessories,confident,source.plumbing.accessories,11
+3923,Мыльные пузыри,review.unresolved,unmapped,fallback.review,10
+636,"Мышеловки, крысоловки, ультразвуковые отпугиватели",review.unresolved,unmapped,fallback.review,20
+3919,Мягкие игрушки,review.unresolved,unmapped,fallback.review,17
+2379,Мясорубки,review.unresolved,unmapped,fallback.review,5
+3359,Мясорубки электрические,review.unresolved,unmapped,fallback.review,22
+557,Мячи,review.unresolved,unmapped,fallback.review,7
+492,Мячи пляжные,review.unresolved,unmapped,fallback.review,4
+1026,Наборы МШИ,review.unresolved,unmapped,fallback.review,21
+1659,Наборы аккумуляторных инструментов,review.unresolved,ambiguous,fallback.review,1
+2509,Наборы барных принадлежностей,review.unresolved,unmapped,fallback.review,3
+1687,Наборы бит,review.unresolved,unmapped,fallback.review,37
+1692,Наборы буров,review.unresolved,unmapped,fallback.review,9
+3659,Наборы для ТО,review.unresolved,unmapped,fallback.review,3
+2446,Наборы для алкогольных напитков,review.unresolved,unmapped,fallback.review,3
+2445,Наборы для безалкогольных напитков,review.unresolved,unmapped,fallback.review,3
+384,Наборы для выращивания растений,review.unresolved,unmapped,fallback.review,20
+3928,Наборы для игры с песком,review.unresolved,unmapped,fallback.review,10
+2496,Наборы для консервирования,review.unresolved,unmapped,fallback.review,2
+1878,Наборы для пайки,review.unresolved,unmapped,fallback.review,14
+1551,Наборы для пневмоинструментов и принадлежности,tools.hand,confident,source.tools.hand,5
+3637,Наборы для ремонта колес,review.unresolved,unmapped,fallback.review,3
+2346,Наборы для салата,review.unresolved,unmapped,fallback.review,5
+2453,Наборы для сервировки столовые,review.unresolved,unmapped,fallback.review,3
+2432,Наборы для сервировки чайно-кофейные,review.unresolved,unmapped,fallback.review,2
+2534,Наборы для специй,review.unresolved,unmapped,fallback.review,25
+3915,Наборы для творчества,review.unresolved,unmapped,fallback.review,34
+2979,Наборы для уборки,review.unresolved,unmapped,fallback.review,19
+3201,Наборы зубные,review.unresolved,unmapped,fallback.review,2
+3040,Наборы и принадлежности для стирки,review.unresolved,unmapped,fallback.review,3
+651,Наборы каминные,review.unresolved,unmapped,fallback.review,22
+330,Наборы капельного полива,garden.watering,confident,source.garden.watering,9
+1818,Наборы ключей,review.unresolved,unmapped,fallback.review,13
+1695,Наборы коронок,review.unresolved,unmapped,fallback.review,8
+2972,Наборы кухонной мелочи,review.unresolved,unmapped,fallback.review,8
+2380,Наборы кухонных инструментов,tools.hand,confident,source.tools.hand,7
+3803,"Наборы линеек, угольников",review.unresolved,unmapped,fallback.review,5
+1731,Наборы насадок для МФИ,review.unresolved,unmapped,fallback.review,1
+1730,Наборы насадок для мини-дрелей,tools.power,confident,source.tools.power,5
+2524,Наборы одноразовой посуды,review.unresolved,unmapped,fallback.review,2
+1699,Наборы оснастки,tools.accessories,confident,source.tools.accessories,6
+1808,Наборы отверток,review.unresolved,unmapped,fallback.review,16
+2519,Наборы пластмассовой посуды,review.unresolved,unmapped,fallback.review,3
+3295,Наборы подарочные для женщин,review.unresolved,unmapped,fallback.review,15
+3296,Наборы подарочные для мужчин,review.unresolved,unmapped,fallback.review,4
+1864,Наборы резьбонарезные,review.unresolved,unmapped,fallback.review,2
+1857,Наборы ручных инструментов,tools.hand,confident,source.tools.hand,47
+1690,Наборы сверл,tools.accessories,confident,source.tools.accessories,32
+1697,Наборы фрез,review.unresolved,unmapped,fallback.review,8
+1717,Наборы шарошек,review.unresolved,unmapped,fallback.review,15
+2220,Навесные шкафы,review.unresolved,ambiguous,fallback.review,192
+1963,Навесы и шины мебельные,review.unresolved,ambiguous,fallback.review,11
+2953,Наволочки,review.unresolved,unmapped,fallback.review,105
+1553,Нагреватели воздуха газовые,review.unresolved,unmapped,fallback.review,10
+1554,Нагреватели воздуха дизельные,review.unresolved,unmapped,fallback.review,4
+1555,Нагреватели воздуха электрические,review.unresolved,unmapped,fallback.review,6
+931,Накладки,review.unresolved,unmapped,fallback.review,110
+3999,Наклейки на стену,review.unresolved,ambiguous,fallback.review,77
+223,"Наклейки, витражи новогодние",review.unresolved,ambiguous,fallback.review,14
+936,"Наклейки, накладки для дверей",review.unresolved,ambiguous,fallback.review,56
+3973,"Наколенники, фартуки, коврики для работ в саду",review.unresolved,unmapped,fallback.review,3
+2613,"Наконечники, гильзы",review.unresolved,unmapped,fallback.review,59
+1376,Наличники,review.unresolved,unmapped,fallback.review,25
+2950,Наматрасники,review.unresolved,unmapped,fallback.review,29
+1872,Напильники,review.unresolved,unmapped,fallback.review,9
+2096,Наполнение шкафов,furniture.home,confident,source.furniture.home,15
+3857,Наполнители для кошачьих туалетов,pets.supplies,confident,source.pets,12
+3858,"Наполнители, сено,опилки для грызунов",review.unresolved,unmapped,fallback.review,2
+684,Напольная плитка,review.unresolved,unmapped,fallback.review,79
+3398,Напольные вентиляторы,heating.ventilation,confident,source.heating.ventilation,54
+944,Направляющие для раздвижных дверей,review.unresolved,unmapped,fallback.review,8
+1676,Направляющие для резки,review.unresolved,unmapped,fallback.review,1
+323,Направляющие для шлангов,garden.watering,confident,source.garden.watering,1
+1680,Насадки для аккумуляторных инструментов,review.unresolved,ambiguous,fallback.review,1
+1672,Насадки для миксеров,review.unresolved,unmapped,fallback.review,6
+407,Насадки для опрыскивателей,garden.watering,confident,source.garden.watering,17
+4157,Насадки для поломоев,review.unresolved,unmapped,fallback.review,41
+1698,Насадки для сверления,tools.accessories,confident,source.tools.accessories,7
+1681,Насадки для фенов строительных,review.unresolved,unmapped,fallback.review,1
+2985,Насадки для швабр,cleaning.equipment,confident,source.cleaning.equipment,16
+1723,Насадки пильные для МФИ,review.unresolved,unmapped,fallback.review,26
+3009,Насадки сменные для стекломоев,review.unresolved,unmapped,fallback.review,1
+1720,Насадки шлифовальные для МФИ,review.unresolved,unmapped,fallback.review,1
+311,Насосные станции,review.unresolved,unmapped,fallback.review,14
+3640,Насосы автомобильные,auto.accessories,confident,source.auto,4
+494,Насосы для надувных товаров,review.unresolved,unmapped,fallback.review,9
+1188,Насосы для повышения давления,review.unresolved,unmapped,fallback.review,6
+1189,Насосы канализационные,review.unresolved,unmapped,fallback.review,3
+3963,Насосы садовые,review.unresolved,unmapped,fallback.review,81
+1187,Насосы циркуляционные,review.unresolved,unmapped,fallback.review,19
+681,Настенная плитка,review.unresolved,unmapped,fallback.review,29
+578,Настенный садовый декор,home.decor,confident,source.home.decor,19
+3399,Настольные вентиляторы,heating.ventilation,confident,source.heating.ventilation,24
+3912,Настольные игры,review.unresolved,unmapped,fallback.review,20
+4196,Наушники,review.unresolved,unmapped,fallback.review,16
+4079,"Наушники, беруши",review.unresolved,unmapped,fallback.review,8
+3119,Нейтрализаторы запахов,review.unresolved,unmapped,fallback.review,4
+3985,Нетканые укрывные материалы,review.unresolved,unmapped,fallback.review,43
+594,Нетканые укрывные материалы мерные,review.unresolved,unmapped,fallback.review,9
+1782,Нивелиры лазерные,review.unresolved,unmapped,fallback.review,37
+1783,Нивелиры оптические,review.unresolved,unmapped,fallback.review,1
+3209,Нити зубные,review.unresolved,unmapped,fallback.review,9
+2385,"Нити кулинарные, завязки для рулетов",review.unresolved,unmapped,fallback.review,2
+3889,Нитки для шитья,review.unresolved,unmapped,fallback.review,1
+1725,Ножи для электрорубанков,kitchen.utensils,confident,source.kitchen.utensils,8
+289,Ножи и головки для триммеров и кос,review.unresolved,ambiguous,fallback.review,27
+661,Ножи и приборы походные,kitchen.utensils,confident,source.kitchen.utensils,4
+3742,Ножи канцелярские,kitchen.utensils,confident,source.kitchen.utensils,3
+2351,Ножи кухонные,kitchen.utensils,confident,source.kitchen.utensils,163
+2352,Ножи кухонные в наборах,kitchen.utensils,confident,source.kitchen.utensils,23
+434,Ножи садовые,kitchen.utensils,confident,source.kitchen.utensils,6
+2407,Ножи столовые,kitchen.utensils,confident,source.kitchen.utensils,56
+1853,Ножи строительные,kitchen.utensils,confident,source.kitchen.utensils,51
+3383,"Ножи электрические, ножеточки",kitchen.utensils,confident,source.kitchen.utensils,4
+1060,Ножки для ванн,review.unresolved,unmapped,fallback.review,10
+4088,Ножки мебельные,furniture.home,confident,source.furniture.home,111
+2356,Ножницы,review.unresolved,unmapped,fallback.review,21
+431,Ножницы газонные,review.unresolved,unmapped,fallback.review,4
+3891,Ножницы для шитья,review.unresolved,unmapped,fallback.review,2
+3741,Ножницы канцелярские,review.unresolved,unmapped,fallback.review,11
+430,Ножницы садовые,review.unresolved,unmapped,fallback.review,9
+269,Ножницы садовые аккумуляторные,electrical.power,confident,source.electrical.power,11
+432,Ножницы-кусторезы,review.unresolved,unmapped,fallback.review,13
+1848,Ножовки,review.unresolved,unmapped,fallback.review,43
+435,Ножовки и пилы садовые,tools.hand,confident,source.tools.hand,13
+3863,Носки капроновые,review.unresolved,unmapped,fallback.review,13
+3864,Носки трикотажные,review.unresolved,unmapped,fallback.review,253
+2843,Ночники для детских светодиодные,review.unresolved,unmapped,fallback.review,90
+3785,Обложки для тетрадей и учебников,review.unresolved,unmapped,fallback.review,19
+670,Обогреватели газовые,review.unresolved,unmapped,fallback.review,1
+3414,Обогреватели инфракрасные,review.unresolved,unmapped,fallback.review,18
+3411,Обогреватели масляные,review.unresolved,unmapped,fallback.review,21
+244,"Ободки, обручи, рожки карнавальные",review.unresolved,unmapped,fallback.review,5
+3998,Обои,finishing.wallpaper,confident,source.finishing.wallpaper,1297
+3997,Обои под покраску,finishing.paint,confident,source.finishing.paint,72
+1573,Оборудование для сварки пластиковых труб,review.unresolved,unmapped,fallback.review,13
+3971,Обувь,review.unresolved,unmapped,fallback.review,402
+455,Обувь детская,review.unresolved,unmapped,fallback.review,29
+224,Объемные украшения из бумаги и фольги,review.unresolved,unmapped,fallback.review,2
+2361,Овощечистки,review.unresolved,unmapped,fallback.review,31
+3931,Огнетушители порошковые,review.unresolved,unmapped,fallback.review,16
+3932,Огнетушители углекислотные,review.unresolved,unmapped,fallback.review,5
+368,Одежда антимоскитная,doors_windows.windows,confident,source.doors.windows,4
+3800,Одежда для труда,review.unresolved,unmapped,fallback.review,3
+2957,Одеяла,home.textiles,confident,source.home.textiles,136
+951,Окна деревянные,doors_windows.windows,confident,source.doors.windows,13
+953,Окна для бани и сауны,doors_windows.windows,confident,source.doors.windows,2
+952,Окна пластиковые,doors_windows.windows,confident,source.doors.windows,10
+964,Оконные водоотливы,review.unresolved,unmapped,fallback.review,12
+991,Олифа,review.unresolved,unmapped,fallback.review,3
+3599,Оплетки и накладки,review.unresolved,unmapped,fallback.review,7
+3208,Ополаскиватели для полости рта,review.unresolved,unmapped,fallback.review,28
+3088,Ополаскиватели и освежители для посудомоечных машин,review.unresolved,unmapped,fallback.review,10
+574,Опоры,review.unresolved,unmapped,fallback.review,70
+1908,Опоры бруса и держатели,building.lumber,confident,source.building.lumber,52
+357,Опоры для фонарей,review.unresolved,unmapped,fallback.review,4
+3968,Опрыскиватели и распылители,garden.watering,confident,source.garden.watering,59
+4163,Органайзеры,home.storage,confident,source.home.storage,62
+3591,Органайзеры автомобильные,review.unresolved,ambiguous,fallback.review,7
+1801,Органайзеры для крепежа и мелочей,home.storage,confident,source.home.storage,46
+2489,Органайзеры для кухни подвесные,home.storage,confident,source.home.storage,7
+2488,Органайзеры на раковину подвесные,review.unresolved,ambiguous,fallback.review,7
+4162,Органайзеры подвесные,home.storage,confident,source.home.storage,6
+3052,Органайзеры-вставки для комодов и шкафов,review.unresolved,ambiguous,fallback.review,14
+2362,Орехоколы,review.unresolved,unmapped,fallback.review,4
+406,Оросители для горшечных растений,review.unresolved,unmapped,fallback.review,9
+3128,Освежители воздуха для туалета,review.unresolved,unmapped,fallback.review,19
+3130,Освежители воздуха для туалета,review.unresolved,unmapped,fallback.review,21
+3129,Освежители воздуха для туалета,review.unresolved,unmapped,fallback.review,29
+2060,Основания для кроватей,review.unresolved,unmapped,fallback.review,13
+2921,Основания для настольных ламп,review.unresolved,unmapped,fallback.review,5
+2928,Основания светильников для технических помещений,lighting.indoor,confident,source.lighting.indoor,4
+3109,Отбеливатели для белья,review.unresolved,unmapped,fallback.review,51
+1807,Отвертки Torx,tools.hand,confident,source.tools.hand,7
+1596,Отвертки аккумуляторные,review.unresolved,ambiguous,fallback.review,10
+1804,Отвертки крестовые,tools.hand,confident,source.tools.hand,33
+1806,Отвертки специальные,tools.hand,confident,source.tools.hand,20
+1805,Отвертки шлицевые,tools.hand,confident,source.tools.hand,22
+1784,"Отвесы, шнуры разметочные",review.unresolved,unmapped,fallback.review,9
+2640,Ответвители,review.unresolved,unmapped,fallback.review,5
+4044,Отводы для унитаза и бытовой техники,review.unresolved,ambiguous,fallback.review,20
+2477,Открывашки,review.unresolved,unmapped,fallback.review,12
+3877,Открытки,review.unresolved,unmapped,fallback.review,23
+4195,Отпариватели,review.unresolved,unmapped,fallback.review,12
+1413,Отражающая изоляция,review.unresolved,unmapped,fallback.review,13
+3696,Очистители двигателей,review.unresolved,unmapped,fallback.review,6
+3684,Очистители дисков,review.unresolved,unmapped,fallback.review,3
+3147,Очистители для обуви,review.unresolved,unmapped,fallback.review,9
+3667,Очистители для рук,review.unresolved,unmapped,fallback.review,7
+3694,Очистители инжекторов и карбюраторов,review.unresolved,unmapped,fallback.review,9
+3699,Очистители кондиционеров,review.unresolved,unmapped,fallback.review,4
+3700,Очистители контактов,review.unresolved,unmapped,fallback.review,5
+3671,Очистители кузова,review.unresolved,unmapped,fallback.review,13
+3676,Очистители обивки из велюра,review.unresolved,unmapped,fallback.review,4
+3678,Очистители обивки из кожи,review.unresolved,unmapped,fallback.review,3
+3675,Очистители обивки универсальные,review.unresolved,unmapped,fallback.review,18
+1440,Очистители пен,review.unresolved,unmapped,fallback.review,10
+3681,Очистители стекол,review.unresolved,unmapped,fallback.review,14
+3683,Очистители стекол в бачок омывателя,review.unresolved,unmapped,fallback.review,33
+3697,Очистители тормозов,review.unresolved,unmapped,fallback.review,4
+3698,Очистители цепей,review.unresolved,unmapped,fallback.review,3
+3685,Очистители шин,review.unresolved,unmapped,fallback.review,5
+3979,Очистка прудов,review.unresolved,unmapped,fallback.review,4
+1742,Очки защитные,review.unresolved,unmapped,fallback.review,21
+491,"Очки и маски для плавания, ласты",review.unresolved,unmapped,fallback.review,8
+245,Очки карнавальные,review.unresolved,unmapped,fallback.review,1
+281,"Очки, наушники и прочие средства защиты",review.unresolved,unmapped,fallback.review,4
+3835,Ошейники для животных,pets.supplies,confident,source.pets,3
+3913,Пазлы,review.unresolved,unmapped,fallback.review,7
+1489,Пазогребневые плиты,review.unresolved,unmapped,fallback.review,2
+3879,Пакеты,review.unresolved,unmapped,fallback.review,116
+3063,Пакеты вакуумные для хранения белья,home.storage,confident,source.home.storage,18
+2302,Пакеты для запекания,review.unresolved,unmapped,fallback.review,9
+2543,Пакеты для продуктов,review.unresolved,unmapped,fallback.review,33
+3884,Пакеты и сумки для покупателей,review.unresolved,unmapped,fallback.review,6
+4161,Пакеты мусорные,review.unresolved,unmapped,fallback.review,47
+653,Палатки,outdoor.leisure,confident,source.outdoor.leisure,2
+3797,Палитры,review.unresolved,unmapped,fallback.review,4
+2527,"Палочки, шпажки, пики одноразовые",review.unresolved,unmapped,fallback.review,18
+887,Панели ХДФ,review.unresolved,unmapped,fallback.review,13
+1066,Панели для ванн,review.unresolved,unmapped,fallback.review,82
+963,"Панели для отделки откосов окон, фиксаторы",review.unresolved,unmapped,fallback.review,18
+862,"Панели листовые декоративные на основе МДФ, ДВП",review.unresolved,ambiguous,fallback.review,27
+861,Панели листовые декоративные на основе ПВХ,home.decor,confident,source.home.decor,68
+863,Панели самоклеящиеся,review.unresolved,unmapped,fallback.review,19
+2827,Панели светодиодные,review.unresolved,unmapped,fallback.review,42
+859,Панели стеновые на основе МДФ,review.unresolved,unmapped,fallback.review,45
+858,Панели стеновые на основе ПВХ,review.unresolved,unmapped,fallback.review,110
+1407,Панели теплозвукоизоляционные,building.insulation,confident,source.building.insulation,3
+1417,Панель звукоизоляционная,building.insulation,confident,source.building.insulation,15
+1408,Панель теплоизоляционная,building.insulation,confident,source.building.insulation,33
+2193,Панно,review.unresolved,unmapped,fallback.review,9
+3752,Папки,review.unresolved,unmapped,fallback.review,36
+3755,Папки для тетрадей и труда,review.unresolved,unmapped,fallback.review,16
+724,Паркет,flooring.wood,confident,source.flooring.wood,32
+1453,Паро- и ветрозащитные мембраны,building.insulation,confident,source.building.insulation,88
+2331,"Пароварки, скороварки и мантоварки",review.unresolved,unmapped,fallback.review,7
+3488,Парогенераторы,review.unresolved,unmapped,fallback.review,14
+3492,Пароочистители,review.unresolved,unmapped,fallback.review,10
+3206,Пасты зубные,review.unresolved,unmapped,fallback.review,97
+1045,Пасты колеровочные для ручной колеровки,review.unresolved,unmapped,fallback.review,67
+1663,Патроны для дрелей,tools.power,confident,source.tools.power,9
+2617,Патроны для лампочек,review.unresolved,unmapped,fallback.review,80
+2927,Патроны для светильников подвесных,lighting.indoor,confident,source.lighting.indoor,4
+1877,Паяльники,review.unresolved,unmapped,fallback.review,11
+3841,"Пеленки, подстилки для животных",pets.supplies,confident,source.pets,6
+4101,Пеналы,review.unresolved,unmapped,fallback.review,41
+3761,Пеналы канцелярские,review.unresolved,unmapped,fallback.review,12
+1410,Пенопласт,review.unresolved,unmapped,fallback.review,13
+1406,Пенополистирол экструдированный,plumbing.bath_shower,confident,source.plumbing.shower,15
+1414,Пенополиэтилен,review.unresolved,unmapped,fallback.review,5
+1437,Пены бытовые,review.unresolved,unmapped,fallback.review,20
+3241,Пены для ванны,plumbing.bath_shower,confident,source.plumbing.shower,16
+1438,Пены профессиональные,review.unresolved,unmapped,fallback.review,31
+3071,Пепельницы,review.unresolved,unmapped,fallback.review,5
+2583,Переключатели встраиваемые,review.unresolved,unmapped,fallback.review,167
+2581,Переключатели накладные,review.unresolved,unmapped,fallback.review,26
+2582,Переключатели накладные влагозащищенные,review.unresolved,unmapped,fallback.review,2
+2609,Переходники,review.unresolved,unmapped,fallback.review,24
+1661,Переходники для перфораторов и дрелей,tools.power,confident,source.tools.power,8
+1550,"Переходники, адаптеры для пневмооборудования",review.unresolved,unmapped,fallback.review,62
+3874,Периодические издания,review.unresolved,unmapped,fallback.review,27
+3771,Перманентные маркеры,review.unresolved,unmapped,fallback.review,6
+1623,Перфораторы аккумуляторные,review.unresolved,ambiguous,fallback.review,8
+1622,Перфораторы сетевые,tools.power,confident,source.tools.power,43
+2998,Перчатки многоразовые,tools.workwear,confident,source.tools.workwear,23
+2997,Перчатки одноразовые,tools.workwear,confident,source.tools.workwear,15
+460,Перчатки садовые,tools.workwear,confident,source.tools.workwear,42
+4080,"Перчатки, рукавицы",tools.workwear,confident,source.tools.workwear,69
+4066,Песок строительный,review.unresolved,unmapped,fallback.review,2
+555,Песочницы детские,review.unresolved,unmapped,fallback.review,2
+927,Петли для дверей,doors_windows.hardware,confident,source.doors.hardware,169
+2014,Петли-винты,review.unresolved,ambiguous,fallback.review,8
+3467,Печи СВЧ встраиваемые,review.unresolved,unmapped,fallback.review,8
+500,Печи-барбекю,review.unresolved,unmapped,fallback.review,1
+1721,Пилки для лобзиков и эл. ножовок,tools.power,confident,source.tools.power,123
+1613,Пилы дисковые аккумуляторные,review.unresolved,ambiguous,fallback.review,13
+1615,Пилы сабельные аккумуляторные,review.unresolved,ambiguous,fallback.review,12
+1617,Пилы цепные аккумуляторные,review.unresolved,ambiguous,fallback.review,18
+1845,Пинцеты,review.unresolved,unmapped,fallback.review,1
+1772,Пирометры,review.unresolved,unmapped,fallback.review,6
+1094,Писсуары,review.unresolved,unmapped,fallback.review,1
+4086,Пистолеты для герметика и монтажной пены,finishing.adhesive_sealant,confident,source.finishing.adhesive,23
+1626,Пистолеты клеевые аккумуляторные,electrical.power,confident,source.electrical.power,1
+1542,Пистолеты пневматические,review.unresolved,unmapped,fallback.review,11
+327,Пистолеты-распылители,review.unresolved,unmapped,fallback.review,42
+493,"Плавательные круги, жилеты, нарукавники",review.unresolved,unmapped,fallback.review,34
+2272,Планки для столешниц,furniture.kitchen,confident,source.furniture.kitchen,110
+925,Планки ответные,review.unresolved,unmapped,fallback.review,11
+1309,Планки с крючками,review.unresolved,unmapped,fallback.review,31
+2232,Планки цокольные,review.unresolved,unmapped,fallback.review,13
+3795,Пластилин,review.unresolved,unmapped,fallback.review,8
+1909,Пластины крепежные,review.unresolved,unmapped,fallback.review,72
+3243,Пластыри,review.unresolved,unmapped,fallback.review,12
+356,Плафоны для фонарей,review.unresolved,unmapped,fallback.review,4
+2917,Плафоны металлические,review.unresolved,unmapped,fallback.review,5
+2916,Плафоны пластиковые,review.unresolved,unmapped,fallback.review,7
+2918,Плафоны светильников для технических помещений,lighting.indoor,confident,source.lighting.indoor,2
+2915,Плафоны стеклянные,review.unresolved,unmapped,fallback.review,15
+2961,Пледы,review.unresolved,unmapped,fallback.review,42
+1536,Пленка воздушно-пузырьковая,review.unresolved,unmapped,fallback.review,6
+3984,Пленка парниковая,outdoor.structures,confident,source.outdoor.structures,21
+2542,Пленка пищевая,review.unresolved,unmapped,fallback.review,12
+3786,Пленка самоклеющаяся для тетрадей и учебников,review.unresolved,unmapped,fallback.review,3
+793,Пленка самоклеящаяся,review.unresolved,unmapped,fallback.review,109
+794,Пленка самоклеящаяся витражная,review.unresolved,unmapped,fallback.review,12
+4003,Пленка светоотражающая для окон,review.unresolved,unmapped,fallback.review,1
+1037,Пленка стретч,review.unresolved,unmapped,fallback.review,6
+590,Пленка техническая,review.unresolved,unmapped,fallback.review,2
+1036,Пленки защитные,review.unresolved,unmapped,fallback.review,52
+762,Плинтусы дюрополимерные,flooring.accessories,confident,source.flooring.accessories,48
+2274,Плинтусы и комплектующие к плинтусам для столешниц,review.unresolved,ambiguous,fallback.review,64
+764,Плинтусы из массива,flooring.accessories,confident,source.flooring.accessories,28
+765,Плинтусы из металла,flooring.accessories,confident,source.flooring.accessories,6
+761,Плинтусы на основе МДФ,flooring.accessories,confident,source.flooring.accessories,10
+760,Плинтусы на основе ПВХ,flooring.accessories,confident,source.flooring.accessories,149
+883,Плинтусы потолочные,flooring.accessories,confident,source.flooring.accessories,201
+748,Плитка SPC,flooring.vinyl,confident,source.flooring.vinyl,190
+747,Плитка ПВХ,flooring.vinyl,confident,source.flooring.vinyl,3
+3994,Плитка для ступеней,review.unresolved,unmapped,fallback.review,22
+695,Плитка интерьерная гипсовая,review.unresolved,unmapped,fallback.review,17
+1455,Плитка кровельная,review.unresolved,unmapped,fallback.review,10
+688,Плитка мозаика каменная,tile.mosaic,confident,source.tile.mosaic,15
+687,Плитка мозаика керамическая,tile.mosaic,confident,source.tile.mosaic,31
+686,Плитка мозаика стеклянная,tile.mosaic,confident,source.tile.mosaic,40
+677,Плитка настенная для ванной,tile.wall,confident,source.tile.wall,577
+679,Плитка настенная для кухни,tile.wall,confident,source.tile.wall,30
+4192,Плитки,review.unresolved,unmapped,fallback.review,37
+880,Плитки потолочные,review.unresolved,unmapped,fallback.review,17
+710,Плиткорезы,review.unresolved,unmapped,fallback.review,8
+1560,Плиткорезы электрические,review.unresolved,unmapped,fallback.review,1
+1356,Плиты OSB,building.sheet_materials,confident,source.building.sheet,9
+4191,Плиты газовые,review.unresolved,unmapped,fallback.review,10
+667,Плиты газовые портативные,review.unresolved,unmapped,fallback.review,8
+881,Плиты минеральные,review.unresolved,unmapped,fallback.review,1
+3456,Плиты электрические,review.unresolved,unmapped,fallback.review,8
+443,Плодосъемники,review.unresolved,unmapped,fallback.review,4
+1831,Плоскогубцы,review.unresolved,unmapped,fallback.review,26
+426,Плоскорезы,review.unresolved,unmapped,fallback.review,5
+2621,Площадки под хомуты,review.unresolved,unmapped,fallback.review,19
+629,Побелки садовые,review.unresolved,unmapped,fallback.review,3
+3836,Поводки для животных,pets.supplies,confident,source.pets,2
+3432,Поглотители запаха для холодильников,kitchen.appliances,confident,source.kitchen.appliances,2
+3097,Поглотители запахов,review.unresolved,unmapped,fallback.review,5
+1377,Погонаж для бани,review.unresolved,unmapped,fallback.review,6
+3941,Подарочные сертификаты,review.unresolved,unmapped,fallback.review,4
+3127,"Подвески, стикеры, таблетки для унитаза",plumbing.sanitary,confident,source.plumbing.sanitary,27
+4194,Подвесные вытяжки,review.unresolved,unmapped,fallback.review,98
+2932,Подвесы для шинопровода трековых систем,electrical.cable,confident,source.electrical.cable,8
+634,Подвязки для растений,review.unresolved,unmapped,fallback.review,14
+1069,Подголовники для ванн,review.unresolved,unmapped,fallback.review,6
+622,Поддоны для балконных ящиков,plumbing.bath_shower,confident,source.plumbing.shower,2
+4018,Поддоны душевые,plumbing.bath_shower,confident,source.plumbing.shower,39
+624,Поддоны керамические,plumbing.bath_shower,confident,source.plumbing.shower,15
+625,Поддоны пластиковые,plumbing.bath_shower,confident,source.plumbing.shower,21
+1973,Подкладки под ножки мебельные,furniture.home,confident,source.furniture.home,72
+729,Подложка пластиковая,flooring.accessories,confident,source.flooring.accessories,14
+730,Подложка пробковая,flooring.accessories,confident,source.flooring.accessories,8
+731,Подложка пробково-битумная,flooring.accessories,confident,source.flooring.accessories,5
+282,Подметальные машины,review.unresolved,unmapped,fallback.review,1
+2468,Подносы,review.unresolved,unmapped,fallback.review,28
+2954,Пододеяльники,home.textiles,confident,source.home.textiles,118
+966,Подоконники ПВХ,doors_windows.windows,confident,source.doors.windows,19
+967,Подоконники из массива дерева,doors_windows.windows,confident,source.doors.windows,6
+359,Подсветка архитектурная,review.unresolved,unmapped,fallback.review,89
+2855,Подсветка архитектурная интерьерная,review.unresolved,unmapped,fallback.review,33
+4151,Подсветка для картин и зеркал,home.decor,confident,source.home.decor,58
+2852,Подсветка для кухни,review.unresolved,unmapped,fallback.review,34
+2860,Подсветка для растений,review.unresolved,unmapped,fallback.review,33
+2853,Подсветка модульная для кухни,review.unresolved,unmapped,fallback.review,19
+2866,Подсветки для ванной комнаты,review.unresolved,unmapped,fallback.review,23
+3191,Подсвечники и наборы,review.unresolved,unmapped,fallback.review,47
+232,Подсвечники новогодние,seasonal.holiday,confident,source.seasonal,5
+4120,Подставки,review.unresolved,unmapped,fallback.review,29
+2485,Подставки для бутылок,review.unresolved,unmapped,fallback.review,3
+195,Подставки для елок,review.unresolved,unmapped,fallback.review,5
+543,Подставки для зонтов,review.unresolved,unmapped,fallback.review,20
+2433,Подставки для подогрева,review.unresolved,unmapped,fallback.review,4
+3814,Подставки для ручек и канцелярии,review.unresolved,unmapped,fallback.review,4
+3077,Подставки для украшений,review.unresolved,unmapped,fallback.review,2
+626,Подставки для цветов,review.unresolved,unmapped,fallback.review,35
+2454,Подставки для чайных пакетиков,review.unresolved,unmapped,fallback.review,4
+2465,Подставки для яиц,review.unresolved,unmapped,fallback.review,11
+2565,Подставки и держатели для кружек,review.unresolved,unmapped,fallback.review,1
+3813,Подставки настольные для книг,review.unresolved,unmapped,fallback.review,7
+2564,Подставки настольные для столовых приборов,kitchen.tableware,confident,source.kitchen.tableware,23
+2486,"Подставки под крышки, сковороды",kitchen.cookware,confident,source.kitchen.cookware,11
+2276,Подстолья из массива дерева,review.unresolved,unmapped,fallback.review,3
+2958,Подушки,home.textiles,confident,source.home.textiles,111
+2959,Подушки декоративные,home.textiles,confident,source.home.textiles,95
+2062,Подушки для изголовья кровати,home.textiles,confident,source.home.textiles,2
+544,Подушки для садовой мебели,review.unresolved,ambiguous,fallback.review,21
+547,Подушки для садовой мебели,review.unresolved,ambiguous,fallback.review,5
+546,Подушки для садовой мебели,review.unresolved,ambiguous,fallback.review,5
+3601,"Подушки на подголовник, на кресло, надувные",review.unresolved,ambiguous,fallback.review,4
+666,Подушки надувные,home.textiles,confident,source.home.textiles,5
+516,"Подушки, матрасы для качелей",review.unresolved,ambiguous,fallback.review,5
+817,Подхваты для штор,home.textiles,confident,source.home.textiles,10
+2063,Подъемные механизмы для кроватей,review.unresolved,unmapped,fallback.review,1
+2962,"Покрывала, комплекты для спальни",review.unresolved,unmapped,fallback.review,43
+3674,Покрытия антикоррозийные,review.unresolved,unmapped,fallback.review,7
+4015,Покрытия декоративные,home.decor,confident,source.home.decor,130
+1507,Поликарбонат сотовый,review.unresolved,unmapped,fallback.review,16
+1510,"Полипропилен сотовый, пластик ПВХ",review.unresolved,unmapped,fallback.review,18
+3669,Полироли для кузова,review.unresolved,unmapped,fallback.review,15
+3677,Полироли для пластика,review.unresolved,unmapped,fallback.review,15
+1307,Полки для ванной комнаты,furniture.home,confident,source.furniture.home,165
+2265,Полки для кухни,furniture.home,confident,source.furniture.home,2
+2150,Полки для обуви,furniture.home,confident,source.furniture.home,3
+1426,Полки мебельные из ДСП,review.unresolved,ambiguous,fallback.review,176
+1425,Полки мебельные из массива,furniture.home,confident,source.furniture.home,43
+2122,Полки настенные,furniture.home,confident,source.furniture.home,59
+2123,Полки обувные,furniture.home,confident,source.furniture.home,37
+2233,"Полки, боковые панели и рампы",furniture.home,confident,source.furniture.home,38
+2046,"Полки, крепления для стеллажей металлических",furniture.home,confident,source.furniture.home,14
+1977,Полкодержатели,review.unresolved,unmapped,fallback.review,15
+2043,Полкодержатели-пеликаны,review.unresolved,unmapped,fallback.review,12
+2347,Половники,kitchen.utensils,confident,source.kitchen.utensils,23
+4156,Поломои,review.unresolved,unmapped,fallback.review,48
+1988,Полосы,review.unresolved,unmapped,fallback.review,40
+4172,Полотенца,home.textiles,confident,source.home.textiles,433
+2968,"Полотенца, салфетки кухонные",home.textiles,confident,source.home.textiles,86
+1326,Полотенцедержатели,home.textiles,confident,source.home.textiles,83
+4032,Полотенцесушители,home.textiles,confident,source.home.textiles,127
+1724,Полотна для дисковых пил,tools.accessories,confident,source.tools.accessories,82
+1849,Полотна к ножовкам,review.unresolved,unmapped,fallback.review,11
+1411,Поролон,review.unresolved,unmapped,fallback.review,6
+3207,Порошки зубные,review.unresolved,unmapped,fallback.review,3
+3409,Порталы для каминов,review.unresolved,unmapped,fallback.review,2
+4060,Поручни для ванной комнаты,review.unresolved,unmapped,fallback.review,11
+2530,Посуда для детей в наборах,review.unresolved,unmapped,fallback.review,8
+2525,Посуда для напитков одноразовая,review.unresolved,unmapped,fallback.review,17
+660,Посуда походная,review.unresolved,unmapped,fallback.review,10
+3074,Посуда сувенирная,review.unresolved,unmapped,fallback.review,9
+3435,Посудомоечные машины настольные,review.unresolved,unmapped,fallback.review,3
+878,Потолки кассетные подвесные,review.unresolved,unmapped,fallback.review,2
+877,Потолки реечные подвесные,review.unresolved,unmapped,fallback.review,15
+1798,"Пояса, держатели для инструмента",tools.hand,confident,source.tools.hand,6
+4083,"Пояса, стропы, подвесы страховочные",review.unresolved,unmapped,fallback.review,8
+1896,Правила,review.unresolved,unmapped,fallback.review,14
+3628,Предохранители автомобильные,auto.accessories,confident,source.auto,1
+4036,Предохранительная арматура для трубопроводов,electrical.cable,confident,source.electrical.cable,27
+1009,Преобразователи и растворители ржавчины,review.unresolved,unmapped,fallback.review,9
+3672,Преобразователи ржавчины,review.unresolved,unmapped,fallback.review,15
+637,Препараты защиты от грызунов,review.unresolved,unmapped,fallback.review,41
+2651,Приборы дистанционного управления,review.unresolved,unmapped,fallback.review,22
+4040,Приборы для учета воды,review.unresolved,unmapped,fallback.review,25
+1254,Приборы учета газа,review.unresolved,unmapped,fallback.review,1
+3308,Принадлежности для бритв электрических,review.unresolved,unmapped,fallback.review,1
+3031,Принадлежности для глажки,review.unresolved,unmapped,fallback.review,6
+502,Принадлежности для гриля,outdoor.grill,confident,source.outdoor.grill,27
+1132,Принадлежности для душевой программы,plumbing.bath_shower,confident,source.plumbing.shower,6
+3892,Принадлежности для кройки и шитья,review.unresolved,unmapped,fallback.review,2
+3799,Принадлежности для лепки,review.unresolved,unmapped,fallback.review,11
+4104,Принадлежности для раковин,plumbing.sanitary,confident,source.plumbing.sanitary,13
+488,Принадлежности к бассейнам,outdoor.leisure,confident,source.outdoor.leisure,67
+1654,Принадлежности к вибраторам глубинным,review.unresolved,unmapped,fallback.review,3
+3701,Присадки автомобильные,auto.accessories,confident,source.auto,16
+444,Приспособления для заточки,review.unresolved,unmapped,fallback.review,5
+3522,Приставки Smart-TV,review.unresolved,unmapped,fallback.review,1
+3277,Присыпки для детей,review.unresolved,unmapped,fallback.review,1
+2478,Прихватки,review.unresolved,unmapped,fallback.review,5
+2970,"Прихватки, рукавицы",review.unresolved,unmapped,fallback.review,37
+2147,Прихожие,review.unresolved,unmapped,fallback.review,15
+3036,Прищепки,review.unresolved,unmapped,fallback.review,6
+1061,Пробки для ванн,review.unresolved,unmapped,fallback.review,9
+2508,"Пробки, аэраторы, каплеуловители для бутылок",review.unresolved,unmapped,fallback.review,26
+3632,Провода прикуривания автомобильные,review.unresolved,ambiguous,fallback.review,7
+4200,Провода телефонные,electrical.cable,confident,source.electrical.cable,6
+1981,Проводники для кабеля,electrical.cable,confident,source.electrical.cable,4
+2666,Проводные звонки,electrical.cable,confident,source.electrical.cable,14
+4089,Проволока,review.unresolved,unmapped,fallback.review,17
+2861,Прожекторы для растений,lighting.work,confident,source.lighting.work,5
+362,Прожекторы светодиодные,lighting.work,confident,source.lighting.work,14
+361,Прожекторы светодиодные,lighting.work,confident,source.lighting.work,65
+4178,Прокладки и тампоны,review.unresolved,unmapped,fallback.review,89
+3715,Промывки автомобильные,auto.accessories,confident,source.auto,2
+3144,Пропитки для обуви,finishing.coatings,confident,source.finishing.coatings,9
+1881,Просекатели,review.unresolved,unmapped,fallback.review,8
+2955,Простыни,home.textiles,confident,source.home.textiles,215
+337,Противогололедные средства,review.unresolved,unmapped,fallback.review,24
+1995,Профили J-образные,review.unresolved,unmapped,fallback.review,1
+1992,Профили Н-образные,review.unresolved,unmapped,fallback.review,14
+1993,Профили П-образные,review.unresolved,unmapped,fallback.review,55
+1991,Профили Т-образные,review.unresolved,unmapped,fallback.review,17
+1994,Профили Ш-образные,review.unresolved,unmapped,fallback.review,15
+768,Профили для полов гибкие,review.unresolved,unmapped,fallback.review,11
+769,Профили для полов противоскользящие,review.unresolved,unmapped,fallback.review,12
+2943,Профили для светодиодной ленты,lighting.decorative,confident,source.lighting.decorative,25
+2281,Профили для стеновых панелей,review.unresolved,unmapped,fallback.review,22
+1996,Профили защитные,review.unresolved,unmapped,fallback.review,6
+1360,Профили и аксессуары для гипсокартона,building.sheet_materials,confident,source.building.sheet,145
+1509,Профили и крепления для сотового поликарбоната,review.unresolved,unmapped,fallback.review,27
+1998,Профили монтажные,review.unresolved,unmapped,fallback.review,13
+1997,Профили специальные,review.unresolved,unmapped,fallback.review,9
+1989,Профили угловые,review.unresolved,unmapped,fallback.review,220
+1428,Профиль кромочный ПВХ для щитов и полок,review.unresolved,unmapped,fallback.review,15
+772,Профиль разноуровневый анодированный,review.unresolved,ambiguous,fallback.review,17
+773,Профиль разноуровневый декорированный,review.unresolved,ambiguous,fallback.review,13
+776,Профиль стыкоперекрывающий ПВХ,review.unresolved,unmapped,fallback.review,34
+770,Профиль стыкоперекрывающий анодированный,plumbing.bath_shower,confident,source.plumbing.shower,26
+771,Профиль стыкоперекрывающий декорированный,review.unresolved,ambiguous,fallback.review,51
+774,Профиль угловой анодированный,plumbing.bath_shower,confident,source.plumbing.shower,31
+775,Профиль угловой декорированный,review.unresolved,ambiguous,fallback.review,8
+4058,Прочие аксессуары,review.unresolved,unmapped,fallback.review,37
+928,Прочие петли,doors_windows.hardware,confident,source.doors.hardware,101
+3169,Прочие средства от насекомых,review.unresolved,unmapped,fallback.review,10
+477,Пруды,review.unresolved,unmapped,fallback.review,3
+933,Пружины дверные,review.unresolved,unmapped,fallback.review,2
+1258,Пружины для сгибания металлопластиковых труб,review.unresolved,unmapped,fallback.review,13
+1985,Прутки круглые,review.unresolved,unmapped,fallback.review,10
+1986,Прутки прямоугольные,review.unresolved,unmapped,fallback.review,2
+1729,Прутки сварочные для фенов,review.unresolved,unmapped,fallback.review,4
+3515,Пульты ДУ универсальные,review.unresolved,unmapped,fallback.review,10
+3631,Пуско-зарядные устройства автомобильные,auto.accessories,confident,source.auto,20
+2158,Пуфы,review.unresolved,unmapped,fallback.review,59
+3447,Пылесборники,review.unresolved,unmapped,fallback.review,44
+3605,Пылесосы автомобильные,review.unresolved,ambiguous,fallback.review,7
+3444,Пылесосы вертикальные,kitchen.appliances,confident,source.kitchen.appliances,35
+3446,Пылесосы моющие,kitchen.appliances,confident,source.kitchen.appliances,9
+3442,Пылесосы с контейнером,review.unresolved,ambiguous,fallback.review,32
+3443,Пылесосы с пылесборником,kitchen.appliances,confident,source.kitchen.appliances,7
+1642,Пылесосы строительные аккумуляторные,review.unresolved,ambiguous,fallback.review,2
+3445,Пылесосы-роботы,kitchen.appliances,confident,source.kitchen.appliances,17
+1664,Пылеуловители,review.unresolved,unmapped,fallback.review,11
+1101,"Пьедесталы, полупьедесталы к раковинам",plumbing.sanitary,confident,source.plumbing.sanitary,7
+3464,Пьезозажигалки,review.unresolved,unmapped,fallback.review,5
+1194,Радиаторы панельные,heating.radiators,confident,source.heating.radiators,16
+4029,Радиаторы секционные,heating.radiators,confident,source.heating.radiators,121
+1195,Радиаторы трубчатые,heating.radiators,confident,source.heating.radiators,6
+3504,Радиоприемники,review.unresolved,unmapped,fallback.review,1
+3896,Радиоуправляемый транспорт,outdoor.leisure,confident,source.outdoor.leisure,1
+2201,Радиочасы,review.unresolved,unmapped,fallback.review,4
+2610,Разветвители,review.unresolved,unmapped,fallback.review,52
+3607,"Разветвители прикуривателя, зарядные устройства",review.unresolved,unmapped,fallback.review,24
+3702,Размораживатели замков,doors_windows.hardware,confident,source.doors.hardware,4
+3682,Размораживатели стекол,review.unresolved,unmapped,fallback.review,8
+2498,Разное для консервации,review.unresolved,unmapped,fallback.review,3
+2507,Разные барные принадлежности,review.unresolved,unmapped,fallback.review,8
+4113,Разные предметы для приготовления пищи,review.unresolved,unmapped,fallback.review,22
+4207,Разъемы,review.unresolved,unmapped,fallback.review,64
+2925,Разъемы для линейных светодиодных светильников,lighting.indoor,confident,source.lighting.indoor,1
+261,Райдеры,review.unresolved,unmapped,fallback.review,6
+397,Раковины дачные,plumbing.sanitary,confident,source.plumbing.sanitary,1
+1099,Раковины для мебели,plumbing.sanitary,confident,source.plumbing.sanitary,39
+1100,Раковины на стиральную машину,plumbing.sanitary,confident,source.plumbing.sanitary,4
+1098,Раковины накладные,plumbing.sanitary,confident,source.plumbing.sanitary,20
+1097,Раковины настенные,plumbing.sanitary,confident,source.plumbing.sanitary,16
+3622,Рамки для номерного знака,review.unresolved,unmapped,fallback.review,3
+4127,"Рамки для розеток, выключателей, накладки декоративные",review.unresolved,ambiguous,fallback.review,514
+3757,Ранцы,review.unresolved,unmapped,fallback.review,1
+3782,Расписание уроков,review.unresolved,unmapped,fallback.review,4
+2537,Распылители масла,review.unresolved,unmapped,fallback.review,2
+3966,Рассада,garden.seeds,confident,source.garden.seeds,110
+403,Рассеиватели для леек садовых,review.unresolved,unmapped,fallback.review,5
+1006,Растворители и очистители,review.unresolved,unmapped,fallback.review,99
+570,Растения искусственные,garden.plants,confident,source.garden.plants,150
+386,Растения комнатные,garden.plants,confident,source.garden.plants,433
+4154,Растровые светильники,lighting.indoor,confident,source.lighting.indoor,26
+3150,Растяжители для обуви,review.unresolved,unmapped,fallback.review,4
+3975,Расходные материалы,review.unresolved,unmapped,fallback.review,43
+287,Расходные материалы для газонокосилок,garden.machinery,confident,source.garden.machinery,17
+301,Расходные материалы для измельчителей,review.unresolved,unmapped,fallback.review,1
+302,Расходные материалы для ледорубов,review.unresolved,unmapped,fallback.review,4
+286,Расходные материалы для моек высокого давления,review.unresolved,unmapped,fallback.review,19
+293,Расходные материалы для садовых ножниц и кустрезов,review.unresolved,unmapped,fallback.review,3
+4076,Расходные материалы для сварочного оборудования,review.unresolved,unmapped,fallback.review,108
+285,Расходные материалы для снегоуборщиков,garden.machinery,confident,source.garden.machinery,2
+303,Расходные материалы для тракторов,review.unresolved,unmapped,fallback.review,1
+290,Расходные материалы для триммеров и кос,garden.machinery,confident,source.garden.machinery,6
+3286,Расчески,review.unresolved,unmapped,fallback.review,8
+713,Расшивки,review.unresolved,unmapped,fallback.review,2
+1873,Рашпили,review.unresolved,unmapped,fallback.review,6
+1242,Регулирующая арматура для трубопроводов,electrical.cable,confident,source.electrical.cable,9
+602,Регуляторы роста и плодообразования,review.unresolved,unmapped,fallback.review,31
+712,Резцы для плиткорезов,review.unresolved,unmapped,fallback.review,10
+864,Рейки декоративные,review.unresolved,ambiguous,fallback.review,27
+1373,"Рейки, штапики, нащельники",building.lumber,confident,source.building.lumber,68
+4105,Рейлинговые системы,review.unresolved,unmapped,fallback.review,132
+2664,Реле,review.unresolved,unmapped,fallback.review,4
+4139,Реле электрические,review.unresolved,unmapped,fallback.review,17
+1916,"Ремешки обжимные, хомуты, ленты",review.unresolved,unmapped,fallback.review,88
+2002,"Ремни, ленты",review.unresolved,unmapped,fallback.review,16
+4100,Репродукции,review.unresolved,unmapped,fallback.review,148
+4081,"Респираторы, защитные маски",tools.workwear,confident,source.tools.workwear,41
+2184,Реставрационные материалы,review.unresolved,unmapped,fallback.review,18
+499,Решетки для барбекю,review.unresolved,unmapped,fallback.review,41
+3904,"Роботы, трансформеры",review.unresolved,unmapped,fallback.review,2
+2602,Розетки HDMI,electrical.switch_socket,confident,source.electrical.switch,2
+2603,Розетки USB,electrical.switch_socket,confident,source.electrical.switch,21
+4123,Розетки встраиваемые,electrical.switch_socket,confident,source.electrical.switch,379
+4125,Розетки для интернета,electrical.switch_socket,confident,source.electrical.switch,89
+4126,Розетки для телефона,electrical.switch_socket,confident,source.electrical.switch,40
+2598,Розетки комбинированные,review.unresolved,ambiguous,fallback.review,24
+4122,Розетки накладные,electrical.switch_socket,confident,source.electrical.switch,149
+885,Розетки потолочные,electrical.switch_socket,confident,source.electrical.switch,14
+4124,Розетки телевизионные,electrical.switch_socket,confident,source.electrical.switch,110
+2461,"Розетки, блюда малые фигурные без ножки",electrical.switch_socket,confident,source.electrical.switch,21
+3039,Ролики для одежды и сменные элементы к ним,review.unresolved,unmapped,fallback.review,8
+2295,Ролики для теста,review.unresolved,unmapped,fallback.review,2
+945,Ролики и комплектующие для раздвижных дверей,doors_windows.hardware,confident,source.doors.hardware,12
+1975,"Ролики, колеса",review.unresolved,unmapped,fallback.review,82
+1874,Рубанки,review.unresolved,unmapped,fallback.review,1
+1634,Рубанки сетевые,review.unresolved,unmapped,fallback.review,10
+2303,Рукава для запекания,review.unresolved,unmapped,fallback.review,5
+398,Рукомойники дачные,review.unresolved,unmapped,fallback.review,8
+1785,Рулетки,tools.hand,confident,source.tools.hand,27
+1461,"Рулонная кровля, пергамин, рубероид",building.roofing,confident,source.building.roofing,28
+3764,Ручки,review.unresolved,unmapped,fallback.review,57
+1021,Ручки для валиков,review.unresolved,unmapped,fallback.review,26
+2986,Ручки для швабр,cleaning.equipment,confident,source.cleaning.equipment,10
+919,Ручки нажимные для финских дверей,review.unresolved,unmapped,fallback.review,7
+915,Ручки нажимные на планке без механизма,review.unresolved,unmapped,fallback.review,21
+916,Ручки нажимные на планке с механизмом,review.unresolved,unmapped,fallback.review,21
+917,Ручки нажимные на розетке без механизма,electrical.switch_socket,confident,source.electrical.switch,227
+918,Ручки нажимные на розетке с механизмом,electrical.switch_socket,confident,source.electrical.switch,54
+913,Ручки-кнобы без механизма,review.unresolved,unmapped,fallback.review,13
+914,Ручки-кнобы с механизмом,review.unresolved,unmapped,fallback.review,30
+912,Ручки-скобы,review.unresolved,unmapped,fallback.review,85
+2363,Рыбочистки,review.unresolved,unmapped,fallback.review,3
+2015,Рым-болты,hardware.fasteners,confident,source.hardware.fasteners,7
+2016,Рым-гайки,hardware.fasteners,confident,source.hardware.fasteners,10
+3758,Рюкзаки,review.unresolved,unmapped,fallback.review,11
+2440,Рюмки и стопки,review.unresolved,unmapped,fallback.review,15
+2441,Рюмки и стопки в наборах,review.unresolved,unmapped,fallback.review,33
+276,Садовые измельчители,review.unresolved,unmapped,fallback.review,13
+3962,Садовые пылесосы и воздуходувки,kitchen.appliances,confident,source.kitchen.appliances,13
+568,Садовые фигуры,review.unresolved,unmapped,fallback.review,86
+3965,Саженцы,garden.plants,confident,source.garden.plants,573
+872,Сайдинг виниловый,building.facade,confident,source.building.facade,10
+2515,Салатники и миски пластмассовые,kitchen.tableware,confident,source.kitchen.tableware,48
+4114,"Салатники, миски",kitchen.tableware,confident,source.kitchen.tableware,423
+4177,Салфетки,review.unresolved,unmapped,fallback.review,33
+3651,Салфетки автомобильные,auto.accessories,confident,source.auto,23
+3276,Салфетки для детей,review.unresolved,unmapped,fallback.review,15
+3000,Салфетки для стекол,review.unresolved,unmapped,fallback.review,3
+2501,Салфетки однотонные,review.unresolved,unmapped,fallback.review,44
+2502,Салфетки с дизайном,review.unresolved,unmapped,fallback.review,83
+2973,Салфетки сервировочные,review.unresolved,unmapped,fallback.review,74
+3001,Салфетки универсальные из вискозы,review.unresolved,unmapped,fallback.review,9
+3002,Салфетки универсальные из микрофибры,review.unresolved,unmapped,fallback.review,34
+3003,Салфетки универсальные из целлюлозы,review.unresolved,unmapped,fallback.review,5
+3004,Салфетки хозяйственные влажные для уборки,home.household,confident,source.home.household,8
+2455,Салфетницы,review.unresolved,unmapped,fallback.review,22
+1904,"Саморезы, шурупы",hardware.fasteners,confident,source.hardware.fasteners,946
+562,"Санки, ледянки",review.unresolved,unmapped,fallback.review,9
+2456,Сахарницы,review.unresolved,unmapped,fallback.review,37
+561,Сачки,review.unresolved,unmapped,fallback.review,3
+1492,Сваи винтовые,hardware.fasteners,confident,source.hardware.fasteners,43
+358,Светильники акцентного освещения садовые,lighting.outdoor,confident,source.lighting.outdoor,8
+4143,Светильники акцентные,lighting.indoor,confident,source.lighting.indoor,136
+2761,Светильники акцентные светодиодные,lighting.indoor,confident,source.lighting.indoor,8
+2875,Светильники влагозащищенные LED с датчиком движения,review.unresolved,ambiguous,fallback.review,4
+2868,Светильники для бани и сауны влагозащищенные,lighting.indoor,confident,source.lighting.indoor,21
+2865,Светильники для ванной комнаты,lighting.indoor,confident,source.lighting.indoor,21
+2867,Светильники для ванной комнаты LED,lighting.indoor,confident,source.lighting.indoor,20
+2882,Светильники для технических помещений,lighting.indoor,confident,source.lighting.indoor,9
+2883,Светильники для технических помещений LED,lighting.indoor,confident,source.lighting.indoor,18
+2794,Светильники для трековых систем,lighting.indoor,confident,source.lighting.indoor,128
+2795,Светильники для трековых систем LED,lighting.indoor,confident,source.lighting.indoor,95
+2763,Светильники мебельные светодиодные,review.unresolved,ambiguous,fallback.review,7
+2764,Светильники мебельные светодиодные,review.unresolved,ambiguous,fallback.review,4
+351,Светильники на солнечных батареях садовые,lighting.outdoor,confident,source.lighting.outdoor,51
+2747,"Светильники настенно-потолочные Е14,Е27",lighting.indoor,confident,source.lighting.indoor,29
+2838,Светильники настенно-потолочные для детских,lighting.indoor,confident,source.lighting.indoor,4
+2748,Светильники настенно-потолочные светодиодные,lighting.indoor,confident,source.lighting.indoor,301
+360,Светильники переносные,lighting.indoor,confident,source.lighting.indoor,6
+2863,Светильники подвесные для растений,lighting.indoor,confident,source.lighting.indoor,10
+2796,Светильники подвесные для трековых систем LED,lighting.indoor,confident,source.lighting.indoor,6
+2744,Светильники подвесные светодиодные,lighting.indoor,confident,source.lighting.indoor,184
+2872,Светильники техничecкие влагозащищенные LED,lighting.indoor,confident,source.lighting.indoor,41
+2871,Светильники технические влагозащищенные,lighting.indoor,confident,source.lighting.indoor,16
+2873,Светильники технические линейные влагозащищенные,lighting.indoor,confident,source.lighting.indoor,3
+2874,Светильники технические линейные влагозащищенные LED,lighting.indoor,confident,source.lighting.indoor,9
+4141,Светильники точечные,lighting.indoor,confident,source.lighting.indoor,232
+2870,Светильники точечные влагозащищенныe LED круглые,lighting.indoor,confident,source.lighting.indoor,8
+2869,Светильники точечные влагозащищенные круглые,lighting.indoor,confident,source.lighting.indoor,11
+4142,Светильники точечные светодиодные,lighting.indoor,confident,source.lighting.indoor,184
+2908,"Светильники-подсветки точечные """"Пушлайт""""",lighting.indoor,confident,source.lighting.indoor,5
+2847,Светодиодные ленты,lighting.decorative,confident,source.lighting.decorative,151
+2881,Светодиодные светильники с датчиком движения,review.unresolved,ambiguous,fallback.review,7
+3188,Свечи античные и витые,home.decor,confident,source.home.decor,34
+3190,"Свечи в стаканах, банках",review.unresolved,ambiguous,fallback.review,40
+3633,Свечи зажигания автомобильные,review.unresolved,ambiguous,fallback.review,5
+296,Свечи зажигания для бензопил,home.decor,confident,source.home.decor,2
+231,Свечи новогодние,review.unresolved,ambiguous,fallback.review,6
+3189,Свечи чайные,home.decor,confident,source.home.decor,15
+4173,"Свечи-столбики, фигурные",home.decor,confident,source.home.decor,84
+1689,Свёрла,tools.accessories,confident,source.tools.accessories,387
+2022,Сейфы ключевые,review.unresolved,unmapped,fallback.review,16
+2023,Сейфы электронные,review.unresolved,unmapped,fallback.review,12
+428,Секаторы,garden.tools,confident,source.garden.tools,49
+273,Секаторы аккумуляторные,review.unresolved,ambiguous,fallback.review,4
+2464,"Селедочники, шпротницы",review.unresolved,unmapped,fallback.review,3
+371,Семена газонных трав,garden.seeds,confident,source.garden.seeds,56
+372,Семена овощей,garden.seeds,confident,source.garden.seeds,1177
+373,Семена сидератов,garden.seeds,confident,source.garden.seeds,28
+370,Семена цветов,garden.seeds,confident,source.garden.seeds,864
+4118,Сервизы,review.unresolved,unmapped,fallback.review,36
+2389,Сервизы столовые,review.unresolved,unmapped,fallback.review,18
+439,Серпы,review.unresolved,unmapped,fallback.review,3
+2692,Сетевые фильтры,electrical.power,confident,source.electrical.power,22
+2693,Сетевые фильтры с USB,electrical.power,confident,source.electrical.power,6
+345,Сетка для ограждений,outdoor.structures,confident,source.outdoor.structures,24
+1033,Сетка шлифовальная,review.unresolved,unmapped,fallback.review,15
+960,Сетки антимоскитные,doors_windows.windows,confident,source.doors.windows,11
+1497,Сетки армирующие,review.unresolved,unmapped,fallback.review,19
+582,"Сетки для защиты от птиц, кротов",review.unresolved,unmapped,fallback.review,16
+3590,Сетки для крепления груза,review.unresolved,unmapped,fallback.review,1
+1498,Сетки кладочные,review.unresolved,unmapped,fallback.review,4
+1038,"Сетки малярные, серпянка",review.unresolved,unmapped,fallback.review,21
+1496,Сетки штукатурные,finishing.putty_plaster,confident,source.finishing.putty,2
+1504,"Сетки, секции заборные",outdoor.structures,confident,source.outdoor.structures,7
+423,Сеялки,review.unresolved,unmapped,fallback.review,3
+1894,Сигнальный инвентарь,review.unresolved,unmapped,fallback.review,6
+468,Сидения для дачных туалетов,review.unresolved,unmapped,fallback.review,3
+1092,Сиденья для унитаз-компактов,plumbing.sanitary,confident,source.plumbing.sanitary,23
+4155,Сиденья на стулья,furniture.home,confident,source.furniture.home,57
+1508,Синтетическое стекло,review.unresolved,unmapped,fallback.review,3
+1464,Система закрытого дренажа,review.unresolved,unmapped,fallback.review,26
+716,Системы выравнивания плитки,tile.installation,confident,source.tile.installation,60
+2102,Системы для гардероба,review.unresolved,unmapped,fallback.review,83
+2103,Системы для гардероба,review.unresolved,unmapped,fallback.review,9
+2100,Системы для гардероба,review.unresolved,unmapped,fallback.review,6
+2098,Системы для гардероба,review.unresolved,unmapped,fallback.review,2
+1433,Системы для раздвижных дверей,review.unresolved,unmapped,fallback.review,34
+1252,Системы контроля и защиты от протечек,review.unresolved,unmapped,fallback.review,19
+1465,Системы поверхностного водоотвода,review.unresolved,unmapped,fallback.review,28
+2431,Ситечки для чая,review.unresolved,unmapped,fallback.review,5
+2378,Сито,review.unresolved,unmapped,fallback.review,27
+4045,Сифоны,review.unresolved,unmapped,fallback.review,104
+2296,Скалки,review.unresolved,unmapped,fallback.review,7
+531,Скамейки садовые,review.unresolved,unmapped,fallback.review,14
+2967,Скатерти ПВХ,review.unresolved,unmapped,fallback.review,15
+2966,Скатерти и клеенки мерные,review.unresolved,unmapped,fallback.review,75
+2500,Скатерти одноразовые,review.unresolved,unmapped,fallback.review,4
+2965,Скатерти текстильные,home.textiles,confident,source.home.textiles,45
+580,Скворечники садовые,review.unresolved,unmapped,fallback.review,17
+1917,Скобы,review.unresolved,unmapped,fallback.review,43
+2619,Скобы для крепления кабеля,electrical.cable,confident,source.electrical.cable,40
+2941,Скобы для крепления светодиодных лент,lighting.decorative,confident,source.lighting.decorative,5
+3748,Скобы для степлера,review.unresolved,unmapped,fallback.review,2
+1868,Скобы для степлеров,review.unresolved,unmapped,fallback.review,18
+1547,Скобы и гвозди для пневмостеплеров,hardware.fasteners,confident,source.hardware.fasteners,32
+2017,Скобы такелажные,review.unresolved,unmapped,fallback.review,14
+4108,Сковороды,kitchen.cookware,confident,source.kitchen.cookware,259
+3753,Скоросшиватели,review.unresolved,unmapped,fallback.review,3
+3237,Скрабы для тела,review.unresolved,unmapped,fallback.review,6
+335,Скребки для крыш,review.unresolved,unmapped,fallback.review,1
+3645,Скребки для льда автомобильные,auto.accessories,confident,source.auto,5
+4158,"Скребки, лезвия для скребков",review.unresolved,unmapped,fallback.review,7
+334,Скреперы для снега,review.unresolved,unmapped,fallback.review,12
+3744,Скрепки,review.unresolved,unmapped,fallback.review,7
+1088,Сливные механизмы для бачка унитаза,plumbing.sanitary,confident,source.plumbing.sanitary,37
+2457,Сливочники,review.unresolved,unmapped,fallback.review,10
+2497,Сливы и стерилизаторы,review.unresolved,unmapped,fallback.review,6
+1279,Сливы-переливы для ванны,plumbing.bath_shower,confident,source.plumbing.shower,22
+3704,Смазки автомобильные,auto.accessories,confident,source.auto,47
+1693,Смазки для буров,review.unresolved,unmapped,fallback.review,4
+3779,Сменные блоки для тетрадей,review.unresolved,unmapped,fallback.review,2
+1180,Сменные картриджи для магистральных фильтров,review.unresolved,unmapped,fallback.review,74
+1175,Сменные модули для проточных фильтров,review.unresolved,unmapped,fallback.review,56
+1177,Сменные модули для систем обратного осмоса,review.unresolved,unmapped,fallback.review,18
+1170,Сменные модули для фильтров-кувшинов,review.unresolved,unmapped,fallback.review,22
+1172,Сменные модули для фильтров-насадок на кран,review.unresolved,unmapped,fallback.review,1
+1181,Сменные модули специального назначения,review.unresolved,unmapped,fallback.review,2
+3485,Сменные фильтры для вытяжек,review.unresolved,unmapped,fallback.review,27
+3223,Сменные элементы к станкам для бритья,review.unresolved,unmapped,fallback.review,9
+1397,Смеси для выравнивания полов гипсовые,review.unresolved,unmapped,fallback.review,7
+1398,Смеси для выравнивания полов специальные,review.unresolved,unmapped,fallback.review,2
+1396,Смеси для выравнивания полов цементные,building.dry_mix,confident,source.building.mix,15
+1399,Смеси для гидроизоляции полов,building.insulation,confident,source.building.insulation,3
+1400,Смеси монтажные,review.unresolved,unmapped,fallback.review,8
+4068,"Смеси огнеупорные для кладки печей, каминов, дымоходов",review.unresolved,unmapped,fallback.review,8
+1393,Смеси ремонтные,review.unresolved,unmapped,fallback.review,5
+1392,Смеси цементно-песчаные,building.dry_mix,confident,source.building.mix,7
+1154,Смесители для биде,plumbing.faucets,confident,source.plumbing.faucets,11
+4025,Смесители для ванны,plumbing.faucets,confident,source.plumbing.faucets,257
+4026,Смесители для душа,plumbing.faucets,confident,source.plumbing.faucets,55
+1137,Смесители для кухни,plumbing.faucets,confident,source.plumbing.faucets,63
+1138,Смесители для кухни,plumbing.faucets,confident,source.plumbing.faucets,45
+1136,Смесители для кухни,plumbing.faucets,confident,source.plumbing.faucets,19
+1140,Смесители для кухни,plumbing.faucets,confident,source.plumbing.faucets,115
+4024,Смесители для раковины,plumbing.faucets,confident,source.plumbing.faucets,261
+1143,Смесители для раковины скрытого монтажа,plumbing.faucets,confident,source.plumbing.faucets,1
+2243,Смесители кухонные,plumbing.faucets,confident,source.plumbing.faucets,13
+2249,Смесители кухонные,plumbing.faucets,confident,source.plumbing.faucets,1
+1155,Смесители моно,plumbing.faucets,confident,source.plumbing.faucets,4
+1345,Смесительные узлы,plumbing.faucets,confident,source.plumbing.faucets,2
+1007,Смывка для красок и лаков,review.unresolved,unmapped,fallback.review,6
+3957,Снегоуборщики,garden.machinery,confident,source.garden.machinery,52
+565,Снежколепы,review.unresolved,unmapped,fallback.review,5
+417,Совки,review.unresolved,unmapped,fallback.review,17
+2995,Совки для мусора,review.unresolved,unmapped,fallback.review,11
+3855,Совочки для туалетов,review.unresolved,unmapped,fallback.review,1
+1270,Соединители гофрированные,plumbing.bath_shower,confident,source.plumbing.shower,18
+2034,Соединители для систем хранения Джокер,home.storage,confident,source.home.storage,18
+2637,Соединители для труб,review.unresolved,unmapped,fallback.review,29
+2018,Соединители цепей,review.unresolved,unmapped,fallback.review,1
+326,Соединители шланговые,garden.watering,confident,source.garden.watering,198
+2348,Соковыжималки,review.unresolved,unmapped,fallback.review,4
+4184,Соковыжималки электрические,review.unresolved,unmapped,fallback.review,19
+3903,Солдатики,review.unresolved,unmapped,fallback.review,3
+3240,Соли для ванны,plumbing.bath_shower,confident,source.plumbing.shower,38
+1183,Соль для регенерации воды,review.unresolved,unmapped,fallback.review,7
+587,Сопутствующие товары для теплиц и парников,outdoor.structures,confident,source.outdoor.structures,19
+2712,Сопутствующие товары для электрощитовой продукции,electrical.protection,confident,source.electrical.protection,11
+1025,Сопутствующий малярный инструмент,tools.hand,confident,source.tools.hand,51
+2458,Соусники,review.unresolved,unmapped,fallback.review,9
+654,Спальные мешки,review.unresolved,unmapped,fallback.review,2
+1008,Специальные средства,review.unresolved,unmapped,fallback.review,27
+1281,Специальные средства для монтажа канализационных систем,review.unresolved,unmapped,fallback.review,6
+4082,Спецодежда,tools.workwear,confident,source.tools.workwear,45
+3165,Спирали и свечи,home.decor,confident,source.home.decor,14
+2791,Споты встраиваемые,lighting.indoor,confident,source.lighting.indoor,6
+4144,Споты под лампочку,lighting.indoor,confident,source.lighting.indoor,303
+2790,Споты светодиодные,lighting.indoor,confident,source.lighting.indoor,17
+2792,Споты светодиодные встраиваемые,lighting.indoor,confident,source.lighting.indoor,2
+1000,Средства биоцидные,review.unresolved,unmapped,fallback.review,17
+3151,Средства дезодорирующие для обуви,review.unresolved,unmapped,fallback.review,8
+3224,Средства для бритья,review.unresolved,unmapped,fallback.review,12
+3099,Средства для глажки белья,review.unresolved,unmapped,fallback.review,2
+3226,Средства для депиляции,review.unresolved,unmapped,fallback.review,4
+3290,Средства для загара,review.unresolved,unmapped,fallback.review,6
+3291,Средства для загара детские,review.unresolved,unmapped,fallback.review,1
+3239,Средства для интимной гигиены,review.unresolved,unmapped,fallback.review,3
+608,Средства для компостирования,cleaning.chemicals,confident,source.cleaning.chemicals,5
+4179,Средства для купания детские,review.unresolved,unmapped,fallback.review,22
+3233,Средства для лица,review.unresolved,unmapped,fallback.review,25
+3133,Средства для металла,review.unresolved,unmapped,fallback.review,3
+778,Средства для монтажа напольных покрытий,review.unresolved,unmapped,fallback.review,12
+3093,Средства для моющих пылесосов,kitchen.appliances,confident,source.kitchen.appliances,1
+3086,Средства для мытья посуды,cleaning.chemicals,confident,source.cleaning.chemicals,62
+3234,Средства для ног,review.unresolved,unmapped,fallback.review,9
+3111,Средства для окраски тканей,finishing.paint,confident,source.finishing.paint,2
+3843,Средства для поддержания чистоты в доме,cleaning.chemicals,confident,source.cleaning.chemicals,8
+3112,Средства для подкрахмаливания тканей,review.unresolved,unmapped,fallback.review,2
+3092,Средства для посудомоечных машин,review.unresolved,unmapped,fallback.review,11
+3091,Средства для посудомоечных машин,review.unresolved,unmapped,fallback.review,11
+3123,Средства для прочистки труб,cleaning.chemicals,confident,source.cleaning.chemicals,23
+3235,Средства для рук,review.unresolved,unmapped,fallback.review,24
+3134,"Средства для саун, бань, бассейнов",outdoor.leisure,confident,source.outdoor.leisure,2
+3135,Средства для септиков,review.unresolved,unmapped,fallback.review,5
+4166,Средства для стирки белья,cleaning.chemicals,confident,source.cleaning.chemicals,208
+3136,Средства для удаления наклеек,review.unresolved,unmapped,fallback.review,4
+3140,"Средства для удаления цемента, зачистки стыков",review.unresolved,ambiguous,fallback.review,5
+3238,Средства для умывания лица,review.unresolved,unmapped,fallback.review,19
+3094,Средства для утюгов,review.unresolved,unmapped,fallback.review,2
+3282,Средства для ухода за волосами,review.unresolved,unmapped,fallback.review,17
+3137,"Средства для ухода за золотом, серебром",review.unresolved,unmapped,fallback.review,2
+3115,Средства для ухода за напольными покрытиями,review.unresolved,unmapped,fallback.review,38
+3132,Средства для ухода за поверхностями из камня,review.unresolved,unmapped,fallback.review,4
+3535,Средства для ухода за техникой,review.unresolved,unmapped,fallback.review,4
+3095,Средства для холодильника,kitchen.appliances,confident,source.kitchen.appliances,4
+631,Средства защиты от болезней,review.unresolved,unmapped,fallback.review,44
+632,Средства защиты от насекомых и вредителей,review.unresolved,unmapped,fallback.review,110
+630,Средства защиты от сорняков,review.unresolved,unmapped,fallback.review,19
+3138,"Средства от плесени, влажности, грибка",review.unresolved,unmapped,fallback.review,6
+4193,Средства очистки стеклокерамических поверхностей,cleaning.chemicals,confident,source.cleaning.chemicals,2
+3225,Средства после бритья,review.unresolved,unmapped,fallback.review,9
+3292,Средства после загара,review.unresolved,unmapped,fallback.review,2
+3159,Средства после укусов насекомых,review.unresolved,unmapped,fallback.review,7
+4171,Средства против моли,review.unresolved,unmapped,fallback.review,17
+4170,"Средства против тараканов, муравьев",review.unresolved,unmapped,fallback.review,29
+633,Средства сохранения свежести срезанных цветов и елок,home.storage,confident,source.home.storage,3
+3114,Средства универсальные,review.unresolved,unmapped,fallback.review,46
+3121,Средства универсальные для сантехники,review.unresolved,unmapped,fallback.review,42
+3122,Средства чистящие для ванн,cleaning.chemicals,confident,source.cleaning.chemicals,11
+3124,Средства чистящие для душевых кабин и джакузи,review.unresolved,ambiguous,fallback.review,5
+3118,Средства чистящие для ковров и мягкой мебели,cleaning.chemicals,confident,source.cleaning.chemicals,10
+3117,Средства чистящие для корпусной мебели,cleaning.chemicals,confident,source.cleaning.chemicals,8
+3090,"Средства чистящие для плит, духовок, грилей и СВЧ",review.unresolved,ambiguous,fallback.review,27
+3116,Средства чистящие для стеклянных и зеркальных поверхностей,review.unresolved,ambiguous,fallback.review,15
+3126,Средства чистящие для туалета,cleaning.chemicals,confident,source.cleaning.chemicals,24
+2705,Стабилизаторы навесные,outdoor.structures,confident,source.outdoor.structures,11
+2704,Стабилизаторы напольные,review.unresolved,unmapped,fallback.review,12
+2437,Стаканы,kitchen.tableware,confident,source.kitchen.tableware,73
+2438,Стаканы в наборах,kitchen.tableware,confident,source.kitchen.tableware,77
+4051,Стаканы для ванной,kitchen.tableware,confident,source.kitchen.tableware,143
+3798,Стаканы для рисования,kitchen.tableware,confident,source.kitchen.tableware,5
+2377,Стаканы мерные,kitchen.tableware,confident,source.kitchen.tableware,7
+2517,"Стаканы, кружки пластмассовые",kitchen.tableware,confident,source.kitchen.tableware,15
+1875,"Стамески, резаки по дереву",review.unresolved,unmapped,fallback.review,6
+1557,Станки деревообрабатывающие,review.unresolved,unmapped,fallback.review,3
+3221,Станки для бритья многоразовые,review.unresolved,unmapped,fallback.review,14
+3222,Станки для бритья одноразовые,review.unresolved,unmapped,fallback.review,30
+1558,Станки для сверления,tools.accessories,confident,source.tools.accessories,2
+1559,Станки точильные,review.unresolved,unmapped,fallback.review,14
+2886,Стартеры для люминисцентных светильников,lighting.indoor,confident,source.lighting.indoor,1
+999,Стекло жидкое,review.unresolved,unmapped,fallback.review,7
+1490,Стеклоблоки,review.unresolved,unmapped,fallback.review,8
+1859,Стеклодомкраты,review.unresolved,unmapped,fallback.review,15
+3007,Стекломои на длинной ручке,review.unresolved,unmapped,fallback.review,9
+3008,Стекломои на короткой ручке,review.unresolved,unmapped,fallback.review,5
+790,Стеклообои,finishing.wallpaper,confident,source.finishing.wallpaper,2
+3495,Стеклоочистители,review.unresolved,unmapped,fallback.review,6
+1860,Стеклорезы,review.unresolved,unmapped,fallback.review,6
+2117,Стеллажи,review.unresolved,unmapped,fallback.review,101
+2116,Стеллажи,review.unresolved,unmapped,fallback.review,2
+2862,Стеллажи для растений с подсветкой,review.unresolved,unmapped,fallback.review,5
+1115,Стеллажи и этажерки для ванной,review.unresolved,unmapped,fallback.review,15
+1114,Стеллажи и этажерки для ванной,review.unresolved,unmapped,fallback.review,6
+1429,Стеллажи-конструктор из массива дерева,review.unresolved,unmapped,fallback.review,37
+4106,Стеновые панели,review.unresolved,unmapped,fallback.review,162
+3747,Степлеры,review.unresolved,unmapped,fallback.review,11
+1629,Степлеры аккумуляторные,electrical.power,confident,source.electrical.power,8
+1545,Степлеры пневматические,review.unresolved,unmapped,fallback.review,6
+1628,Степлеры сетевые,review.unresolved,unmapped,fallback.review,2
+1867,Степлеры строительные,review.unresolved,unmapped,fallback.review,8
+1728,Стержни для клеевых пистолетов,review.unresolved,unmapped,fallback.review,14
+932,Стержни для ручек дверных,review.unresolved,unmapped,fallback.review,5
+3720,Стикеры,review.unresolved,unmapped,fallback.review,7
+3425,Стиральные машины активаторного типа,review.unresolved,unmapped,fallback.review,2
+3422,Стиральные машины встраиваемые,review.unresolved,unmapped,fallback.review,1
+3420,Стиральные машины с вертикальной загрузкой,review.unresolved,unmapped,fallback.review,6
+3421,Стиральные машины с сушкой,review.unresolved,unmapped,fallback.review,5
+3419,Стиральные машины с фронтальной загрузкой,review.unresolved,unmapped,fallback.review,46
+1675,Стойки для УШМ,review.unresolved,unmapped,fallback.review,5
+1674,Стойки для дрелей,tools.power,confident,source.tools.power,2
+2269,Столешницы ДСП,review.unresolved,ambiguous,fallback.review,113
+2271,Столешницы из HPL пластика,furniture.kitchen,confident,source.furniture.kitchen,6
+2270,Столешницы из массива дерева,furniture.kitchen,confident,source.furniture.kitchen,9
+2268,Столешницы искусственный камень,furniture.kitchen,confident,source.furniture.kitchen,18
+2134,Столики сервировочные,review.unresolved,unmapped,fallback.review,7
+2135,Столики сервировочные,review.unresolved,unmapped,fallback.review,3
+2129,Столики туалетные,review.unresolved,unmapped,fallback.review,5
+2409,Столовые приборы в наборах,kitchen.tableware,confident,source.kitchen.tableware,17
+2531,Столовые приборы детские в наборах,kitchen.tableware,confident,source.kitchen.tableware,8
+2526,Столовые приборы одноразовые,kitchen.tableware,confident,source.kitchen.tableware,14
+2410,Столовые приборы специальные,kitchen.tableware,confident,source.kitchen.tableware,13
+2131,Столы детские,furniture.home,confident,source.furniture.home,1
+2132,Столы для столовой,furniture.home,confident,source.furniture.home,120
+2130,Столы журнальные,furniture.home,confident,source.furniture.home,71
+4092,Столы письменные,furniture.home,confident,source.furniture.home,36
+524,Столы садовые деревянные,furniture.home,confident,source.furniture.home,4
+523,Столы садовые металлические,furniture.home,confident,source.furniture.home,12
+522,Столы садовые пластиковые,furniture.home,confident,source.furniture.home,18
+525,"Столы садовые плетеные, ротанговые",furniture.home,confident,source.furniture.home,4
+2133,Столы складные,furniture.home,confident,source.furniture.home,14
+549,Столы туристические,furniture.home,confident,source.furniture.home,7
+937,Стопоры дверные,review.unresolved,unmapped,fallback.review,53
+1473,Стремянки алюминиевые двухсторонние,home.household,confident,source.home.household,3
+1472,Стремянки алюминиевые односторонние,home.household,confident,source.home.household,17
+1471,Стремянки стальные,home.household,confident,source.home.household,17
+1479,"Строительные леса, вышки, оборудование",review.unresolved,unmapped,fallback.review,15
+1644,Строительные миксеры,review.unresolved,unmapped,fallback.review,8
+1855,Строительные ножницы,review.unresolved,unmapped,fallback.review,23
+1641,Строительные пылесосы,kitchen.appliances,confident,source.kitchen.appliances,31
+1844,"Струбцины, опоры",review.unresolved,unmapped,fallback.review,30
+2137,Стулья барные,furniture.home,confident,source.furniture.home,40
+529,Стулья деревянные садовые,furniture.home,confident,source.furniture.home,5
+4094,Стулья детские,furniture.home,confident,source.furniture.home,6
+2210,Стулья для кухни,furniture.home,confident,source.furniture.home,1
+2213,Стулья для кухни,furniture.home,confident,source.furniture.home,1
+2212,Стулья для кухни,furniture.home,confident,source.furniture.home,1
+2145,Стулья для столовой,furniture.home,confident,source.furniture.home,161
+1335,Стулья и сиденья для ванной комнаты,furniture.home,confident,source.furniture.home,12
+528,Стулья металлические садовые,furniture.home,confident,source.furniture.home,15
+527,Стулья пластиковые садовые,furniture.home,confident,source.furniture.home,22
+2138,Стулья складные,furniture.home,confident,source.furniture.home,22
+2139,Стулья складные,furniture.home,confident,source.furniture.home,5
+550,Стулья туристические,furniture.home,confident,source.furniture.home,20
+2364,Ступки,review.unresolved,unmapped,fallback.review,3
+1851,Стусла,review.unresolved,unmapped,fallback.review,9
+2618,Стяжки кабельные,electrical.cable,confident,source.electrical.cable,70
+3593,"Стяжки, резинки для крепления груза в автомобиле",auto.accessories,confident,source.auto,32
+234,Сувениры новогодние,seasonal.holiday,confident,source.seasonal,3
+658,Сумки для пляжа и покупок,review.unresolved,unmapped,fallback.review,18
+659,"Сумки дорожные, спортивные, рюкзаки",outdoor.leisure,confident,source.outdoor.leisure,6
+1797,"Сумки, рюкзаки для инструмента",tools.hand,confident,source.tools.hand,13
+3969,"Сумки, тележки хозяйственные",home.household,confident,source.home.household,20
+655,Сумки-холодильники,kitchen.appliances,confident,source.kitchen.appliances,24
+2399,Супницы,review.unresolved,unmapped,fallback.review,1
+2516,"Сухарницы, корзины для хлеба пластмассовые",home.storage,confident,source.home.storage,15
+510,Сухие средства для розжига,review.unresolved,unmapped,fallback.review,10
+429,Сучкорезы,review.unresolved,unmapped,fallback.review,20
+3493,Сушилки для обуви,review.unresolved,unmapped,fallback.review,9
+3367,Сушилки для овощей и фруктов,review.unresolved,unmapped,fallback.review,11
+2254,Сушилки для посуды,review.unresolved,unmapped,fallback.review,10
+2251,Сушилки для посуды,review.unresolved,unmapped,fallback.review,25
+2253,Сушилки для посуды,review.unresolved,unmapped,fallback.review,1
+2252,Сушилки для посуды,review.unresolved,unmapped,fallback.review,3
+3423,Сушильные машины,review.unresolved,unmapped,fallback.review,7
+2708,Счетчики электроэнергии многотарифные,electrical.protection,confident,source.electrical.protection,6
+2707,Счетчики электроэнергии однотарифные,electrical.protection,confident,source.electrical.protection,3
+2365,Сырорезки,review.unresolved,unmapped,fallback.review,3
+3373,Сэндвич-тостеры,review.unresolved,unmapped,fallback.review,12
+3521,ТВ-тюнеры цифровые,review.unresolved,unmapped,fallback.review,6
+581,Таблички и указатели для растений,review.unresolved,unmapped,fallback.review,9
+2140,Табуреты,review.unresolved,unmapped,fallback.review,53
+3041,Тазы,review.unresolved,unmapped,fallback.review,24
+4130,Таймеры,review.unresolved,unmapped,fallback.review,13
+2480,Таймеры кухонные,review.unresolved,unmapped,fallback.review,6
+2019,Талрепы,review.unresolved,unmapped,fallback.review,10
+3868,Тапки женские домашние,review.unresolved,unmapped,fallback.review,59
+3871,Тапки женские пляжные,review.unresolved,unmapped,fallback.review,9
+3867,Тапки мужские домашние,review.unresolved,unmapped,fallback.review,36
+3870,Тапки мужские пляжные,review.unresolved,unmapped,fallback.review,8
+2387,Тарелки,kitchen.tableware,confident,source.kitchen.tableware,603
+2532,"Тарелки , миски, пиалы детские",kitchen.tableware,confident,source.kitchen.tableware,12
+2388,Тарелки в наборах,kitchen.tableware,confident,source.kitchen.tableware,16
+3469,Тарелки для микроволновой печи,kitchen.tableware,confident,source.kitchen.tableware,3
+1668,Тарелки опорные для шлифовальных кругов,kitchen.tableware,confident,source.kitchen.tableware,13
+2518,Тарелки пластмассовые,kitchen.tableware,confident,source.kitchen.tableware,21
+2523,"Тарелки, миски одноразовые",kitchen.tableware,confident,source.kitchen.tableware,21
+339,Тачки садовые,review.unresolved,unmapped,fallback.review,11
+3772,Текстовыделители,review.unresolved,unmapped,fallback.review,5
+4197,Телевизоры LED,review.unresolved,unmapped,fallback.review,47
+1976,Тележки мебельные,furniture.home,confident,source.furniture.home,4
+1796,Тележки транспортировочные,outdoor.leisure,confident,source.outdoor.leisure,6
+517,Тенты и чехлы для садовых качелей,outdoor.furniture,confident,source.outdoor.furniture,15
+595,Тенты хозяйственные,home.household,confident,source.home.household,6
+3412,Тепловентиляторы,heating.ventilation,confident,source.heating.ventilation,36
+3416,Тепловые завесы электрические,review.unresolved,unmapped,fallback.review,4
+3413,Тепловые пушки электрические,review.unresolved,unmapped,fallback.review,21
+1202,Теплоносители,review.unresolved,unmapped,fallback.review,8
+1516,Теплый пол в бетонную стяжку,heating.radiators,confident,source.heating.radiators,44
+1515,"Теплый пол под ламинат, паркет, линолеум и ковролин",review.unresolved,ambiguous,fallback.review,70
+1514,Теплый пол под плитку,heating.radiators,confident,source.heating.radiators,145
+2366,Терки,kitchen.utensils,confident,source.kitchen.utensils,29
+2367,Терки в наборах,kitchen.utensils,confident,source.kitchen.utensils,8
+639,Термозащита для печей,review.unresolved,unmapped,fallback.review,2
+2554,Термокружки,kitchen.tableware,confident,source.kitchen.tableware,18
+3176,Термометры для комнаты,review.unresolved,unmapped,fallback.review,6
+2481,Термометры кухонные,review.unresolved,unmapped,fallback.review,2
+579,Термометры садовые и другие измерительные приборы,review.unresolved,unmapped,fallback.review,17
+3177,Термометры уличные,review.unresolved,unmapped,fallback.review,8
+649,"Термометры, гигрометры и часы",review.unresolved,unmapped,fallback.review,9
+3352,Термопоты,review.unresolved,unmapped,fallback.review,6
+1512,Терморегуляторы для теплых полов,heating.radiators,confident,source.heating.radiators,57
+2579,Термостаты и терморегуляторы,review.unresolved,unmapped,fallback.review,6
+2553,Термосы,review.unresolved,unmapped,fallback.review,34
+3775,Тетради,review.unresolved,unmapped,fallback.review,147
+3776,Тетради для записи иностранных слов,review.unresolved,unmapped,fallback.review,3
+3777,Тетради для нот,review.unresolved,unmapped,fallback.review,2
+3778,Тетради со сменными блоками,review.unresolved,unmapped,fallback.review,2
+1639,Технические фены,review.unresolved,unmapped,fallback.review,11
+1843,Тиски,review.unresolved,unmapped,fallback.review,14
+4004,Ткани на отрез,review.unresolved,unmapped,fallback.review,114
+2783,Тоpшеры,review.unresolved,unmapped,fallback.review,123
+1064,Товары для монтажа ванн,review.unresolved,unmapped,fallback.review,5
+1282,Товары для монтажа газовых систем,review.unresolved,unmapped,fallback.review,6
+4027,Товары для монтажа и обслуживания смесителей,plumbing.faucets,confident,source.plumbing.faucets,11
+1185,Товары для монтажа и обслуживания фильтров,review.unresolved,unmapped,fallback.review,15
+3852,Товары для транспортировки животных,review.unresolved,ambiguous,fallback.review,1
+411,Товары для хранения садового инвентаря,home.storage,confident,source.home.storage,3
+1962,Толкатели и амортизаторы,review.unresolved,unmapped,fallback.review,23
+2368,Толкушки,review.unresolved,unmapped,fallback.review,17
+3980,Топливные брикеты,review.unresolved,unmapped,fallback.review,11
+2357,Топорики,review.unresolved,unmapped,fallback.review,4
+1840,Топоры,review.unresolved,unmapped,fallback.review,34
+2463,Тортовницы и блюда для торта,review.unresolved,unmapped,fallback.review,9
+2784,Торшеры LED,lighting.indoor,confident,source.lighting.indoor,22
+3372,Тостеры,review.unresolved,unmapped,fallback.review,37
+3806,Точилки,review.unresolved,unmapped,fallback.review,11
+4112,Точилки и мусаты для ножей,review.unresolved,unmapped,fallback.review,18
+1870,"Точильные камни, точилки",review.unresolved,unmapped,fallback.review,7
+2933,Точки крепления светильников для трековых систем,lighting.indoor,confident,source.lighting.indoor,5
+3710,Трансмиссионные масла,review.unresolved,unmapped,fallback.review,2
+3804,Транспортиры,outdoor.leisure,confident,source.outdoor.leisure,2
+1280,Трапы для душа,review.unresolved,unmapped,fallback.review,39
+3805,Трафареты,review.unresolved,unmapped,fallback.review,1
+225,Трафареты на окна,doors_windows.windows,confident,source.doors.windows,2
+3313,Триммеры для носа и ушей,garden.machinery,confident,source.garden.machinery,5
+3312,Триммеры для стрижки волос,garden.machinery,confident,source.garden.machinery,6
+3959,Триммеры для травы,garden.machinery,confident,source.garden.machinery,89
+324,Тройники и разветвители,review.unresolved,unmapped,fallback.review,21
+2004,Тросы,review.unresolved,unmapped,fallback.review,44
+3662,Тросы буксировочные,review.unresolved,unmapped,fallback.review,7
+1268,Тросы для прочистки труб,review.unresolved,unmapped,fallback.review,18
+342,Тротуарная плитка,review.unresolved,unmapped,fallback.review,8
+1484,Труба стальная,plumbing.pipes_fittings,confident,source.plumbing.pipes,16
+2644,Трубки для домофонов,review.unresolved,unmapped,fallback.review,4
+2624,Трубки термоусадочные,review.unresolved,unmapped,fallback.review,35
+1892,"Труборезы, трубогибы",review.unresolved,unmapped,fallback.review,7
+2511,"Трубочки, украшения для коктейлей",review.unresolved,unmapped,fallback.review,8
+4035,Трубы,plumbing.pipes_fittings,confident,source.plumbing.pipes,131
+1343,Трубы ПНД гофрированные,plumbing.bath_shower,confident,source.plumbing.shower,18
+4129,Трубы гофрированные,plumbing.bath_shower,confident,source.plumbing.shower,75
+2036,Трубы для систем хранения Джокер,review.unresolved,ambiguous,fallback.review,15
+1342,Трубы для теплых полов,review.unresolved,ambiguous,fallback.review,46
+2634,Трубы изоляционные,plumbing.pipes_fittings,confident,source.plumbing.pipes,7
+1983,Трубы круглые,plumbing.pipes_fittings,confident,source.plumbing.pipes,37
+1984,Трубы прямоугольные,plumbing.pipes_fittings,confident,source.plumbing.pipes,25
+3006,Тряпки для пола,review.unresolved,unmapped,fallback.review,13
+3005,Тряпки и салфетки в рулонах,review.unresolved,unmapped,fallback.review,15
+3854,Туалеты для животных,pets.supplies,confident,source.pets,5
+466,Туалеты-ведра,review.unresolved,unmapped,fallback.review,8
+4020,Тумбы в ванную,review.unresolved,unmapped,fallback.review,145
+2082,Тумбы обувные,review.unresolved,unmapped,fallback.review,36
+2081,Тумбы под ТВ,review.unresolved,unmapped,fallback.review,17
+399,Тумбы под умывальники дачные,plumbing.sanitary,confident,source.plumbing.sanitary,2
+4091,Тумбы прикроватные,review.unresolved,unmapped,fallback.review,44
+2428,Турки,review.unresolved,unmapped,fallback.review,15
+3343,Турки электрические,review.unresolved,unmapped,fallback.review,5
+3404,Увлажнители воздуха,review.unresolved,unmapped,fallback.review,25
+1786,"Угломеры, угольники, штангенциркули, циркули, щупы",review.unresolved,unmapped,fallback.review,26
+2629,Углы для кабель-каналов,electrical.cable,confident,source.electrical.cable,42
+884,Углы для плинтуса потолочного,flooring.accessories,confident,source.flooring.accessories,33
+1374,Уголки деревянные,review.unresolved,unmapped,fallback.review,19
+690,Уголки и бордюры для плитки,tile.installation,confident,source.tile.installation,269
+4087,Уголки крепежные,hardware.metal,confident,source.hardware.metal,240
+868,"Уголки, галтели из ПВХ",review.unresolved,unmapped,fallback.review,72
+1485,Уголок стальной,review.unresolved,unmapped,fallback.review,5
+504,"Уголь, дрова",review.unresolved,unmapped,fallback.review,23
+3802,Угольники,review.unresolved,unmapped,fallback.review,2
+2369,Удалители косточек,review.unresolved,unmapped,fallback.review,4
+2691,Удлинители бытовые,electrical.power,confident,source.electrical.power,87
+2694,Удлинители на катушках,electrical.power,confident,source.electrical.power,39
+2696,Удлинители с USB,electrical.power,confident,source.electrical.power,10
+2695,Удлинители садовые,electrical.power,confident,source.electrical.power,50
+3986,Удобрения,garden.fertilizers,confident,source.garden.fertilizers,347
+2884,Указатели,review.unresolved,unmapped,fallback.review,15
+1537,Укрывные защитные материалы,review.unresolved,unmapped,fallback.review,4
+2649,Умные датчики,review.unresolved,unmapped,fallback.review,17
+2653,Умные камеры видеонаблюдения,electrical.smart_security,confident,source.electrical.security,3
+2657,Умные лампочки,lighting.bulbs,confident,source.lighting.bulbs,10
+2661,Умные настольные лампы,review.unresolved,unmapped,fallback.review,1
+2658,Умные прожекторы,lighting.work,confident,source.lighting.work,1
+2660,Умный разветвитель,review.unresolved,unmapped,fallback.review,7
+1083,Унитазы подвесные,plumbing.sanitary,confident,source.plumbing.sanitary,35
+1082,Унитазы-компакты,plumbing.sanitary,confident,source.plumbing.sanitary,57
+961,Уплотнители для окон,review.unresolved,unmapped,fallback.review,37
+4043,Уплотнители и герметизирующие материалы,review.unresolved,unmapped,fallback.review,76
+1454,Уплотнитель кровельный,review.unresolved,unmapped,fallback.review,2
+3658,"Упоры противооткатные, антипробуксовочные траки",review.unresolved,unmapped,fallback.review,2
+1787,Уровни пузырьковые,tools.hand,confident,source.tools.hand,34
+3586,Усилители,review.unresolved,unmapped,fallback.review,2
+3608,Устройства 12В автомобильные,auto.accessories,confident,source.auto,4
+2689,Устройства закладки кабеля,electrical.cable,confident,source.electrical.cable,2
+1416,Утеплитель межвенцовый,building.insulation,confident,source.building.insulation,10
+3487,Утюги,review.unresolved,unmapped,fallback.review,44
+2332,"Утятницы, гусятницы",review.unresolved,unmapped,fallback.review,7
+646,"Ушаты, ковши, ведра",review.unresolved,unmapped,fallback.review,12
+3754,Файлы,review.unresolved,unmapped,fallback.review,1
+2650,Фальш-камеры,review.unresolved,unmapped,fallback.review,8
+4063,Фанера,building.sheet_materials,confident,source.building.sheet,52
+2971,Фартуки,review.unresolved,unmapped,fallback.review,10
+873,Фасадные панели,building.facade,confident,source.building.facade,21
+2226,Фасады - ДСП ламинированная,review.unresolved,ambiguous,fallback.review,119
+2227,Фасады - МДФ,review.unresolved,ambiguous,fallback.review,2084
+1422,Фасады из массива,building.facade,confident,source.building.facade,104
+4180,Фены,review.unresolved,unmapped,fallback.review,58
+3906,Фигурки,review.unresolved,unmapped,fallback.review,7
+3072,Фигурки и статуэтки,review.unresolved,unmapped,fallback.review,40
+235,Фигуры новогодние,seasonal.holiday,confident,source.seasonal,21
+212,Фигуры объемные световые,review.unresolved,unmapped,fallback.review,7
+1920,Фиксаторы арматуры,review.unresolved,unmapped,fallback.review,13
+939,Фиксаторы дверные механические,review.unresolved,unmapped,fallback.review,8
+3623,Фильтры автомобильные,auto.accessories,confident,source.auto,7
+1182,Фильтры высокой производительности,review.unresolved,unmapped,fallback.review,6
+4041,"Фильтры грубой очистки, сменные элементы к ним",review.unresolved,unmapped,fallback.review,24
+3406,Фильтры для воздухоочистителей,review.unresolved,unmapped,fallback.review,1
+3342,Фильтры для кофемашин,review.unresolved,unmapped,fallback.review,5
+1727,Фильтры для строительных пылесосов,kitchen.appliances,confident,source.kitchen.appliances,8
+2430,Фильтры запасные для чая и кофе,review.unresolved,unmapped,fallback.review,1
+1174,"Фильтры проточные """"под мойку""""",review.unresolved,unmapped,fallback.review,32
+1169,Фильтры-кувшины,review.unresolved,unmapped,fallback.review,16
+1171,Фильтры-насадки на кран,review.unresolved,unmapped,fallback.review,1
+1176,Фильтры-системы обратного осмоса,review.unresolved,unmapped,fallback.review,16
+4034,Фитинги,plumbing.pipes_fittings,confident,source.plumbing.pipes,1254
+1032,Флис шлифовальный,review.unresolved,unmapped,fallback.review,2
+3770,Фломастеры,review.unresolved,unmapped,fallback.review,18
+2305,Фольга пищевая,review.unresolved,unmapped,fallback.review,10
+1682,Фонари аккумуляторные,review.unresolved,ambiguous,fallback.review,3
+2906,Фонари велосипедные,lighting.work,confident,source.lighting.work,7
+2904,Фонари карманные,lighting.work,confident,source.lighting.work,10
+2900,Фонари кемпинговые,review.unresolved,ambiguous,fallback.review,8
+2902,Фонари налобные,lighting.work,confident,source.lighting.work,31
+2907,Фонари подсветки,lighting.work,confident,source.lighting.work,4
+2901,Фонари прожекторы,lighting.work,confident,source.lighting.work,17
+2903,Фонари ручные,lighting.work,confident,source.lighting.work,24
+353,Фонари садовые,lighting.outdoor,confident,source.lighting.outdoor,172
+355,Фонари садовые,lighting.outdoor,confident,source.lighting.outdoor,95
+354,Фонари садовые,lighting.outdoor,confident,source.lighting.outdoor,26
+3976,Фонтаны,review.unresolved,unmapped,fallback.review,4
+4107,Формы для выпечки,kitchen.cookware,confident,source.kitchen.cookware,140
+2506,Формы для льда,review.unresolved,unmapped,fallback.review,23
+2297,Формы кулинарные,review.unresolved,unmapped,fallback.review,17
+2194,Фоторамки,home.decor,confident,source.home.decor,257
+1696,Фрезы,review.unresolved,unmapped,fallback.review,73
+2424,Френч-прессы,review.unresolved,unmapped,fallback.review,41
+3387,Фритюрницы,review.unresolved,unmapped,fallback.review,2
+4169,"Фумигаторы, сменные элементы",review.unresolved,unmapped,fallback.review,34
+2231,Фурнитура,review.unresolved,unmapped,fallback.review,7
+4013,Фурнитура для деревянных окон,doors_windows.hardware,confident,source.doors.hardware,8
+4012,Фурнитура для металлопластиковых окон,doors_windows.hardware,confident,source.doors.hardware,66
+3181,Халаты,review.unresolved,unmapped,fallback.review,55
+2552,Хлебницы,review.unresolved,unmapped,fallback.review,9
+3371,Хлебопечки,review.unresolved,unmapped,fallback.review,3
+1898,Хозяйственные товары и расходные материалы,home.household,confident,source.home.household,3
+3428,Холодильники двухкамерные,kitchen.appliances,confident,source.kitchen.appliances,85
+3427,Холодильники однокамерные,kitchen.appliances,confident,source.kitchen.appliances,7
+1292,Хомуты для воздуховодов,heating.ventilation,confident,source.heating.ventilation,7
+325,Хомуты для шлангов,garden.watering,confident,source.garden.watering,3
+3728,Цветная бумага,review.unresolved,unmapped,fallback.review,34
+3768,Цветные карандаши,review.unresolved,unmapped,fallback.review,32
+4067,Цемент,building.dry_mix,confident,source.building.mix,5
+1357,Цементно-стружечная плита,building.dry_mix,confident,source.building.mix,3
+2005,Цепи,review.unresolved,unmapped,fallback.review,33
+294,Цепи для бензопил,review.unresolved,unmapped,fallback.review,52
+948,Цепочки дверные,review.unresolved,unmapped,fallback.review,3
+924,Цилиндры,review.unresolved,unmapped,fallback.review,158
+4096,Циновки,review.unresolved,unmapped,fallback.review,28
+3809,Циркуль,review.unresolved,unmapped,fallback.review,10
+4115,Чайники,review.unresolved,unmapped,fallback.review,35
+4119,Чайники заварочные,review.unresolved,unmapped,fallback.review,77
+4181,Чайники электрические,review.unresolved,unmapped,fallback.review,150
+2200,Часы настенные,review.unresolved,unmapped,fallback.review,82
+2199,Часы настольные,review.unresolved,unmapped,fallback.review,29
+2202,Часы электронные,review.unresolved,unmapped,fallback.review,6
+2482,Чаши для миксера,review.unresolved,unmapped,fallback.review,4
+4019,"Чаши, бачки составные",review.unresolved,unmapped,fallback.review,3
+4117,Чашки,kitchen.tableware,confident,source.kitchen.tableware,99
+1704,Чашки алмазные,kitchen.tableware,confident,source.kitchen.tableware,16
+2400,"Чашки бульонные, джамбо",kitchen.tableware,confident,source.kitchen.tableware,20
+1167,Чашки декоративные,review.unresolved,ambiguous,fallback.review,20
+1705,Чашки твердосплавные,kitchen.tableware,confident,source.kitchen.tableware,2
+3970,"Черенки, рукоятки",review.unresolved,unmapped,fallback.review,33
+3769,Чернографитные карандаши,review.unresolved,unmapped,fallback.review,22
+2370,Чеснокодавилки,review.unresolved,unmapped,fallback.review,9
+3032,Чехлы для досок гладильных,review.unresolved,unmapped,fallback.review,20
+3157,Чехлы для обуви,review.unresolved,unmapped,fallback.review,4
+3064,Чехлы для одежды,review.unresolved,unmapped,fallback.review,14
+3650,"Чехлы защитные, тенты автомобильные",auto.accessories,confident,source.auto,15
+3600,Чехлы и накидки,review.unresolved,unmapped,fallback.review,2
+3865,Чулки,review.unresolved,unmapped,fallback.review,6
+1665,Шаблоны для сверления,tools.accessories,confident,source.tools.accessories,11
+2626,Шаблоны для сверления подрозетников,review.unresolved,ambiguous,fallback.review,3
+3668,Шампуни автомобильные,auto.accessories,confident,source.auto,20
+3271,Шампуни детские,review.unresolved,unmapped,fallback.review,13
+3280,Шампуни для волос,review.unresolved,unmapped,fallback.review,141
+3842,"Шампуни, бальзамы, средства гигиены для животных",pets.supplies,confident,source.pets,12
+501,Шампуры,outdoor.grill,confident,source.outdoor.grill,31
+1716,Шарошки,review.unresolved,unmapped,fallback.review,21
+199,Шары елочные в наборах,seasonal.holiday,confident,source.seasonal,13
+198,Шары елочные одиночные,seasonal.holiday,confident,source.seasonal,84
+218,"Шары, подвески, свечи, сувениры с подсветкой",home.decor,confident,source.home.decor,1
+3981,"Шатры, тенты",review.unresolved,unmapped,fallback.review,39
+2984,Швабры с ручкой,cleaning.equipment,confident,source.cleaning.equipment,12
+4005,Швейная фурнитура,review.unresolved,unmapped,fallback.review,32
+3983,Шезлонги,outdoor.furniture,confident,source.outdoor.furniture,17
+2504,Шейкеры,review.unresolved,unmapped,fallback.review,1
+1882,Шило,review.unresolved,unmapped,fallback.review,2
+3624,Шины автомобильные,auto.accessories,confident,source.auto,9
+295,Шины для бензопил,review.unresolved,unmapped,fallback.review,8
+2931,Шины для трековых систем,review.unresolved,unmapped,fallback.review,36
+2711,Шины нулевые,review.unresolved,unmapped,fallback.review,34
+2203,Ширмы,review.unresolved,unmapped,fallback.review,1
+1074,Ширмы душевые,plumbing.bath_shower,confident,source.plumbing.shower,40
+1458,Шифер,review.unresolved,unmapped,fallback.review,2
+1980,Шкант,review.unresolved,unmapped,fallback.review,16
+4165,Шкатулки,review.unresolved,unmapped,fallback.review,17
+2029,Шкафы бухгалтерские,furniture.home,confident,source.furniture.home,4
+4021,Шкафы для ванной,furniture.bathroom,confident,source.furniture.bathroom,102
+2028,Шкафы для газовых баллонов,furniture.home,confident,source.furniture.home,2
+2095,Шкафы для детской комнаты,furniture.home,confident,source.furniture.home,1
+2094,Шкафы для коридора,furniture.home,confident,source.furniture.home,7
+2093,Шкафы для посуды,furniture.home,confident,source.furniture.home,19
+2091,Шкафы книжные,furniture.home,confident,source.furniture.home,1
+2024,Шкафы оружейные,furniture.home,confident,source.furniture.home,10
+2092,Шкафы распашные,furniture.home,confident,source.furniture.home,204
+2090,Шкафы угловые,furniture.home,confident,source.furniture.home,7
+2085,Шкафы-купе готовые,furniture.home,confident,source.furniture.home,96
+1031,Шкурка шлифовальная,review.unresolved,unmapped,fallback.review,33
+4099,Шкуры,review.unresolved,unmapped,fallback.review,14
+4038,Шланги для бытовой техники,review.unresolved,ambiguous,fallback.review,33
+1131,Шланги для душа,garden.watering,confident,source.garden.watering,51
+1549,Шланги для пневмооборудования,garden.watering,confident,source.garden.watering,17
+3964,Шланги для полива,garden.watering,confident,source.garden.watering,145
+3837,Шлейки для животных,review.unresolved,ambiguous,fallback.review,2
+1599,Шлифмашины виброшлифовальные,tools.power,confident,source.tools.power,10
+1603,Шлифмашины ленточные,tools.power,confident,source.tools.power,7
+1601,Шлифмашины орбитальные,tools.accessories,confident,source.tools.accessories,18
+1602,Шлифмашины орбитальные аккумуляторные,review.unresolved,ambiguous,fallback.review,3
+1606,Шлифмашины отрезные аккумуляторные,review.unresolved,ambiguous,fallback.review,24
+1605,Шлифмашины полировальные,tools.power,confident,source.tools.power,5
+1035,"Шлифовщики, терки",kitchen.utensils,confident,source.kitchen.utensils,18
+2929,Шнурки для светильников подвесных,lighting.indoor,confident,source.lighting.indoor,8
+3037,Шнуры бельевые,review.unresolved,unmapped,fallback.review,6
+573,Шпалеры,review.unresolved,unmapped,fallback.review,23
+1028,Шпатели,review.unresolved,unmapped,fallback.review,126
+3687,Шпатлевки автомобильные,review.unresolved,ambiguous,fallback.review,6
+1381,Шпатлевки готовые,finishing.putty_plaster,confident,source.finishing.putty,48
+1383,Шпатлевки сухие гипсовые,finishing.putty_plaster,confident,source.finishing.putty,6
+1385,Шпатлевки сухие полимерные,finishing.putty_plaster,confident,source.finishing.putty,9
+1384,Шпатлевки сухие цементные,review.unresolved,ambiguous,fallback.review,2
+1382,Шпатлевки тонированные,review.unresolved,ambiguous,fallback.review,10
+941,"Шпингалеты, засовы",review.unresolved,unmapped,fallback.review,55
+1918,Штанги,review.unresolved,unmapped,fallback.review,54
+1129,Штанги для душа,review.unresolved,unmapped,fallback.review,16
+363,Штативы для светодиодных прожекторов,lighting.work,confident,source.lighting.work,4
+1789,"Штативы, штанги для измерительного инструмента",tools.hand,confident,source.tools.hand,9
+2510,Штопоры,review.unresolved,unmapped,fallback.review,21
+1068,Шторки для ванн,home.textiles,confident,source.home.textiles,8
+3603,Шторки солнцезащитные автомобильные,review.unresolved,ambiguous,fallback.review,5
+4000,Шторы,home.textiles,confident,source.home.textiles,338
+4001,Шторы рулонные,home.textiles,confident,source.home.textiles,640
+1620,Штроборезы,review.unresolved,unmapped,fallback.review,3
+1379,Штукатурка гипсовая,finishing.putty_plaster,confident,source.finishing.putty,14
+1380,Штукатурка цементная,review.unresolved,ambiguous,fallback.review,11
+2349,Шумовки,review.unresolved,unmapped,fallback.review,23
+1419,Шумоизоляция пола,review.unresolved,unmapped,fallback.review,4
+1418,Шумоизоляция потолка,review.unresolved,unmapped,fallback.review,2
+507,Щепа для копчения,outdoor.grill,confident,source.outdoor.grill,25
+4159,Щетки,review.unresolved,unmapped,fallback.review,42
+3649,Щетки для мойки автомобиля,auto.accessories,confident,source.auto,13
+3042,Щетки для одежды,review.unresolved,unmapped,fallback.review,4
+3644,Щетки для уборки снега,cleaning.equipment,confident,source.cleaning.equipment,16
+3202,Щетки зубные,review.unresolved,unmapped,fallback.review,61
+3287,Щетки массажные,review.unresolved,unmapped,fallback.review,15
+3617,Щетки стеклоочистителя бескаркасные,review.unresolved,unmapped,fallback.review,54
+3619,Щетки стеклоочистителя гибридные,review.unresolved,unmapped,fallback.review,9
+3618,Щетки стеклоочистителя каркасные,review.unresolved,unmapped,fallback.review,21
+1666,Щетки угольные,review.unresolved,unmapped,fallback.review,16
+442,Щетки щелевые,review.unresolved,unmapped,fallback.review,2
+4167,"Щетки, тряпки, салфетки для обуви",review.unresolved,unmapped,fallback.review,24
+2350,Щипцы,review.unresolved,unmapped,fallback.review,14
+3301,Щипцы и плойки,review.unresolved,unmapped,fallback.review,7
+3302,Щипцы-гофре,review.unresolved,unmapped,fallback.review,1
+4137,Щиты для учета и распределения,review.unresolved,unmapped,fallback.review,54
+1423,Щиты мебельные из ДСП,review.unresolved,ambiguous,fallback.review,74
+1421,Щиты мебельные из массива,furniture.home,confident,source.furniture.home,58
+889,Экраны,review.unresolved,unmapped,fallback.review,33
+1067,Экраны для ванн,review.unresolved,unmapped,fallback.review,39
+1162,Эксцентрики,review.unresolved,unmapped,fallback.review,4
+3204,Электрические зубные щетки,review.unresolved,unmapped,fallback.review,2
+3327,Электрогрелки,review.unresolved,unmapped,fallback.review,3
+3377,Электрогрили,outdoor.grill,confident,source.outdoor.grill,7
+1594,Электродрели,tools.power,confident,source.tools.power,31
+1595,Электродрели мини,tools.power,confident,source.tools.power,5
+3323,Электромассажеры,review.unresolved,unmapped,fallback.review,8
+3943,Электронные подарочные сертификаты,review.unresolved,unmapped,fallback.review,4
+2732,Электронные пускорегулирующие аппараты,review.unresolved,unmapped,fallback.review,6
+3468,Электропечи,review.unresolved,unmapped,fallback.review,11
+1612,Электропилы дисковые,tools.hand,confident,source.tools.hand,34
+1614,Электропилы сабельные,tools.hand,confident,source.tools.hand,7
+1618,Электропилы торцовочные,tools.hand,confident,source.tools.hand,18
+1616,Электропилы цепные,tools.hand,confident,source.tools.hand,15
+3326,Электропростыни,home.textiles,confident,source.home.textiles,4
+4074,Электросварочное оборудование,review.unresolved,unmapped,fallback.review,19
+3378,Электрошашлычницы,review.unresolved,unmapped,fallback.review,1
+980,Эмали универсальные,finishing.paint,confident,source.finishing.paint,135
+2119,Этажерки,review.unresolved,unmapped,fallback.review,5
+2371,Яблокорезки,review.unresolved,unmapped,fallback.review,13
+2372,Яйцерезки,review.unresolved,unmapped,fallback.review,2
+621,Ящики балконные,review.unresolved,unmapped,fallback.review,38
+1799,Ящики для инструмента,tools.hand,confident,source.tools.hand,32
+1800,Ящики для инструмента на колесах,tools.hand,confident,source.tools.hand,2
+2061,Ящики для кроватей,review.unresolved,unmapped,fallback.review,7
+2088,Ящики для шкафов-купе,furniture.home,confident,source.furniture.home,10
+2026,Ящики почтовые,review.unresolved,unmapped,fallback.review,19
