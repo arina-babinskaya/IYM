@@ -179,7 +179,7 @@ def test_quality_pct_is_relative_to_ideal_product():
 
 
 def test_moisture_filter_uses_catalog_characteristics():
-    from app.catalog.repository import has_flags
+    from app.ml.ranker import has_flags
 
     wet = ["moisture_resistant"]
     assert has_flags(*item(1, chars={"Влагостойкость краски": "да"}), wet)
@@ -224,3 +224,52 @@ def test_why_warns_when_moisture_unknown():
     assert "влагостойкость не указана — проверьте перед покупкой" in why(unknown, True)
     assert not any("не указана" in w for w in why(wet, True))
     assert not any("не указана" in w for w in why(unknown, False))
+
+
+def test_decorative_finish_pushed_down_in_plain_works():
+    deco = item(1, "plaster", name="штукатурка декоративная BERGAUF Dekor короед 25 кг", rating=5, **PACK)
+    plain = item(2, "plaster", name="штукатурка гипсовая Knauf Ротбанд 30 кг", **PACK)
+    scored = ContextRanker().score([deco, plain], room())
+    assert ids([s.product for s in scored]) == [2, 1] and scored[1].parts["decorative"] == -8
+    border = item(3, "tile", name="бордюр настенный Ромашка 25х6", **PACK)
+    tile = item(4, "tile", name="плитка настенная Ромашка 25х40", **PACK)
+    assert ids(ContextRanker().rank([border, tile], room("bathroom"))) == [4, 3]
+    satin = item(5, "paint", name="краска интерьерная шелковисто-матовая 9л", **PACK)
+    assert "decorative" not in ContextRanker().score([satin], room())[0].parts
+    panel = item(6, "decorative", name="панель декоративная МДФ", **PACK)
+    assert "decorative" not in ContextRanker().score([panel], room())[0].parts
+
+
+def test_phone_and_tv_sockets_are_not_typical():
+    from app.ml.ranker import _typical
+    from app.taxonomy import Material
+
+    assert not _typical(Material.socket, "розетка 1 пост телефонная 1xRJ11 ONEKEYELECTRO")
+    assert not _typical(Material.socket, "розетка TV оконечная")
+    assert _typical(Material.socket, "розетка 1 пост BYLECTRICA 16А IP44 с/з белый")
+    assert _typical(Material.socket, "розетка с USB и заземлением")
+
+
+def test_profile_cache_follows_binding_changes():
+    p, b = item(1, chars={"Влагостойкость краски": "да"}, **PACK)
+    assert signals(p, b)["moisture_resistant"] == 1
+    b.material = "tile"
+    assert signals(p, b)["moisture_resistant"] == 1 and ContextRanker().score([(p, b)], room())[0].product is p
+
+
+def test_profile_cache_refreshes_after_catalog_reload():
+    p, b = item(1, name="Краска интерьерная", **PACK)
+    p.last_seen_run = 1
+    assert signals(p, b)["moisture_resistant"] == 0
+    p.raw = {"characteristics": [{"name": "Влагостойкость краски", "value": "да"}]}
+    p.last_seen_run = 2
+    assert signals(p, b)["moisture_resistant"] == 1
+
+
+def test_roofing_screws_are_not_typical_fasteners():
+    from app.ml.ranker import _typical
+    from app.taxonomy import Material
+
+    assert not _typical(Material.fasteners, "саморез кровельный св. 4,8х35мм 5 кг синий")
+    assert _typical(Material.fasteners, "саморез по гипсокартону 3,5х25 мм 200 шт")
+    assert _typical(Material.fasteners, "дюбель-хомут для кабеля 5-10 мм")

@@ -29,3 +29,11 @@ def db():
 def ingested(db):
     with get_sessionmaker()() as s:
         return load_catalog(s, SAMPLE)
+
+
+@pytest.fixture(autouse=True)
+def _fresh_ranker_cache():
+    from app.ml.ranker import clear_cache
+
+    clear_cache()
+    yield

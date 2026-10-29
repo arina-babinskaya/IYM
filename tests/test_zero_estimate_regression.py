@@ -87,3 +87,20 @@ def test_confirmed_legacy_material_binding_is_compatible_but_automatic_category_
     assert {product.id for product, _ in rows} == {10, 12}
     session.close()
     engine.dispose()
+
+
+def test_material_only_bindings_fill_an_otherwise_empty_work(tmp_path):
+    engine, session, repo = _repo(tmp_path)
+    for pid in (20, 21, 22):
+        session.add(Product(id=pid, name=f"Саморез {pid}", status=True, in_stock=True, result_price=Decimal("50")))
+    session.add_all([
+        ProductBinding(product_id=20, material="fasteners", work_types=[], room_types=[], flags={},
+                       source="ml", confidence=.9, confirmed=False),
+        ProductBinding(product_id=21, material="fasteners", work_types=["plumbing_rough"], room_types=[], flags={},
+                       source="ml", confidence=.9, confirmed=False),
+    ])
+    session.commit()
+    assert {p.id for p, _ in repo.candidates(Material.fasteners, WorkType.drywall_install, min_confidence=.7)} == {20}
+    assert {p.id for p, _ in repo.candidates(Material.fasteners, WorkType.plumbing_rough, min_confidence=.7)} == {21}
+    session.close()
+    engine.dispose()
