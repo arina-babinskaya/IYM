@@ -305,6 +305,27 @@ class AdminStats(BaseModel):
     auto_bound_share: float
 
 
+class AutobindJob(BaseModel):
+    id: str
+    status: Literal["running", "completed", "failed", "cancelled"]
+    phase: str
+    processed: int = 0
+    candidates: int = 0
+    bound: int = 0
+    skipped: int = 0
+    rejected: int = 0
+    persistence_conflicts: int = 0
+    rejection_reasons: dict[str, int] = Field(default_factory=dict)
+    errors: int = 0
+    gigachat_considered: int = 0
+    batches: int = 0
+    elapsed_ms: int = 0
+    classifier_ms: int = 0
+    dependency_ms: int = 0
+    error: str | None = None
+    stats: AdminStats | None = None
+
+
 class WorkOption(BaseModel):
     work_type: WorkType
     surface: Surface | None = None
@@ -383,3 +404,88 @@ class OptionsResponse(BaseModel):
     total: int
     variants: dict[str, OptionProduct] = Field(default_factory=dict)
     products: list[OptionProduct] = Field(default_factory=list)
+
+
+class CatalogMatchAlternative(BaseModel):
+    category_id: str
+    category_name: str
+    score: float
+
+
+class CatalogMatchOut(BaseModel):
+    product_id: int | str | None
+    category_id: str
+    category_name: str
+    score: float
+    top_3: list[CatalogMatchAlternative]
+    review_recommended: bool
+    score_type: str
+    model: str
+    taxonomy_version: str
+
+
+class CatalogTaxonomyCategory(BaseModel):
+    id: str
+    name: str
+    parent_id: str
+    parent_name: str
+    definition: str
+
+
+class CatalogTaxonomyOut(BaseModel):
+    version: str
+    category_count: int
+    categories: list[CatalogTaxonomyCategory]
+
+
+class CatalogAssignmentOut(BaseModel):
+    category_id: str
+    category_name: str
+    score: float | None = None
+    top_3: list[CatalogMatchAlternative] = Field(default_factory=list)
+    model: str | None = None
+    taxonomy_version: str
+    status: Literal["predicted", "needs_review", "confirmed", "corrected"]
+    source: Literal["ml", "manual"]
+
+
+class CatalogAdminRow(BaseModel):
+    product: ProductBrief
+    source_category: str | None = None
+    manual: bool = False
+    assignment: CatalogAssignmentOut | None = None
+
+
+class CatalogCategoryIn(BaseModel):
+    category_id: str = Field(min_length=1, max_length=128)
+
+
+class CatalogAdminStats(BaseModel):
+    products_total: int
+    assigned: int
+    model_suggestions: int
+    manual_confirmed: int
+    needs_review: int
+    unassigned: int
+    coverage: float
+
+
+class CatalogCategorizationJob(BaseModel):
+    id: str
+    status: Literal["running", "completed", "failed", "cancelled"]
+    phase: str
+    total: int = 0
+    processed: int = 0
+    categorized: int = 0
+    inserted: int = 0
+    updated: int = 0
+    unchanged: int = 0
+    manual_preserved: int = 0
+    needs_review: int = 0
+    errors: int = 0
+    batches: int = 0
+    elapsed_ms: int = 0
+    inference_ms: int = 0
+    persistence_ms: int = 0
+    error: str | None = None
+    stats: CatalogAdminStats | None = None

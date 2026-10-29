@@ -91,6 +91,27 @@ class ProductBinding(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
 
+class CatalogCategoryAssignment(Base):
+    """Independent full-catalog taxonomy assignment; never consumed by renovation ranking."""
+
+    __tablename__ = "catalog_category_assignments"
+
+    product_id: Mapped[int] = mapped_column(
+        Id, ForeignKey("products.id", ondelete="CASCADE"), primary_key=True
+    )
+    category_id: Mapped[str] = mapped_column(String(128), index=True)
+    model_score: Mapped[float | None]
+    model_version: Mapped[str | None] = mapped_column(String(128))
+    taxonomy_version: Mapped[str] = mapped_column(String(128), index=True)
+    status: Mapped[str] = mapped_column(String(32), index=True)
+    source: Mapped[str] = mapped_column(String(16), index=True)
+    alternatives: Mapped[list[dict[str, Any]]] = mapped_column(Json, default=list)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+
 class IngestRun(Base):
     __tablename__ = "ingest_runs"
 

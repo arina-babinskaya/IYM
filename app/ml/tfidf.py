@@ -52,7 +52,9 @@ MATERIAL_HINTS: tuple[tuple[str, Material], ...] = (
     (r"монтажн\w* пен", Material.mounting_foam),
     (r"подрозетник|установочн\w* короб|распаечн\w* короб", Material.electrical_boxes),
     (r"кабель[- ]канал|гофротруб|гофрированн\w* труб", Material.cable_channel),
-    (r"автоматическ\w* выключател|\bузо\b|дифавтомат|электрощит|щиток", Material.circuit_breakers),
+    # Product names use both "автоматический выключатель" and "выключатель автоматический".
+    # Match protection devices before the generic switch hint below.
+    (r"автоматическ\w* выключател|выключател\w* автоматическ|\bузо\b|дифавтомат|электрощит|щиток", Material.circuit_breakers),
     (r"\bрозетк\w*\b(?!.*(рамк|накладк))", Material.socket),
     (r"\bвыключател", Material.switch),
     (r"кабел|электропровод|\bпровод\b", Material.cable),

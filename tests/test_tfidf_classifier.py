@@ -130,6 +130,21 @@ def test_category_scoped_hints_prevent_cross_category_assignments():
     assert not publishable(result, .7)
 
 
+def test_automatic_circuit_breaker_is_not_mapped_to_wall_switch():
+    raw = Prediction(149, ["electrical_wiring"], {"electrical_wiring": .91}, "predicted",
+                     domain_label="renovation", product_category="electrical_goods",
+                     work_types=["electrical_wiring"], dimension_scores={
+                         "domain": {"renovation": .95}, "product_category": {"electrical_goods": .82}})
+    suggestion = prediction_to_suggestion(
+        raw,
+        Product(id=149, name="выключатель автоматический 1P 16А", categories={"1": "Автоматы защиты"}),
+    )
+    assert suggestion.material == Material.circuit_breakers
+    assert suggestion.work_types == [WorkType.electrical_wiring]
+    assert not suggestion.flags.get("taxonomy_inconsistent", False)
+    assert publishable(suggestion, .7)
+
+
 def test_default_operating_threshold_is_point_seven(monkeypatch):
     monkeypatch.delenv("RC_AUTOBIND_MIN_CONFIDENCE", raising=False)
     get_settings.cache_clear()

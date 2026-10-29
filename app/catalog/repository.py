@@ -124,7 +124,7 @@ class CatalogRepo:
         self.session.commit()
         return b
 
-    def save_ml_bindings(self, pairs: Sequence[tuple[int, Suggestion]]) -> None:
+    def save_ml_bindings(self, pairs: Sequence[tuple[int, Suggestion]]) -> int:
         rows = [
             {
                 "product_id": pid,
@@ -140,8 +140,9 @@ class CatalogRepo:
             for pid, s in pairs
         ]
         # Classification only fills missing bindings; it must never replace manual/confirmed data.
-        upsert(self.session, ProductBinding, rows, ["product_id"], update=False)
+        inserted = upsert(self.session, ProductBinding, rows, ["product_id"], update=False)
         self.session.commit()
+        return inserted
 
     def admin_list(self, status: AdminStatus = "unbound", q: str | None = None, limit: int = 50,
                    offset: int = 0) -> list[Product]:
