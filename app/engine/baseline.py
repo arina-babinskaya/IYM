@@ -378,6 +378,8 @@ def _piece_need(material: Material, room: RoomInput, area: Decimal) -> tuple[Dec
     ):
         return Decimal(max(1, _ceil(floor / 8))), "шт"
     if hasattr(Material, "heating") and material == Material.heating:
+        if room.room_type in (RoomType.bathroom,):
+            return Decimal(1), "шт"
         return Decimal(max(1, _ceil(floor / 10))), "шт"
     if material == Material.profile or (hasattr(Material, "beacons") and material == Material.beacons):
         return Decimal(_ceil(area / Decimal("1.5"))), "шт"
@@ -450,6 +452,19 @@ class BaselineEngine:
         if hint:
             ranked.sort(key=lambda p: not re.search(hint, p.name.lower()))
 
+        if material == Material.plaster:
+            # Для оштукатуривания стен приоритет у базовых выравнивающих смесей; декоративные (фактурные) опускаем в конец
+            ranked.sort(key=lambda p: bool(re.search(r"декоратив|фактурн|шуба|короед|микроцемент|венециан|stucco|grotto|modellier", p.name.lower())))
+        elif material == Material.putty:
+            # Для шпаклевки также исключаем декоративные пасты
+            ranked.sort(key=lambda p: bool(re.search(r"декоратив|фактурн|венециан", p.name.lower())))
+        elif hasattr(Material, "heating") and material == Material.heating and room.room_type in (RoomType.bathroom,):
+            # В ванной комнате приоритет отдаем полотенцесушителям, а не комнатным радиаторам
+            ranked.sort(key=lambda p: not bool(re.search(r"полотенцесушител", p.name.lower())))
+        elif hasattr(Material, "beacons") and material == Material.beacons and surface == Surface.wall:
+            # Для стен приоритет у стеновых маячковых профилей перед маяками для наливного пола
+            ranked.sort(key=lambda p: bool(re.search(r"наливн|для пола", p.name.lower())))
+
         base = dict(
             stage=info.stage,
             work_type=work,
@@ -496,7 +511,24 @@ class BaselineEngine:
                 else:
                     n = _ceil(need)
             else:
-                n = _ceil(need)
+                # Поштучные позиции (маяки, крепеж, лампы): проверяем фасовку в упаковке
+                pcs = _spec(p, "pcs_in_pack")
+                if not pcs and p.name:
+                    m_pcs = re.search(r"(?<![\dх×x*])(\d+)\s*шт(?![а-яa-z\d])", p.name, re.IGNORECASE)
+                    if m_pcs:
+                        try:
+                            val = Decimal(m_pcs.group(1))
+                            if val > 1:
+                                pcs = val
+                        except Exception:
+                            pass
+                item_len = _spec(p, "length_m") or _spec(p, "pack_length_m")
+                if pcs and pcs > 1:
+                    n = _ceil(need / pcs)
+                elif item_len and item_len > 1 and material == Material.profile:
+                    n = _ceil(need / item_len)
+                else:
+                    n = _ceil(need)
             reason = "влагостойкий, т.к. высокая влажность" if wet else None
         else:
             reserve = RESERVE.get(material, Decimal(5))
