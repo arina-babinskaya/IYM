@@ -2,6 +2,10 @@ import math
 import re
 from dataclasses import dataclass, field
 
+from sqlalchemy import inspect, select
+from sqlalchemy.orm import object_session
+from sqlalchemy.orm.attributes import set_committed_value
+
 from app.models import Product, ProductBinding
 from app.schemas import Level, RoomInput, RoomType
 from app.taxonomy import Material
@@ -22,6 +26,9 @@ LOW_EMISSION = _rx(r"без запаха|гипоаллерг|экологич|\
 NO = _rx(r"^(нет|no|-|отсутств|0$)")
 WEAR_CLASS = _rx(r"\b(3[1-4])\s*класс|класс\w*\s*(?:износостойкости|эксплуатации|нагрузки)?\D{0,3}(3[1-4])\b")
 PEI = _rx(r"\bPEI\s*(I{1,3}V?|V|[1-5])\b")
+DECORATIVE = _rx(r"декоратив|фактурн|короед|\bшуба\b|венецианск|травертин|микроцемент|под бетон|кракелюр|"
+                 r"перламутр|металлик|с эффектом|\bэффект(?!ивн)|песчан\w* вихр|рельефн|структурн")
+TILE_DECOR = _rx(r"\bдекор\b|бордюр|панно|вставк|фриз|карандаш|\bугол\w* керам")
 OUTDOOR = _rx(r"уличн|прожектор|садов|ландшафт|солнечн\w* батар|промышленн|наземн|фасадн|грунтов\w* светил")
 IP = _rx(r"\bIP\s?(\d{2})\b")
 ROMAN = {"I": 1, "II": 2, "III": 3, "IV": 4, "V": 5}
@@ -41,7 +48,7 @@ TYPICAL: dict[Material, re.Pattern[str]] = {m: _rx(p) for m, p in {
     M.cable_channel: r"^(кабель-канал|гофротруб|труба гофрир)",
     M.electrical_boxes: r"^(подрозетник|коробка|распределительн\w* коробк|распаечн)",
     M.circuit_breakers: r"^(автомат|выключатель автомат|узо|дифавтомат|щит)",
-    M.socket: r"^розетк(?!.*(переносн|удлинит|колодк|таймер|без заземлен|б/з))",
+    M.socket: r"^розетк(?!.*(переносн|удлинит|колодк|таймер|без заземлен|б/з|телефон|rj\d|компьютер|интернет|\bтв\b|\btv\b|антенн|телевиз|акустич|din|потолочн))",
     M.switch: r"^выключател(?!\w* автомат)(?!.*(на шнур|шнуров|проходн\w* для|кнопк|для ламп|для светильн))",
     M.lighting: r"^(светильник|люстр|бра\b|спот|торшер)",
     M.lamps: r"^(лампа|лампочк)(?!.*(настольн|напольн|растени|аквариум|автомоб|\b12\s?в\b|h[1-9]\b|ультрафиолет|бактерицид|холодильн|швейн|духов|печ))",
@@ -51,7 +58,7 @@ TYPICAL: dict[Material, re.Pattern[str]] = {m: _rx(p) for m, p in {
     M.ventilation: r"^(вентилятор|воздуховод|решетк\w* вентил|решётк\w* вентил)",
     M.doors: r"^(двер|полотно дверн|блок дверн|окно)",
     M.door_hardware: r"^(ручк\w* дверн|петл|замок|защ[её]лк)",
-    M.fasteners: r"^(дюбел|саморез|шуруп|анкер)",
+    M.fasteners: r"^(дюбел|саморез|шуруп|анкер)(?!.*(кровельн|сэндвич|мебельн|конфирмат|профнастил|фасадн|для поликарбонат|рыболов))",
     M.mounting_foam: r"^пена",
     M.mounting_adhesive: r"^(жидкие гвозди|клей монтажн)",
     M.skirting: r"^(плинтус|порож)",
@@ -88,6 +95,8 @@ WALLS = {M.paint, M.wallpaper}
 FLOORS = {M.laminate, M.linoleum, M.tile}
 MIXES = {M.putty, M.plaster, M.primer, M.paint, M.grout, M.tile_adhesive, M.screed_mix}
 ELECTRIC = {M.lighting, M.socket, M.switch, M.ventilation, M.electrical_boxes}
+# Base materials of ordinary works; decorative finishes have their own work and material (M.decorative).
+PLAIN_FINISH = {M.plaster, M.putty, M.paint, M.primer, M.grout, M.tile_adhesive, M.screed_mix, M.tile}
 LIVING = {R.bedroom, R.living_room, R.home_office, R.dining_room}
 BUSY = {R.kitchen, R.hallway}
 WET = {R.bathroom, R.utility_room, R.kitchen, R.balcony}
@@ -126,6 +135,7 @@ RULES: list[Rule] = [
     rule("ip_protected", 5, ELECTRIC, rooms={R.bathroom}),
     rule("ip_protected", 3, ELECTRIC, humidity=Level.high),
     rule("outdoor", -10, ELECTRIC, rooms=set(RoomType) - {R.balcony}),
+    rule("decorative", -8, PLAIN_FINISH),
     rule("low_emission", 2, {M.paint, M.wallpaper, M.laminate, M.linoleum, M.primer, M.wallpaper_glue},
          rooms=LIVING),
 ]
@@ -168,6 +178,15 @@ def _material(b: ProductBinding) -> Material | None:
 
 
 def characteristics(p: Product) -> dict[str, str]:
+    cached = getattr(p, "_rc_characteristics", None)
+    if cached is not None and cached[0] is p.raw:
+        return cached[1]
+    out = _characteristics(p)
+    p._rc_characteristics = (p.raw, out)
+    return out
+
+
+def _characteristics(p: Product) -> dict[str, str]:
     raw = p.raw or {}
     items = raw.get("characteristics") or raw.get("params") or []
     out: dict[str, str] = {}
@@ -260,6 +279,13 @@ def _outdoor(chars: dict[str, str], text: str) -> float:
     return 1.0 if OUTDOOR.search(text) else 0.0
 
 
+def _decorative(material: Material | None, name: str | None) -> float:
+    text = name or ""
+    if DECORATIVE.search(text):
+        return 1.0
+    return 1.0 if material == M.tile and TILE_DECOR.search(text) else 0.0
+
+
 def _typical(material: Material | None, name: str | None) -> float:
     pattern = TYPICAL.get(material)
     return 1.0 if pattern and pattern.search((name or "").strip()) else 0.0
@@ -272,7 +298,79 @@ def room_match(name: str | None, room: RoomType) -> float:
     return 1.0 if room in mentioned else -1.0
 
 
+@dataclass(frozen=True)
+class _Profile:
+    signals: dict[str, float]
+    filled: int
+    unit_price: tuple[float | None, str]
+    calculable: bool
+    rooms: frozenset[RoomType]
+    moisture_rejected: bool
+
+
+_PROFILES: dict[tuple, _Profile] = {}
+_PROFILES_MAX = 300_000
+
+
+def clear_cache() -> None:
+    _PROFILES.clear()
+
+
+def _key(p: Product, b: ProductBinding) -> tuple:
+    # Products are scored thousands of times (every estimate, hint and filter) but change only on a
+    # catalog load (new last_seen_run, also when loaded by another process) or a binding/price edit.
+    return (p.id, p.last_seen_run, p.name, p.result_price, p.package_area, p.unit, b.material,
+            tuple(sorted((b.flags or {}).items())))
+
+
+def _preload_cards(items: list[tuple[Product, ProductBinding]]) -> None:
+    """Candidate queries skip the heavy card columns; fetch them in bulk for products not profiled yet."""
+    missing = {p.id: p for p, b in items
+               if p.id is not None and _key(p, b) not in _PROFILES and "raw" in inspect(p).unloaded}
+    session = object_session(next(iter(missing.values()))) if missing else None
+    if session is None:
+        return
+    ids = list(missing)
+    for start in range(0, len(ids), 900):
+        chunk = ids[start:start + 900]
+        for pid, raw, description in session.execute(
+                select(Product.id, Product.raw, Product.description).where(Product.id.in_(chunk))):
+            set_committed_value(missing[pid], "raw", raw)
+            set_committed_value(missing[pid], "description", description)
+
+
+def _profile(p: Product, b: ProductBinding) -> _Profile:
+    key = _key(p, b)
+    cached = _PROFILES.get(key) if p.id is not None else None
+    if cached is None:
+        cached = _Profile(_signals(p, b), len(characteristics(p)), unit_price(p), calculable(p, b),
+                          frozenset(r for r, pattern in ROOM_WORDS.items() if pattern.search(p.name or "")),
+                          moisture_rejected(p))
+        if p.id is not None:
+            if len(_PROFILES) >= _PROFILES_MAX:
+                _PROFILES.clear()
+            _PROFILES[key] = cached
+    return cached
+
+
 def signals(p: Product, b: ProductBinding) -> dict[str, float]:
+    return dict(_profile(p, b).signals)
+
+
+def has_flags(p: Product, b: ProductBinding, required) -> bool:
+    """Wet-room filter: explicit flags or catalog evidence pass; only explicit "not moisture resistant" fails."""
+    profile, flags = _profile(p, b), b.flags or {}
+    return all(
+        flags.get(f) or profile.signals.get(f, 0) >= 1 or (f == "moisture_resistant" and not profile.moisture_rejected)
+        for f in required
+    )
+
+
+def preload(items: list[tuple[Product, ProductBinding]]) -> None:
+    _preload_cards(items)
+
+
+def _signals(p: Product, b: ProductBinding) -> dict[str, float]:
     chars = characteristics(p)
     text = " ".join([p.name or "", (p.description or "")[:500]])
     flags = b.flags or {}
@@ -286,6 +384,7 @@ def signals(p: Product, b: ProductBinding) -> dict[str, float]:
         "low_emission": _low_emission(chars, text),
         "ip_protected": _ip(chars, text),
         "outdoor": _outdoor(chars, text),
+        "decorative": _decorative(_material(b), p.name),
         "typical": _typical(_material(b), p.name),
     }
 
@@ -358,34 +457,36 @@ class ContextRanker:
         for p, b in candidates:
             unique.setdefault(p.id, (p, b))
         items = list(unique.values())
+        _preload_cards(items)
         recsys = _percentile([_num(p.recsys_rating) for p, _ in items])
-        prices = [unit_price(p) for p, _ in items]
+        profiles = [_profile(p, b) for p, b in items]
+        prices = [pr.unit_price for pr in profiles]
         cheap = _cheapness(prices)
         if len(items) < 2:
             cheap = [0.0] * len(items)
         picked = {pid: i for i, pid in enumerate(room.picks)}
 
         scored = []
-        for (p, b), rs, (up, basis), ch in zip(items, recsys, prices, cheap):
+        for (p, b), pr, rs, (up, basis), ch in zip(items, profiles, recsys, prices, cheap):
             rating = _num(p.rating)
             w = self.base_weights
             parts = {
                 "in_stock": w["in_stock"] * (1.0 if p.in_stock else 0.0),
-                "calculable": w["calculable"] * (1.0 if calculable(p, b) else 0.0),
+                "calculable": w["calculable"] * (1.0 if pr.calculable else 0.0),
                 "confirmed": w["confirmed"] * (1.0 if b.confirmed else 0.0),
                 "recsys": w["recsys"] * rs,
                 "rating": w["rating"] * (min(max(rating / 5, 0.0), 1.0) if rating else 0.0),
-                "room_match": w["room_match"] * room_match(p.name, room.room_type),
+                "room_match": w["room_match"] * (0.0 if not pr.rooms else 1.0 if room.room_type in pr.rooms else -1.0),
             }
             material = _material(b)
-            sig = signals(p, b)
+            sig = pr.signals
             for r in self.rules:
                 if sig.get(r.signal) and r.applies(material, room):
                     parts[r.signal] = parts.get(r.signal, 0.0) + r.weight * sig[r.signal]
             quality = sum(parts.values())
             parts["price"] = self.base_weights["price"] * ch
             parts = {k: round(v, 4) for k, v in parts.items() if v}
-            scored.append(Scored(p, round(sum(parts.values()), 4), parts, len(characteristics(p)), round(quality, 4),
+            scored.append(Scored(p, round(sum(parts.values()), 4), parts, pr.filled, round(quality, 4),
                                  up, basis))
 
         scored.sort(key=lambda s: (picked.get(s.product.id, len(picked)), -s.score, -s.filled, s.product.id))
