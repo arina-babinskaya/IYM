@@ -45,12 +45,15 @@
     .why-pop { position: fixed; z-index: 100; width: min(360px, 80vw); background: #fff; color: #111827; border: 1px solid #e5e7eb; border-radius: 0.75rem; padding: 12px 14px; font-weight: 400; font-size: 13px; text-align: left; box-shadow: 0 10px 25px rgba(0,0,0,.12); white-space: normal; }
     .why-pop ul { margin: 4px 0 0; padding-left: 18px; list-style: disc; }
     .logo-fallback { display: none; }
+    .chat-copy h3 { font-weight: 700; margin: .7rem 0 .25rem; }
+    .chat-copy ul { list-style: disc; padding-left: 1.25rem; margin: .35rem 0; }
+    .chat-copy p { margin: .3rem 0; }
   </style>
 </head>
 <body class="bg-brand-bg text-gray-900 font-sans antialiased min-h-screen flex flex-col">
 
 <header class="bg-white border-b border-gray-200 sticky top-0 z-50">
-  <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+  <div class="max-w-6xl mx-auto px-4 min-h-16 py-2 flex flex-wrap items-center justify-between gap-2">
     <a href="/" class="flex items-center gap-3 group cursor-pointer">
       <img src="/static/logo.png" alt="" onerror="this.style.display='none'; document.getElementById('logo-fallback').style.display='flex';" class="h-10 w-auto object-contain transition-transform group-hover:scale-105">
       <div id="logo-fallback" class="logo-fallback w-10 h-10 bg-brand-red rounded-xl items-center justify-center text-white font-extrabold text-lg shadow-sm">IYM</div>
@@ -60,11 +63,12 @@
         </p>
       </div>
     </a>
-    <nav class="hidden md:flex bg-gray-100 p-1 rounded-xl">
-      <button data-tab="calc" class="px-5 py-2 rounded-lg text-sm font-semibold transition-all bg-white text-brand-red shadow-sm">Калькулятор</button>
-      <button data-tab="card" class="px-5 py-2 rounded-lg text-sm font-semibold transition-all text-gray-600 hover:text-gray-900">Карточка товара</button>
-      <button data-tab="decor" class="px-5 py-2 rounded-lg text-sm font-semibold transition-all text-gray-600 hover:text-gray-900">Декор</button>
-      <button data-tab="admin" class="px-5 py-2 rounded-lg text-sm font-semibold transition-all text-gray-600 hover:text-gray-900">Админка</button>
+    <nav class="flex overflow-x-auto bg-gray-100 p-1 rounded-xl max-w-full">
+      <button data-tab="calc" class="px-3 lg:px-5 py-2 rounded-lg text-xs lg:text-sm whitespace-nowrap font-semibold transition-all bg-white text-brand-red shadow-sm">Калькулятор</button>
+      <button data-tab="consultant" class="px-3 lg:px-5 py-2 rounded-lg text-xs lg:text-sm whitespace-nowrap font-semibold transition-all text-gray-600 hover:text-gray-900">Консультант</button>
+      <button data-tab="card" class="px-3 lg:px-5 py-2 rounded-lg text-xs lg:text-sm whitespace-nowrap font-semibold transition-all text-gray-600 hover:text-gray-900">Карточка товара</button>
+      <button data-tab="decor" class="px-3 lg:px-5 py-2 rounded-lg text-xs lg:text-sm whitespace-nowrap font-semibold transition-all text-gray-600 hover:text-gray-900">Декор</button>
+      <button data-tab="admin" class="px-3 lg:px-5 py-2 rounded-lg text-xs lg:text-sm whitespace-nowrap font-semibold transition-all text-gray-600 hover:text-gray-900">Админка</button>
     </nav>
   </div>
 </header>
@@ -127,6 +131,33 @@
     <div class="p-6 md:p-8" id="decor-box"></div>
   </section>
 
+  <section data-panel="consultant" class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden" hidden>
+    <div class="grid md:grid-cols-[260px_1fr] min-h-[70vh]">
+      <aside class="border-b md:border-b-0 md:border-r border-gray-200 bg-gray-50 p-4">
+        <button id="chat-new" class="w-full bg-brand-red hover:bg-red-900 text-white font-semibold py-2.5 px-4 rounded-xl">+ Новый чат</button>
+        <div id="chat-list" class="mt-3 flex md:block gap-2 overflow-x-auto md:overflow-y-auto md:max-h-[62vh]"></div>
+      </aside>
+      <div class="flex flex-col min-w-0 h-[70vh]">
+        <div class="px-4 md:px-6 py-3 border-b flex justify-between items-center gap-3">
+          <div class="min-w-0"><h2 id="chat-title" class="font-bold truncate">Консультант по ремонту</h2><p class="text-xs text-gray-500">GigaChat · рекомендации по материалам и отделке</p></div>
+          <div id="chat-actions" class="flex gap-1" hidden>
+            <button id="chat-rename" class="p-2 text-gray-500 hover:text-brand-red" aria-label="Переименовать чат" title="Переименовать">✎</button>
+            <button id="chat-delete" class="p-2 text-gray-500 hover:text-brand-red" aria-label="Удалить чат" title="Удалить">🗑</button>
+          </div>
+        </div>
+        <div id="chat-messages" class="flex-1 overflow-y-auto p-4 md:p-6 space-y-4" aria-live="polite"></div>
+        <div id="chat-error" class="mx-4 mb-2 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg p-3" hidden></div>
+        <div class="border-t p-3 md:p-4 bg-white">
+          <div class="flex gap-2 items-end">
+            <textarea id="chat-input" rows="2" maxlength="6000" placeholder="Расскажите, что планируете отремонтировать…" class="flex-1 resize-none border border-gray-300 rounded-xl px-4 py-3 outline-none focus:border-brand-blue disabled:bg-gray-100"></textarea>
+            <button id="chat-send" class="bg-brand-red hover:bg-red-900 text-white font-semibold px-5 py-3 rounded-xl disabled:opacity-50" disabled>Отправить</button>
+          </div>
+          <div class="mt-2 flex justify-between items-center gap-2"><span class="text-[11px] text-gray-400">Enter — отправить, Shift+Enter — новая строка</span><button id="chat-to-calc" class="text-sm font-semibold text-brand-red hover:underline" hidden>Перейти к калькулятору →</button></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <section data-panel="admin" class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8" hidden>
     <div class="flex flex-wrap justify-between items-center gap-4 mb-6">
       <h2 class="text-2xl font-bold">Привязка товаров</h2>
@@ -179,6 +210,7 @@
   </section>
 </main>
 
+<script src="/static/consultant_state.js?v=20261031-3"></script>
 <script>
 const ROOMS = {};
 const ROOM_OPENINGS = {};
@@ -215,7 +247,9 @@ async function api(path, options = {}) {
   return body;
 }
 
-document.querySelectorAll("nav button").forEach(b => b.onclick = () => {
+function switchTab(tab) {
+  const b = document.querySelector(`nav button[data-tab="${tab}"]`);
+  if (!b) return;
   document.querySelectorAll("nav button").forEach(x => {
     x.classList.toggle("bg-white", x === b);
     x.classList.toggle("text-brand-red", x === b);
@@ -225,7 +259,9 @@ document.querySelectorAll("nav button").forEach(b => b.onclick = () => {
   document.querySelectorAll("[data-panel]").forEach(p => p.hidden = p.dataset.panel !== b.dataset.tab || (p.id === "estimate-result" && !p.dataset.filled));
   if (b.dataset.tab === "admin") loadAdmin();
   if (b.dataset.tab === "decor" && !D.shown) decorRooms();
-});
+  if (b.dataset.tab === "consultant") loadChats();
+}
+document.querySelectorAll("nav button").forEach(b => b.onclick = () => switchTab(b.dataset.tab));
 
 const STEPS = ["Помещение", "Размеры", "Вид ремонта", "Работы", "Смета"];
 const RENO_HINTS = { cosmetic: "обновить отделку: стены, пол", capital: "с демонтажом, черновыми и чистовыми работами", euro: "капитальный под ключ, дорогие материалы", rental: "быстро и недорого для арендаторов" };
@@ -1614,6 +1650,239 @@ async function decorReplace(line) {
   document.getElementById("decor-q").oninput = () => { clearTimeout(t); t = setTimeout(load, 300); };
   load();
 }
+
+const C = { chats: [], loaded: false, listGeneration: 0, store: new ConsultantStateStore() };
+const chatList = document.getElementById("chat-list");
+const chatMessages = document.getElementById("chat-messages");
+const chatInput = document.getElementById("chat-input");
+const chatSend = document.getElementById("chat-send");
+const activeChatState = () => C.store.activeState();
+
+function chatMarkup(text) {
+  return esc(text).split("\n").map(line => {
+    if (/^\*\*(.+)\*\*$/.test(line.trim())) return `<h3>${line.trim().slice(2, -2)}</h3>`;
+    if (/^[-*] /.test(line)) return `<div class="pl-3">• ${line.slice(2).replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")}</div>`;
+    return line ? `<p>${line.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")}</p>` : '<div class="h-2"></div>';
+  }).join("");
+}
+
+function renderChatList() {
+  chatList.innerHTML = C.chats.length ? C.chats.map(c => { const s = C.store.ensure(c.id); return `<div class="min-w-[210px] md:min-w-0 mb-2"><button data-chat="${c.id}" class="w-full text-left p-3 rounded-xl border ${c.id === C.store.active ? "border-brand-red bg-white shadow-sm" : "border-transparent hover:bg-white"}"><div class="font-semibold text-sm truncate">${esc(c.title)}</div><div class="text-xs ${s.loading ? "text-brand-red" : "text-gray-400"} truncate mt-1">${esc(s.loading ? "Консультант печатает…" : (c.preview || "Пока нет сообщений"))}</div><div class="text-[10px] text-gray-300 mt-1">${new Date(c.updated_at).toLocaleString("ru-RU", {day:"2-digit", month:"2-digit", hour:"2-digit", minute:"2-digit"})}</div></button></div>`; }).join("") : '<p class="text-sm text-gray-500 p-2">Создайте отдельный чат для комнаты или всего ремонта.</p>';
+  chatList.querySelectorAll("[data-chat]").forEach(b => b.onclick = () => openChat(b.dataset.chat));
+}
+
+function renderMessages() {
+  const state = activeChatState();
+  // Store boundaries already normalize messages. Keep rendering defensive as the final safety net
+  // so a bad extension/stale script value cannot take down the entire consultant panel.
+  const messages = ConsultantStateStore.validMessages(state?.messages);
+  if (!C.store.active) {
+    chatMessages.innerHTML = '<div class="h-full grid place-items-center text-center"><div><div class="text-4xl mb-3">🛠️</div><h3 class="font-bold text-lg">Спланируем ремонт вместе</h3><p class="text-gray-500 mt-2 max-w-md">Создайте чат для детской, ванной, кухни или всей квартиры. История каждой комнаты сохранится отдельно.</p></div></div>';
+  } else if (state.historyLoading && !state.historyLoaded && !messages.length) {
+    chatMessages.innerHTML = '<div class="h-full grid place-items-center text-gray-500"><div class="animate-pulse">Загружаю историю…</div></div>';
+  } else if (!messages.length) {
+    chatMessages.innerHTML = '<div class="h-full grid place-items-center text-center"><div><h3 class="font-bold text-lg">С чего начнём?</h3><p class="text-gray-500 mt-2 max-w-md">Опишите помещение, задачу или сомнения по материалам. Я задам только нужные уточнения.</p></div></div>';
+  } else {
+    chatMessages.innerHTML = messages.map(m => {
+      // An optimistic first message has no database id yet. `null?.id === m.id` was therefore
+      // `undefined === undefined` and incorrectly entered edit mode, then dereferenced
+      // `state.editing.content`. Require a real edit object and a persisted message id.
+      const user = m.role === "user", editing = Boolean(state.editing && m.id != null && state.editing.id === m.id);
+      if (editing) return `<div class="flex justify-end"><div class="w-full max-w-[88%] md:max-w-[75%] rounded-2xl border border-brand-red bg-white p-3"><textarea data-edit-input rows="4" maxlength="6000" ${state.loading ? "disabled" : ""} class="w-full resize-y border border-gray-300 rounded-lg p-3 outline-none focus:border-brand-blue">${esc(state.editing.content)}</textarea><div class="mt-2 flex flex-wrap justify-end gap-2"><button data-edit-cancel ${state.loading ? "disabled" : ""} class="px-3 py-1.5 text-sm border rounded-lg hover:bg-gray-50 disabled:opacity-50">Отмена</button><button data-edit-save ${state.loading ? "disabled" : ""} class="px-3 py-1.5 text-sm bg-brand-red text-white rounded-lg disabled:opacity-50">${state.loading ? "Обновляю…" : "Сохранить и отправить"}</button></div></div></div>`;
+      return `<div class="group flex ${user ? "justify-end" : "justify-start"}"><div class="max-w-[88%] md:max-w-[75%] min-w-0 rounded-2xl px-4 py-3 ${user ? "bg-brand-red text-white rounded-br-md" : "bg-gray-100 text-gray-900 rounded-bl-md"}"><div class="chat-copy text-sm leading-relaxed break-words">${chatMarkup(m.content)}</div><div class="mt-2 flex items-center justify-between gap-3"><div class="text-[10px] ${user ? "text-red-100" : "text-gray-400"}">${new Date(m.created_at).toLocaleTimeString("ru-RU", {hour:"2-digit", minute:"2-digit"})}</div>${m.id ? `<div class="flex gap-2 text-[11px] ${user ? "text-red-100" : "text-gray-500"}"><button data-copy-message="${m.id}" class="hover:underline focus:underline" title="Копировать сообщение">Копировать</button>${user ? `<button data-edit-message="${m.id}" class="hover:underline focus:underline" title="Изменить сообщение">Изменить</button>` : ""}</div>` : ""}</div></div></div>`;
+    }).join("");
+  }
+  if (state?.loading) chatMessages.insertAdjacentHTML("beforeend", '<div class="flex justify-start"><div class="bg-gray-100 rounded-2xl px-4 py-3 text-gray-500 animate-pulse">Консультант печатает…</div></div>');
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+  const hasAdvice = messages.some(m => m.role === "assistant" && /рекоменд|учесть|материал/i.test(m.content));
+  document.getElementById("chat-to-calc").hidden = !hasAdvice;
+}
+
+function setChatControls() {
+  const state = activeChatState(); chatInput.disabled = !state || state.loading || state.deleting;
+  chatSend.disabled = !state || state.loading || state.deleting || !chatInput.value.trim();
+  document.getElementById("chat-actions").hidden = !C.store.active;
+}
+
+function renderChatError() {
+  const box = document.getElementById("chat-error"), message = activeChatState()?.error || "";
+  box.textContent = message; box.hidden = !message;
+}
+
+async function refreshChatList() {
+  const generation = ++C.listGeneration;
+  const started = performance.now();
+  try { const chats = await api("/api/v1/consultant/chats"); if (generation === C.listGeneration) { C.chats = chats; C.loaded = true; renderChatList(); console.info("Consultant chat list", {apiMs:Math.round(performance.now()-started), chats:chats.length}); } }
+  catch (e) { showChatError(consultantErrorMessage(e)); }
+}
+
+async function loadChats() {
+  if (C.loaded) return;
+  await refreshChatList(); renderMessages(); setChatControls();
+}
+
+async function openChat(id) {
+  const navigationStarted = performance.now();
+  // Do not abort another chat's history load when navigating away. The FastAPI history handler
+  // is synchronous, so aborting fetch cannot cancel work already executing on the server. It only
+  // discarded the result and caused another request when the user returned, producing an
+  // increasing backlog during rapid switching. Each chat already has its own generation token;
+  // let its single in-flight request finish and populate that chat's cache.
+  C.store.select(id); const state = C.store.ensure(id);
+  const listed = C.chats.find(x => x.id === id); if (listed) document.getElementById("chat-title").textContent = listed.title;
+  chatInput.value = state.draft; const renderStarted = performance.now(); renderChatList(); renderMessages(); renderChatError(); setChatControls();
+  const renderMs = Math.round(performance.now() - renderStarted);
+  if ((state.loading && state.historyLoaded) || C.store.hasFreshHistory(id, listed?.last_message_id ?? null)) {
+    console.info("Consultant navigation", {chatId:id, cached:true, requests:0, renderMs, totalMs:Math.round(performance.now()-navigationStarted), messages:state.messages.length});
+    return;
+  }
+  if (state.historyLoading) {
+    console.info("Consultant navigation", {chatId:id, cached:state.historyLoaded, requests:0, pendingHistory:true, renderMs, totalMs:Math.round(performance.now()-navigationStarted), messages:state.messages.length});
+    return;
+  }
+  const generation = C.store.beginHistory(id); if (generation === null) return;
+  state.error = "";
+  const controller = new AbortController(); state.historyAbort = controller;
+  if (!state.historyLoaded) renderMessages();
+  const apiStarted = performance.now();
+  try {
+    const chat = await api(`/api/v1/consultant/chats/${id}`, {signal:controller.signal});
+    const apiMs = Math.round(performance.now() - apiStarted);
+    C.store.applyLoad(id, generation, chat.messages || [], chat.last_message_id ?? null);
+    const listed = C.chats.find(x => x.id === id); if (listed) Object.assign(listed, chat);
+    if (C.store.active === id) { const freshRender = performance.now(); document.getElementById("chat-title").textContent = chat.title; renderMessages(); setChatControls(); console.info("Consultant navigation", {chatId:id, cached:false, requests:1, apiMs, renderMs:Math.round(performance.now()-freshRender), totalMs:Math.round(performance.now()-navigationStarted), messages:(chat.messages||[]).length}); }
+  } catch (e) {
+    if (e.name !== "AbortError") showChatError(consultantErrorMessage(e, "Не удалось загрузить историю чата."), id);
+  } finally {
+    if (state.historyAbort === controller) C.store.finishHistory(id, generation);
+    if (C.store.active === id) { renderMessages(); setChatControls(); }
+  }
+}
+
+function showChatError(message, chatId = C.store.active) {
+  if (chatId) C.store.ensure(chatId).error = message;
+  if (C.store.active === chatId) renderChatError();
+}
+
+function consultantErrorMessage(error, fallback = "Не удалось выполнить действие. Попробуйте ещё раз.") {
+  if (error instanceof TypeError || error instanceof ReferenceError || error instanceof SyntaxError) {
+    console.error("Consultant frontend failure", {name:error.name, message:error.message, stack:error.stack});
+    return fallback;
+  }
+  return error?.message || fallback;
+}
+
+document.getElementById("chat-new").onclick = async () => {
+  try { const chat = await api("/api/v1/consultant/chats", {method:"POST", body:JSON.stringify({})}); C.chats.unshift(chat); const state=C.store.ensure(chat.id); state.historyLoaded=true; state.lastMessageId=null; state.historyFetchedAt=Date.now(); await openChat(chat.id); chatInput.focus(); }
+  catch (e) { showChatError(consultantErrorMessage(e)); }
+};
+document.getElementById("chat-rename").onclick = async () => {
+  const chatId = C.store.active, old = C.chats.find(x => x.id === chatId); const title = prompt("Новое название", old?.title || ""); if (!title?.trim()) return;
+  try { const chat = await api(`/api/v1/consultant/chats/${chatId}`, {method:"PATCH", body:JSON.stringify({title:title.trim()})}); Object.assign(old, chat); if (C.store.active === chatId) document.getElementById("chat-title").textContent = chat.title; renderChatList(); }
+  catch (e) { showChatError(consultantErrorMessage(e), chatId); }
+};
+document.getElementById("chat-delete").onclick = async () => {
+  const chatId = C.store.active, state = activeChatState(), old = C.chats.find(x => x.id === chatId); if (!confirm(`Удалить чат «${old?.title}» и всю его историю?`)) return;
+  state.deleting = true; setChatControls();
+  try { await api(`/api/v1/consultant/chats/${chatId}`, {method:"DELETE"}); C.chats = C.chats.filter(x => x.id !== chatId); C.store.remove(chatId); document.getElementById("chat-title").textContent = "Консультант по ремонту"; chatInput.value = ""; renderChatList(); renderMessages(); renderChatError(); setChatControls(); }
+  catch (e) { state.deleting = false; showChatError(consultantErrorMessage(e), chatId); setChatControls(); }
+};
+
+async function sendChat() {
+  const chatId = C.store.active, state = activeChatState(), content = chatInput.value.trim(); if (!content || !state) return;
+  const requestStarted = performance.now();
+  const operation = C.store.beginOperation(chatId); if (operation === null) return;
+  const requestId = state.retryId || (crypto.randomUUID ? crypto.randomUUID().replaceAll("-", "") : `${Date.now()}_${Math.random().toString(36).slice(2)}`);
+  state.retryId = requestId; state.draft = content;
+  let answerMessage = null;
+  try {
+    const optimistic = {role:"user", content, created_at:new Date().toISOString(), optimisticId:requestId};
+    if (!C.store.appendMessage(chatId, optimistic)) throw new Error("Не удалось подготовить сообщение к отправке.");
+    renderChatList(); renderMessages(); renderChatError(); setChatControls();
+    const answer = await api(`/api/v1/consultant/chats/${chatId}/messages`, {method:"POST", body:JSON.stringify({content, request_id:requestId})});
+    if (!C.store.isCurrent(chatId, operation)) return;
+    if (!C.store.appendMessage(chatId, answer)) throw new Error("Сервер вернул некорректный ответ консультанта.");
+    answerMessage = answer;
+    state.draft = ""; state.retryId = null;
+    if (C.store.active === chatId) { chatInput.value = ""; renderMessages(); setChatControls(); }
+    console.info("Consultant request response", {chatId, requestId, networkMs:Math.round(performance.now() - requestStarted)});
+    const current = C.chats.find(x => x.id === chatId);
+    if (current) { current.preview = answer.content; current.updated_at = answer.created_at; current.last_message_id = answer.id; C.chats = [current, ...C.chats.filter(x => x !== current)]; }
+    try {
+      const detail = await api(`/api/v1/consultant/chats/${chatId}`);
+      if (C.store.isCurrent(chatId, operation)) { C.store.setMessages(chatId, detail.messages); state.historyLoaded=true; state.lastMessageId=detail.last_message_id ?? null; state.historyFetchedAt=Date.now(); }
+      const listed = C.chats.find(x => x.id === chatId); if (listed) Object.assign(listed, detail);
+      if (C.store.active === chatId) document.getElementById("chat-title").textContent = detail.title;
+      refreshChatList();
+      console.info("Consultant request synchronized", {chatId, requestId, totalMs:Math.round(performance.now() - requestStarted)});
+    } catch (_) { C.loaded = false; }
+  } catch (e) {
+    console.error("Consultant send failed", {chatId, requestId, error:e});
+    if (C.store.isCurrent(chatId, operation)) { state.messages = state.messages.filter(x => x && x !== answerMessage && x.optimisticId !== requestId); showChatError("Не удалось отправить сообщение. Текст сохранён — попробуйте ещё раз.", chatId); }
+  } finally {
+    const active = C.store.finishOperation(chatId, operation) && C.store.active === chatId;
+    // Loading is cleared before any DOM work. A rendering problem can no longer strand the chat in
+    // the typing state, and controls/list cleanup still runs independently.
+    if (active) {
+      try { renderMessages(); } catch (renderError) { console.error("Consultant render failed", renderError); }
+      try { renderChatError(); } finally { setChatControls(); }
+    }
+    renderChatList();
+  }
+}
+
+async function copyChatMessage(message) {
+  try {
+    if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(message.content);
+    else {
+      const area = document.createElement("textarea"); area.value = message.content; area.style.position = "fixed"; area.style.opacity = "0";
+      document.body.appendChild(area); area.select(); const copied = document.execCommand("copy"); area.remove(); if (!copied) throw new Error("copy failed");
+    }
+    const button = chatMessages.querySelector(`[data-copy-message="${message.id}"]`); if (button) { button.textContent = "Скопировано"; setTimeout(() => { if (button.isConnected) button.textContent = "Копировать"; }, 1400); }
+  } catch (_) { showChatError("Не удалось скопировать сообщение. Выделите текст и скопируйте его вручную."); }
+}
+
+async function saveEditedMessage() {
+  const chatId = C.store.active, state = activeChatState(); if (!state?.editing) return;
+  const input = chatMessages.querySelector("[data-edit-input]"); const content = input?.value.trim();
+  if (!content) { showChatError("Сообщение не может быть пустым.", chatId); input?.focus(); return; }
+  const last = state.messages[state.messages.length - 1]; if (!last?.id) return;
+  const operation = C.store.beginOperation(chatId); if (operation === null) return;
+  const requestId = crypto.randomUUID ? crypto.randomUUID().replaceAll("-", "") : `edit_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+  try {
+    renderMessages(); renderChatList(); renderChatError(); setChatControls();
+    const chat = await api(`/api/v1/consultant/chats/${chatId}/messages/${state.editing.id}`, {method:"PATCH", body:JSON.stringify({content, request_id:requestId, expected_last_message_id:last.id})});
+    if (!C.store.isCurrent(chatId, operation)) return;
+    C.store.setMessages(chatId, chat.messages); state.editing = null; state.historyLoaded=true; state.lastMessageId=chat.last_message_id ?? null; state.historyFetchedAt=Date.now();
+    if (C.store.active === chatId) document.getElementById("chat-title").textContent = chat.title;
+    const current = C.chats.find(x => x.id === chatId);
+    if (current) { Object.assign(current, chat); C.chats = [current, ...C.chats.filter(x => x !== current)]; }
+    refreshChatList();
+  } catch (e) { if (C.store.isCurrent(chatId, operation)) showChatError(`${consultantErrorMessage(e, "Не удалось обновить сообщение.")} Исходная история сохранена.`, chatId); }
+  finally {
+    const active = C.store.finishOperation(chatId, operation) && C.store.active === chatId;
+    if (active) {
+      try { renderMessages(); } catch (renderError) { console.error("Consultant render failed", renderError); }
+      try { renderChatError(); } finally { setChatControls(); }
+    }
+    renderChatList();
+  }
+}
+
+chatMessages.onclick = e => {
+  const state = activeChatState(); if (!state) return;
+  const copy = e.target.closest("[data-copy-message]");
+  if (copy) { const message = state.messages.find(x => x.id === Number(copy.dataset.copyMessage)); if (message) copyChatMessage(message); return; }
+  const edit = e.target.closest("[data-edit-message]");
+  if (edit && !state.loading) { const message = state.messages.find(x => x.id === Number(edit.dataset.editMessage) && x.role === "user"); if (message) { state.editing = {id:message.id, content:message.content}; renderMessages(); chatMessages.querySelector("[data-edit-input]")?.focus(); } return; }
+  if (e.target.closest("[data-edit-cancel]")) { state.editing = null; renderMessages(); return; }
+  if (e.target.closest("[data-edit-save]")) saveEditedMessage();
+};
+chatMessages.oninput = e => { if (e.target.matches("[data-edit-input]")) { const b = chatMessages.querySelector("[data-edit-save]"); if (b) b.disabled = !e.target.value.trim() || activeChatState()?.loading; } };
+chatInput.oninput = () => { const state = activeChatState(); if (state) state.draft = chatInput.value; setChatControls(); };
+chatInput.onkeydown = e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendChat(); } };
+chatSend.onclick = sendChat;
+document.getElementById("chat-to-calc").onclick = () => switchTab("calc");
 
 api("/api/v1/taxonomy").then(t => {
   t.stages.forEach(s => T.stages[s.id] = s.title);

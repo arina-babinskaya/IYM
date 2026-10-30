@@ -4,6 +4,7 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import json
+import logging
 import sqlite3
 import ssl
 import time
@@ -19,7 +20,11 @@ from app.models import Product
 from app.schemas import EstimateResponse, Suggestion
 from app.taxonomy import MATERIAL_TITLES, PRODUCT_CATEGORY_TITLES, WORKS, Material, ProductCategory, WorkType, works_for_material
 
-ErrorKind = Literal["api_error", "invalid_json", "schema_validation", "taxonomy_conflict", "budget"]
+ErrorKind = Literal[
+    "api_error", "authentication", "timeout", "connection", "ssl", "rate_limit",
+    "invalid_request", "invalid_json", "schema_validation", "taxonomy_conflict", "budget",
+]
+logger = logging.getLogger(__name__)
 TAXONOMY_VERSION = "taxonomy_v2-38"
 CLASSIFICATION_PROMPT_VERSION = "hybrid-classification-v2"
 EXPLANATION_PROMPT_VERSION = "estimate-explanation-v1"
@@ -133,7 +138,8 @@ class GigaCache:
 class GigaChatClient:
     def __init__(self, settings: Settings | None = None, transport: httpx.AsyncBaseTransport | None = None):
         self.s = settings or get_settings(); self.transport = transport; self.cache = GigaCache(self.s.gigachat_cache_path)
-        self._token: str | None = None; self._token_expiry = 0.0; self._lock = asyncio.Lock()
+        self._token: str | None = None; self._token_expiry = 0.0; self._auth_lock = asyncio.Lock()
+        self._admission_lock = asyncio.Lock(); self._inflight_requests = 0
         self.stats = {"requests": 0, "attempts": 0, "cache_hits": 0, "tokens": self.cache.tokens(), "elapsed_ms": 0,
                       "api_errors": 0, "validation_failures": 0, "unknown_usage": 0}
 
@@ -152,21 +158,29 @@ class GigaChatClient:
         return httpx.AsyncClient(timeout=self.s.gigachat_timeout_s, verify=self._verify(), transport=self.transport)
 
     async def _authenticate(self, http: httpx.AsyncClient) -> str:
-        if self._token and time.time() < self._token_expiry - 30: return self._token
-        if not self.s.gigachat_credentials: raise GigaChatError("GigaChat credentials are not configured")
-        started = time.perf_counter(); key = _hash([self.s.gigachat_cache_namespace, "oauth", self.s.gigachat_scope])
-        response = await http.post(self.s.gigachat_auth_url, headers={"Authorization": f"Basic {self.s.gigachat_credentials}",
-            "RqUID": str(uuid.uuid4())}, data={"scope": self.s.gigachat_scope})
-        elapsed = int((time.perf_counter() - started) * 1000)
-        if response.status_code >= 400:
+        if self._token and time.time() < self._token_expiry - 30:
+            return self._token
+        async with self._auth_lock:
+            if self._token and time.time() < self._token_expiry - 30:
+                return self._token
+            if not self.s.gigachat_credentials: raise GigaChatError("GigaChat credentials are not configured")
+            started = time.perf_counter(); key = _hash([self.s.gigachat_cache_namespace, "oauth", self.s.gigachat_scope])
+            response = await http.post(self.s.gigachat_auth_url, headers={"Authorization": f"Basic {self.s.gigachat_credentials}",
+                "RqUID": str(uuid.uuid4())}, data={"scope": self.s.gigachat_scope})
+            elapsed = int((time.perf_counter() - started) * 1000)
+            if response.status_code >= 400:
+                error_kind: ErrorKind = "authentication" if response.status_code in (401, 403) else "api_error"
+                self.cache.log(key=key,kind="oauth",model=self.s.gigachat_model,attempt=1,from_cache=False,data=None,
+                               elapsed_ms=elapsed,status="api_error",error_kind=error_kind,error=f"HTTP {response.status_code}")
+                raise GigaChatError(f"GigaChat OAuth HTTP {response.status_code}", kind=error_kind,
+                                    diagnostic={"step": "oauth", "status_code": response.status_code})
+            try: data = response.json(); self._token = data["access_token"]
+            except (ValueError, KeyError, TypeError) as exc: raise GigaChatError("GigaChat OAuth returned an invalid response") from exc
             self.cache.log(key=key,kind="oauth",model=self.s.gigachat_model,attempt=1,from_cache=False,data=None,
-                           elapsed_ms=elapsed,status="api_error",error_kind="api_error",error=f"HTTP {response.status_code}")
-            raise GigaChatError(f"GigaChat OAuth HTTP {response.status_code}")
-        try: data = response.json(); self._token = data["access_token"]
-        except (ValueError, KeyError, TypeError) as exc: raise GigaChatError("GigaChat OAuth returned an invalid response") from exc
-        self.cache.log(key=key,kind="oauth",model=self.s.gigachat_model,attempt=1,from_cache=False,data=None,
-                       elapsed_ms=elapsed,status="success")
-        self._token_expiry = float(data.get("expires_at", int((time.time() + 1500) * 1000))) / 1000; return self._token
+                           elapsed_ms=elapsed,status="success")
+            self._token_expiry = float(data.get("expires_at", int((time.time() + 1500) * 1000))) / 1000
+            logger.info("GigaChat OAuth complete elapsed_ms=%s", elapsed)
+            return self._token
 
     async def models(self) -> list[str]:
         started = time.perf_counter(); key = _hash([self.s.gigachat_cache_namespace, "model_discovery"])
@@ -189,6 +203,22 @@ class GigaChatClient:
         if self.s.gigachat_token_budget is not None and self.s.gigachat_token_budget - self.cache.tokens() < self.s.gigachat_token_reservation:
             raise GigaChatError("GigaChat token budget cannot cover the conservative reservation", kind="budget")
 
+    async def _admit_request(self) -> None:
+        """Reserve configured request/token capacity without serializing provider I/O."""
+        async with self._admission_lock:
+            if (self.s.gigachat_max_requests is not None and
+                    self.cache.request_count() + self._inflight_requests >= self.s.gigachat_max_requests):
+                raise GigaChatError("GigaChat request limit exhausted", kind="budget")
+            reserved = self._inflight_requests * self.s.gigachat_token_reservation
+            if (self.s.gigachat_token_budget is not None and
+                    self.s.gigachat_token_budget - self.cache.tokens() - reserved < self.s.gigachat_token_reservation):
+                raise GigaChatError("GigaChat token budget cannot cover the conservative reservation", kind="budget")
+            self._inflight_requests += 1
+
+    async def _release_request(self) -> None:
+        async with self._admission_lock:
+            self._inflight_requests -= 1
+
     async def _chat(self, kind: str, messages: list[dict[str, str]], max_tokens: int,
                     schema: dict[str, Any] | None = None) -> tuple[dict[str, Any], str]:
         key = _hash([self.s.gigachat_cache_namespace, kind, self.s.gigachat_model, messages, max_tokens, schema])
@@ -196,55 +226,94 @@ class GigaChatClient:
             self.stats["cache_hits"] += 1; self.cache.log(key=key, kind=kind, model=self.s.gigachat_model, attempt=0,
                 from_cache=True, data=hit, elapsed_ms=0, status="cache_hit"); return hit, key
         if not self.configured: raise GigaChatError("GigaChat fallback is disabled or has no credentials")
-        async with self._lock:
-            delay = 1.0
-            for attempt in range(1, self.s.gigachat_retries + 2):
-                # Re-check before every network attempt. A retry response can itself consume
-                # tokens or the request quota, so checking only once before the retry loop can
-                # overshoot a configured safety budget.
-                self._budget_check()
-                started = time.perf_counter(); data: dict[str, Any] | None = None; self.stats["attempts"] += 1
-                try:
-                    async with self._http() as http:
-                        token = await self._authenticate(http)
-                        body: dict[str, Any] = {"model": self.s.gigachat_model, "messages": messages, "temperature": 0,
-                                                "max_tokens": max_tokens, "stream": False}
-                        if schema is not None and self.s.gigachat_structured_output:
-                            body["response_format"] = {"type": "json_schema", "json_schema": {"name": kind, "schema": schema}}
-                        response = await http.post(f"{self.s.gigachat_api_url.rstrip('/')}/chat/completions",
-                                                   headers={"Authorization": f"Bearer {token}"}, json=body)
-                    elapsed = int((time.perf_counter() - started) * 1000)
-                    try: data = response.json()
-                    except ValueError: data = None
-                    if response.status_code == 401: self._token = None
-                    if (response.status_code == 429 or response.status_code >= 500) and attempt <= self.s.gigachat_retries:
-                        self.cache.log(key=key, kind=kind, model=self.s.gigachat_model, attempt=attempt, from_cache=False,
-                            data=data, elapsed_ms=elapsed, status="api_error", error_kind="api_error",
-                            error=f"HTTP {response.status_code}")
-                        retry = response.headers.get("Retry-After"); await asyncio.sleep(float(retry) if retry and retry.isdigit() else delay)
-                        delay = min(delay * 2, 20); continue
-                    if response.status_code >= 400: raise GigaChatError(f"GigaChat HTTP {response.status_code}")
-                    if not isinstance(data, dict): raise GigaChatError("GigaChat returned a non-JSON HTTP response")
-                    self.cache.put(key, kind, data, elapsed); self.cache.log(key=key, kind=kind, model=self.s.gigachat_model,
-                        attempt=attempt, from_cache=False, data=data, elapsed_ms=elapsed, status="response_received")
-                    if _usage(data)[2] is None: self.stats["unknown_usage"] += 1
-                    self.stats["requests"] += 1; self.stats["tokens"] = self.cache.tokens(); self.stats["elapsed_ms"] += elapsed
-                    return data, key
-                except (httpx.TransportError, httpx.TimeoutException, ssl.SSLError, GigaChatError) as exc:
-                    elapsed = int((time.perf_counter() - started) * 1000)
-                    if not isinstance(exc, GigaChatError) and attempt <= self.s.gigachat_retries:
-                        self.cache.log(key=key, kind=kind, model=self.s.gigachat_model, attempt=attempt, from_cache=False,
-                            data=data, elapsed_ms=elapsed, status="api_error", error_kind="api_error", error=type(exc).__name__)
-                        await asyncio.sleep(delay); delay = min(delay * 2, 20); continue
-                    self.stats["api_errors"] += 1; self.cache.log(key=key, kind=kind, model=self.s.gigachat_model,
-                        attempt=attempt, from_cache=False, data=data, elapsed_ms=elapsed, status="api_error",
-                        error_kind="api_error", error=str(exc)); raise GigaChatError(f"GigaChat unavailable: {type(exc).__name__}") from exc
+        await self._admit_request()
+        try:
+            return await self._chat_network(kind, messages, max_tokens, schema, key)
+        finally:
+            await self._release_request()
+
+    async def _chat_network(self, kind: str, messages: list[dict[str, str]], max_tokens: int,
+                            schema: dict[str, Any] | None, key: str) -> tuple[dict[str, Any], str]:
+        delay = 1.0
+        for attempt in range(1, self.s.gigachat_retries + 2):
+            # Re-check before every network attempt. A retry response can itself consume
+            # tokens or the request quota, so checking only once before the retry loop can
+            # overshoot a configured safety budget.
+            self._budget_check()
+            started = time.perf_counter(); data: dict[str, Any] | None = None; self.stats["attempts"] += 1
+            try:
+                async with self._http() as http:
+                    token = await self._authenticate(http)
+                    body: dict[str, Any] = {"model": self.s.gigachat_model, "messages": messages, "temperature": 0,
+                                            "max_tokens": max_tokens, "stream": False}
+                    if schema is not None and self.s.gigachat_structured_output:
+                        body["response_format"] = {"type": "json_schema", "json_schema": {"name": kind, "schema": schema}}
+                    response = await http.post(f"{self.s.gigachat_api_url.rstrip('/')}/chat/completions",
+                                               headers={"Authorization": f"Bearer {token}"}, json=body)
+                elapsed = int((time.perf_counter() - started) * 1000)
+                try: data = response.json()
+                except ValueError: data = None
+                if response.status_code == 401: self._token = None
+                if (response.status_code == 429 or response.status_code >= 500) and attempt <= self.s.gigachat_retries:
+                    self.cache.log(key=key, kind=kind, model=self.s.gigachat_model, attempt=attempt, from_cache=False,
+                        data=data, elapsed_ms=elapsed, status="api_error", error_kind="api_error",
+                        error=f"HTTP {response.status_code}")
+                    retry = response.headers.get("Retry-After"); await asyncio.sleep(float(retry) if retry and retry.isdigit() else delay)
+                    delay = min(delay * 2, 20); continue
+                if response.status_code >= 400:
+                    error_kind: ErrorKind = (
+                        "authentication" if response.status_code in (401, 403) else
+                        "rate_limit" if response.status_code == 429 else
+                        "invalid_request" if response.status_code in (400, 404, 409, 413, 422) else "api_error"
+                    )
+                    raise GigaChatError(f"GigaChat HTTP {response.status_code}", kind=error_kind,
+                                        diagnostic={"step": "chat_completion", "status_code": response.status_code})
+                if not isinstance(data, dict): raise GigaChatError("GigaChat returned a non-JSON HTTP response")
+                self.cache.put(key, kind, data, elapsed); self.cache.log(key=key, kind=kind, model=self.s.gigachat_model,
+                    attempt=attempt, from_cache=False, data=data, elapsed_ms=elapsed, status="response_received")
+                if _usage(data)[2] is None: self.stats["unknown_usage"] += 1
+                self.stats["requests"] += 1; self.stats["tokens"] = self.cache.tokens(); self.stats["elapsed_ms"] += elapsed
+                logger.info("GigaChat completion complete kind=%s attempt=%s elapsed_ms=%s messages=%s chars=%s",
+                            kind, attempt, elapsed, len(messages), sum(len(x.get("content", "")) for x in messages))
+                return data, key
+            except (httpx.TransportError, httpx.TimeoutException, ssl.SSLError, GigaChatError) as exc:
+                elapsed = int((time.perf_counter() - started) * 1000)
+                if not isinstance(exc, GigaChatError) and attempt <= self.s.gigachat_retries:
+                    self.cache.log(key=key, kind=kind, model=self.s.gigachat_model, attempt=attempt, from_cache=False,
+                        data=data, elapsed_ms=elapsed, status="api_error", error_kind="api_error", error=type(exc).__name__)
+                    await asyncio.sleep(delay); delay = min(delay * 2, 20); continue
+                error_kind: ErrorKind = exc.kind if isinstance(exc, GigaChatError) else (
+                    "timeout" if isinstance(exc, (httpx.TimeoutException, TimeoutError)) else
+                    "ssl" if isinstance(exc, ssl.SSLError) or "certificate_verify_failed" in str(exc).lower() else
+                    "connection"
+                )
+                diagnostic = exc.diagnostic if isinstance(exc, GigaChatError) else {
+                    "step": "transport", "exception_type": type(exc).__name__
+                }
+                self.stats["api_errors"] += 1; self.cache.log(key=key, kind=kind, model=self.s.gigachat_model,
+                    attempt=attempt, from_cache=False, data=data, elapsed_ms=elapsed, status="api_error",
+                    error_kind=error_kind, error=str(exc))
+                logger.warning("GigaChat request failed kind=%s step=%s attempt=%s elapsed_ms=%s status_code=%s exception=%s",
+                               error_kind, diagnostic.get("step", "unknown"), attempt, elapsed,
+                               diagnostic.get("status_code"), type(exc).__name__)
+                raise GigaChatError(f"GigaChat unavailable: {error_kind}", kind=error_kind,
+                                    diagnostic=diagnostic) from exc
         raise AssertionError("unreachable")
 
     @staticmethod
     def _content(data: dict[str, Any]) -> str:
         try: return data["choices"][0]["message"]["content"]
         except (KeyError, IndexError, TypeError) as exc: raise GigaChatError("GigaChat response has no message content", kind="schema_validation") from exc
+
+    async def consultant_chat(self, messages: list[dict[str, str]]) -> str:
+        """Use the shared OAuth, transport, retry and timeout implementation for free-form chat."""
+        data, _ = await self._chat(
+            "renovation_consultant", messages, self.s.consultant_max_output_tokens
+        )
+        content = self._content(data).strip()
+        if not content:
+            raise GigaChatError("GigaChat returned an empty consultant response", kind="schema_validation")
+        return content
 
     async def _parse_classification(self, data: dict[str, Any], key: str, allow_repair: bool) -> GigaClassification:
         content = self._content(data)

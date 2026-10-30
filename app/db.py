@@ -53,6 +53,16 @@ def init_db(engine: Engine | None = None) -> None:
                 "CREATE INDEX IF NOT EXISTS ix_product_bindings_product_category "
                 "ON product_bindings (product_category)"
             ))
+    # Existing consultant titles predate automatic naming and must be treated as manual so a
+    # later message or edit never overwrites a title chosen by the user.
+    if inspect(target).has_table("consultant_chats"):
+        chat_columns = {column["name"] for column in inspect(target).get_columns("consultant_chats")}
+        if "title_source" not in chat_columns:
+            with target.begin() as connection:
+                connection.execute(text(
+                    "ALTER TABLE consultant_chats ADD COLUMN title_source VARCHAR(16) "
+                    "NOT NULL DEFAULT 'manual'"
+                ))
 
 
 def upsert(

@@ -39,3 +39,28 @@ def test_additive_product_category_migration_preserves_confirmed_binding(tmp_pat
         index["name"] for index in inspect(engine).get_indexes("product_bindings")
     }
     engine.dispose()
+
+
+def test_existing_consultant_titles_migrate_as_manual(tmp_path):
+    engine = create_engine(f"sqlite:///{tmp_path / 'legacy-consultant.sqlite'}")
+    with engine.begin() as connection:
+        connection.execute(text("""
+            CREATE TABLE consultant_chats (
+                id VARCHAR(36) PRIMARY KEY, owner_hash VARCHAR(64) NOT NULL,
+                title VARCHAR(120) NOT NULL, preference_summary TEXT,
+                created_at DATETIME, updated_at DATETIME
+            )
+        """))
+        connection.execute(text("""
+            INSERT INTO consultant_chats(id, owner_hash, title)
+            VALUES ('legacy', 'owner', 'Название пользователя')
+        """))
+    init_db(engine)
+    assert "title_source" in {
+        column["name"] for column in inspect(engine).get_columns("consultant_chats")
+    }
+    with engine.connect() as connection:
+        assert connection.execute(text(
+            "SELECT title_source FROM consultant_chats WHERE id='legacy'"
+        )).scalar_one() == "manual"
+    engine.dispose()
