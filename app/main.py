@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from app.api import catalog_admin, decor, picker, routes
+from app.api import catalog_admin, consultant, decor, picker, routes
 from app.config import get_settings
 from app.db import init_db
 
@@ -39,13 +39,17 @@ def create_app() -> FastAPI:
     app.include_router(catalog_admin.router)
     app.include_router(picker.router)
     app.include_router(decor.router)
+    app.include_router(consultant.router)
     app.include_router(routes.health_router)
 
     app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
     @app.get("/", include_in_schema=False)
     def index() -> FileResponse:
-        return FileResponse(INDEX_HTML)
+        # The consultant is plain JavaScript embedded in this document. Always revalidate the
+        # shell so deployments cannot leave a browser running an older request lifecycle against
+        # a newer backend. Fingerprinted static asset URLs in the shell remain cacheable.
+        return FileResponse(INDEX_HTML, headers={"Cache-Control": "no-cache"})
 
     return app
 

@@ -2,7 +2,7 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Any
 
-from sqlalchemy import JSON, BigInteger, Boolean, DateTime, ForeignKey, Integer, Numeric, String, Text, func
+from sqlalchemy import JSON, BigInteger, Boolean, DateTime, ForeignKey, Integer, Numeric, String, Text, UniqueConstraint, func
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -122,3 +122,31 @@ class IngestRun(Base):
     finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     stats: Mapped[dict[str, Any] | None] = mapped_column(Json)
     error: Mapped[str | None] = mapped_column(Text)
+
+
+class ConsultantChat(Base):
+    __tablename__ = "consultant_chats"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    owner_hash: Mapped[str] = mapped_column(String(64), index=True)
+    title: Mapped[str] = mapped_column(String(120))
+    title_source: Mapped[str] = mapped_column(String(16), default="auto", server_default="auto")
+    preference_summary: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), index=True
+    )
+
+
+class ConsultantMessage(Base):
+    __tablename__ = "consultant_messages"
+    __table_args__ = (UniqueConstraint("chat_id", "exchange_id", "role", name="uq_consultant_exchange_role"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    chat_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("consultant_chats.id", ondelete="CASCADE"), index=True
+    )
+    exchange_id: Mapped[str] = mapped_column(String(64), index=True)
+    role: Mapped[str] = mapped_column(String(16))
+    content: Mapped[str] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), index=True)

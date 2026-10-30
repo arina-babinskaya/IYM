@@ -114,12 +114,12 @@ def test_api_unavailable_keeps_admin_fallback(tmp_path):
     ml=Suggestion(product_category=ProductCategory.lighting,material=Material.lighting,work_types=[WorkType.lighting_install],confidence=.4,flags={"domain_renovation":True},model="tfidf")
     assert decide_hybrid(ml,None,.6).action=="admin_review" and eligible_for_gigachat(ml,.6)
 
-@pytest.mark.parametrize("failure", [httpx.ReadTimeout("slow"), ssl.SSLError("bad CA")])
-def test_timeout_and_ssl_failures_are_normalized(tmp_path, failure):
+@pytest.mark.parametrize(("failure","kind"), [(httpx.ReadTimeout("slow"), "timeout"), (ssl.SSLError("bad CA"), "ssl")])
+def test_timeout_and_ssl_failures_are_normalized(tmp_path, failure, kind):
     def down(_): raise failure
     c,_=client(tmp_path,[down])
     with pytest.raises(GigaChatError) as exc: asyncio.run(c.classify(product()))
-    assert exc.value.kind=="api_error" and c.cache.records()[-1]["status"]=="api_error"
+    assert exc.value.kind==kind and c.cache.records()[-1]["status"]=="api_error"
 
 def test_authentication_failure_is_normalized_without_chat_request(tmp_path):
     calls=[]
@@ -130,8 +130,79 @@ def test_authentication_failure_is_normalized_without_chat_request(tmp_path):
         gigachat_cache_path=tmp_path/"giga.sqlite",gigachat_retries=0)
     c=GigaChatClient(settings,httpx.MockTransport(handler))
     with pytest.raises(GigaChatError) as exc: asyncio.run(c.classify(product()))
-    assert exc.value.kind=="api_error"
+    assert exc.value.kind=="authentication"
+    assert exc.value.diagnostic=={"step":"oauth","status_code":401}
     assert [x.url.path for x in calls]==["/api/v2/oauth"]
+
+def test_consultant_uses_plain_chat_payload_and_supported_roles(tmp_path):
+    c,calls=client(tmp_path,[response("Уточните площадь.",{"total_tokens":8})])
+    messages=[{"role":"system","content":"Правила"},{"role":"user","content":"Хочу бохо"}]
+    assert asyncio.run(c.consultant_chat(messages))=="Уточните площадь."
+    request=next(x for x in calls if x.url.path.endswith("chat/completions"))
+    body=json.loads(request.content)
+    assert body["messages"]==messages
+    assert "response_format" not in body
+
+def test_independent_completions_are_concurrent_and_share_one_oauth(tmp_path):
+    active=0; max_active=0; oauth_calls=0
+    async def handler(request):
+        nonlocal active,max_active,oauth_calls
+        if request.url.path.endswith("/oauth"):
+            oauth_calls += 1
+            return httpx.Response(200,json={"access_token":"token","expires_at":int((time.time()+1000)*1000)})
+        active += 1; max_active=max(max_active,active)
+        await asyncio.sleep(.06)
+        active -= 1
+        return response("Ответ",{"total_tokens":2})
+    settings=Settings(gigachat_enabled=True,gigachat_credentials="secret",gigachat_retries=0,
+                      gigachat_cache_path=tmp_path/"concurrent.sqlite")
+    c=GigaChatClient(settings,httpx.MockTransport(handler))
+    async def run():
+        started=time.perf_counter()
+        await asyncio.gather(
+            c.consultant_chat([{"role":"user","content":"Детская"}]),
+            c.consultant_chat([{"role":"user","content":"Гостиная"}]),
+        )
+        return time.perf_counter()-started
+    elapsed=asyncio.run(run())
+    assert max_active==2 and oauth_calls==1
+    assert elapsed < .11
+
+def test_concurrent_calls_reserve_budget_without_serializing(tmp_path):
+    active=0; max_active=0
+    async def handler(request):
+        nonlocal active,max_active
+        if request.url.path.endswith("/oauth"):
+            return httpx.Response(200,json={"access_token":"token","expires_at":int((time.time()+1000)*1000)})
+        active+=1; max_active=max(max_active,active); await asyncio.sleep(.03); active-=1
+        return response("Ответ",{"total_tokens":2})
+    settings=Settings(gigachat_enabled=True,gigachat_credentials="secret",gigachat_retries=0,
+        gigachat_cache_path=tmp_path/"budget-concurrent.sqlite",gigachat_token_budget=5000,
+        gigachat_token_reservation=2500)
+    c=GigaChatClient(settings,httpx.MockTransport(handler))
+    async def run():
+        await asyncio.gather(
+            c.consultant_chat([{"role":"user","content":"A"}]),
+            c.consultant_chat([{"role":"user","content":"B"}]),
+        )
+    asyncio.run(run())
+    assert max_active==2 and c._inflight_requests==0
+
+@pytest.mark.parametrize(("status","kind"),[(400,"invalid_request"),(403,"authentication"),(429,"rate_limit")])
+def test_chat_http_failures_have_distinct_kinds(tmp_path,status,kind):
+    c,_=client(tmp_path,[httpx.Response(status,json={"message":"safe provider error"})])
+    with pytest.raises(GigaChatError) as exc:
+        asyncio.run(c.consultant_chat([{"role":"user","content":"Тест"}]))
+    assert exc.value.kind==kind
+    assert exc.value.diagnostic=={"step":"chat_completion","status_code":status}
+
+def test_certificate_failure_has_ssl_kind(tmp_path):
+    def down(_): raise httpx.ConnectError("[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed")
+    c,_=client(tmp_path,[down])
+    with pytest.raises(GigaChatError) as exc:
+        asyncio.run(c.consultant_chat([{"role":"user","content":"Тест"}]))
+    assert exc.value.kind=="ssl"
+    assert c.cache.records()[-1]["error_kind"]=="ssl"
 
 def test_retry_usage_is_counted_and_budget_is_rechecked(tmp_path):
     busy=httpx.Response(500,json={"usage":{"total_tokens":600}})

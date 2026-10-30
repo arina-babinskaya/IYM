@@ -62,6 +62,13 @@ class Settings(BaseSettings):
     gigachat_explanations: bool = False
     gigachat_explanation_max_items: int = 30
 
+    consultant_session_secret: str = "repaircalc-local-consultant-secret-change-in-production"
+    consultant_cookie_secure: bool = False
+    consultant_context_messages: int = 20
+    consultant_context_chars: int = 24000
+    consultant_max_message_chars: int = 6000
+    consultant_max_output_tokens: int = 1200
+
     cors_origins: list[str] = ["*"]
 
 
