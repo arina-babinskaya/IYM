@@ -63,6 +63,7 @@
     <nav class="hidden md:flex bg-gray-100 p-1 rounded-xl">
       <button data-tab="calc" class="px-5 py-2 rounded-lg text-sm font-semibold transition-all bg-white text-brand-red shadow-sm">Калькулятор</button>
       <button data-tab="card" class="px-5 py-2 rounded-lg text-sm font-semibold transition-all text-gray-600 hover:text-gray-900">Карточка товара</button>
+      <button data-tab="decor" class="px-5 py-2 rounded-lg text-sm font-semibold transition-all text-gray-600 hover:text-gray-900">Декор</button>
       <button data-tab="admin" class="px-5 py-2 rounded-lg text-sm font-semibold transition-all text-gray-600 hover:text-gray-900">Админка</button>
     </nav>
   </div>
@@ -116,6 +117,14 @@
       </div>
     </div>
     <div id="calc-result" class="mt-6"></div>
+  </section>
+
+  <section data-panel="decor" class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden" hidden>
+    <div class="p-6 md:p-8 border-b border-gray-100 bg-gray-50/50">
+      <h2 class="text-2xl font-bold">Декор</h2>
+      <p class="text-sm text-gray-500 mt-1">Выберите помещение и стиль — подберём свет, текстиль и аксессуары из каталога в одном стиле.</p>
+    </div>
+    <div class="p-6 md:p-8" id="decor-box"></div>
   </section>
 
   <section data-panel="admin" class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8" hidden>
@@ -215,6 +224,7 @@ document.querySelectorAll("nav button").forEach(b => b.onclick = () => {
   });
   document.querySelectorAll("[data-panel]").forEach(p => p.hidden = p.dataset.panel !== b.dataset.tab || (p.id === "estimate-result" && !p.dataset.filled));
   if (b.dataset.tab === "admin") loadAdmin();
+  if (b.dataset.tab === "decor" && !D.shown) decorRooms();
 });
 
 const STEPS = ["Помещение", "Размеры", "Вид ремонта", "Работы", "Смета"];
@@ -669,6 +679,82 @@ document.getElementById("autobind").onclick = async () => {
     btn.disabled = false; btn.textContent = "Привязать (ML)";
   }
 };
+
+const D = { room: null, style: null, budget: "standard", picks: {}, skip: [], shown: false };
+const BUDGET_TITLES = { economy: "Эконом", standard: "Средний", premium: "Премиум" };
+const decorBox = document.getElementById("decor-box");
+const backBtn = (label, fn) => `<button class="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold rounded-lg transition-colors py-2 px-4 text-sm shadow-sm" onclick="${fn}">${label}</button>`;
+
+function decorRooms() {
+  D.shown = true;
+  decorBox.innerHTML = `<h3 class="font-semibold text-lg mb-4">Какое помещение оформляем?</h3>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">${Object.entries(ROOMS).map(([k, v]) => `<button data-room="${k}" class="border-2 border-gray-200 hover:border-brand-red rounded-xl p-4 text-left font-semibold transition-colors">${esc(v)}</button>`).join("")}</div>`;
+  decorBox.querySelectorAll("[data-room]").forEach(b => b.onclick = () => { Object.assign(D, { room: b.dataset.room, picks: {}, skip: [] }); decorStyles(); });
+}
+
+async function decorStyles() {
+  decorBox.innerHTML = `<p class="text-gray-500 animate-pulse">Смотрю, что есть в каталоге…</p>`;
+  const styles = await api(`/api/v1/decor/styles?room_type=${D.room}`).catch(e => { decorBox.innerHTML = `<div class="warn">${esc(e.message)}</div>`; return null; });
+  if (!styles) return;
+  decorBox.innerHTML = `<div class="flex flex-wrap justify-between items-center gap-3 mb-4">
+      <h3 class="font-semibold text-lg">${esc(ROOMS[D.room])}: выберите стиль</h3>${backBtn("← Другое помещение", "decorRooms()")}</div>
+    <div class="flex items-center gap-2 mb-5 text-sm font-medium text-gray-700">Бюджет:
+      <div class="flex bg-gray-100 p-1 rounded-lg">${Object.entries(BUDGET_TITLES).map(([k, v]) => `<button data-budget="${k}" class="px-4 py-1.5 rounded-md ${k === D.budget ? "bg-white shadow-sm text-brand-red" : "text-gray-600"}">${v}</button>`).join("")}</div></div>
+    <div class="grid md:grid-cols-3 gap-4">${styles.map(s => `<button data-style="${s.id}" ${s.slots_found ? "" : "disabled"} class="border-2 border-gray-200 hover:border-brand-red disabled:opacity-40 disabled:hover:border-gray-200 rounded-xl p-5 text-left transition-colors">
+      <div class="flex gap-1 mb-3">${s.palette.map(c => `<span class="w-8 h-8 rounded-full border border-gray-200" style="background:${c}"></span>`).join("")}</div>
+      <div class="font-bold text-lg">${esc(s.title)}</div>
+      <div class="text-sm text-gray-500 mt-1">${esc(s.description)}</div>
+      <div class="text-xs font-semibold mt-3 ${s.slots_found === s.slots_total ? "text-green-700" : "text-gray-500"}">в стиле найдено ${s.slots_found} из ${s.slots_total} позиций</div></button>`).join("")}</div>`;
+  decorBox.querySelectorAll("[data-budget]").forEach(b => b.onclick = () => { D.budget = b.dataset.budget; decorStyles(); });
+  decorBox.querySelectorAll("[data-style]").forEach(b => b.onclick = () => { Object.assign(D, { style: b.dataset.style, picks: {}, skip: [] }); decorResult(); });
+}
+
+async function decorResult() {
+  decorBox.innerHTML = `<p class="text-gray-500 animate-pulse">Подбираю товары…</p>`;
+  let r;
+  try { r = await api("/api/v1/decor", { method: "POST", body: JSON.stringify({ room_type: D.room, style: D.style, budget: D.budget, picks: D.picks, skip: D.skip }) }); }
+  catch (e) { decorBox.innerHTML = `<div class="warn">${esc(e.message)}</div>`; return; }
+  const img = p => p.picture_url ? `<img src="${esc(p.picture_url)}" alt="" class="w-full h-40 object-contain bg-white rounded-lg">` : `<div class="w-full h-40 bg-gray-100 rounded-lg"></div>`;
+  const card = x => x.product ? `<div class="border border-gray-200 rounded-xl p-4 flex flex-col gap-2 bg-white">
+      ${img(x.product)}
+      <div class="text-xs font-semibold uppercase tracking-wide text-gray-500">${esc(x.title)}</div>
+      <div class="font-semibold text-sm leading-snug">${esc(x.product.name)}</div>
+      <div class="flex flex-wrap">${x.product.why.map(w => `<span class="pill">${esc(w)}</span>`).join("")}</div>
+      <div class="mt-auto flex justify-between items-end"><span class="text-sm text-gray-500">${x.qty > 1 ? `${x.qty} × ${rub(x.product.price)}` : ""}</span><b>${rub(x.cost)}</b></div>
+      <div class="flex gap-2"><button data-replace="${x.slot}" class="flex-1 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg py-1.5 text-sm font-semibold">Заменить</button><button data-skip="${x.slot}" class="bg-white border border-gray-300 hover:bg-gray-50 rounded-lg py-1.5 px-3 text-sm" title="Убрать из подборки">✕</button></div>
+    </div>` : `<div class="border border-dashed border-gray-300 rounded-xl p-4 text-sm text-gray-400 flex flex-col justify-between"><div><div class="text-xs font-semibold uppercase tracking-wide">${esc(x.title)}</div><div class="mt-2">в каталоге не нашлось</div></div><button data-skip="${x.slot}" class="text-left underline mt-3">убрать</button></div>`;
+  decorBox.innerHTML = `<div class="flex flex-wrap justify-between items-center gap-3 mb-5">
+      <div><h3 class="font-bold text-xl">${esc(r.room_title)} · ${esc(r.style_title)}</h3><div class="text-sm text-gray-500">бюджет: ${BUDGET_TITLES[r.budget]} · позиций: ${r.items.filter(x => x.product).length}</div></div>
+      <div class="flex flex-wrap gap-2 items-center"><div class="flex bg-gray-100 p-1 rounded-lg text-sm">${Object.entries(BUDGET_TITLES).map(([k, v]) => `<button data-budget="${k}" class="px-3 py-1.5 rounded-md ${k === D.budget ? "bg-white shadow-sm text-brand-red font-semibold" : "text-gray-600"}">${v}</button>`).join("")}</div>${D.skip.length ? backBtn("Вернуть убранные", "D.skip=[];decorResult()") : ""}${backBtn("← Другой стиль", "decorStyles()")}</div></div>
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">${r.items.map(card).join("")}</div>
+    <div class="mt-6 flex justify-end items-center gap-3 text-lg">Итого: <b class="text-2xl text-brand-red">${rub(r.total)}</b></div>`;
+  decorBox.querySelectorAll("[data-budget]").forEach(b => b.onclick = () => { D.budget = b.dataset.budget; D.picks = {}; decorResult(); });
+  decorBox.querySelectorAll("[data-skip]").forEach(b => b.onclick = () => { D.skip.push(b.dataset.skip); decorResult(); });
+  decorBox.querySelectorAll("[data-replace]").forEach(b => b.onclick = () => decorReplace(r.items.find(x => x.slot === b.dataset.replace)));
+}
+
+async function decorReplace(line) {
+  closePicker();
+  document.body.insertAdjacentHTML("beforeend", `<div class="fixed inset-0 bg-black/40 z-[60] backdrop-blur-sm" id="picker-bg"></div>
+    <aside class="fixed inset-y-0 right-0 w-full max-w-3xl bg-brand-bg z-[61] overflow-y-auto p-6 md:p-8 grid gap-4 content-start shadow-2xl" id="picker">
+      <div class="flex justify-between items-center gap-4"><h2 class="text-xl font-bold">${esc(line.title)}</h2><button class="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold rounded-lg py-2 px-4 text-sm shadow-sm" id="picker-close">✕ Закрыть</button></div>
+      <input id="decor-q" placeholder="Поиск по названию" class="w-full bg-white border border-gray-300 rounded-lg p-2.5 text-sm outline-none focus:border-brand-blue">
+      <div id="decor-options" class="grid gap-2"><p class="text-gray-500 animate-pulse">Загружаю…</p></div>
+    </aside>`);
+  document.getElementById("picker-close").onclick = closePicker;
+  document.getElementById("picker-bg").onclick = closePicker;
+  const load = async () => {
+    const q = document.getElementById("decor-q").value;
+    const rows = await api(`/api/v1/decor/options?style=${D.style}&slot=${line.slot}&limit=60` + (q ? `&q=${encodeURIComponent(q)}` : ""));
+    document.getElementById("decor-options").innerHTML = rows.length ? rows.map(p => `<button data-pick="${p.id}" class="flex gap-3 items-center text-left bg-white border ${p.id === line.product?.id ? "border-brand-red" : "border-gray-200"} hover:border-brand-red rounded-xl p-3">
+        ${p.picture_url ? `<img src="${esc(p.picture_url)}" alt="" class="w-16 h-16 object-contain">` : `<div class="w-16 h-16 bg-gray-100 rounded"></div>`}
+        <div class="flex-1"><div class="font-semibold text-sm">${esc(p.name)}</div><div class="text-xs text-gray-500 mt-1">${p.why.map(esc).join(" · ")}</div></div><b class="whitespace-nowrap">${rub(p.price)}</b></button>`).join("") : `<p class="text-gray-500">Ничего не нашлось.</p>`;
+    document.querySelectorAll("#decor-options [data-pick]").forEach(b => b.onclick = () => { D.picks[line.slot] = Number(b.dataset.pick); closePicker(); decorResult(); });
+  };
+  let t = null;
+  document.getElementById("decor-q").oninput = () => { clearTimeout(t); t = setTimeout(load, 300); };
+  load();
+}
 
 api("/api/v1/taxonomy").then(t => {
   t.stages.forEach(s => T.stages[s.id] = s.title);

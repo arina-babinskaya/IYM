@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from app.api import catalog_admin, picker, routes
+from app.api import catalog_admin, decor, picker, routes
 from app.config import get_settings
 from app.db import init_db
 
@@ -38,6 +38,7 @@ def create_app() -> FastAPI:
     app.include_router(routes.router)
     app.include_router(catalog_admin.router)
     app.include_router(picker.router)
+    app.include_router(decor.router)
     app.include_router(routes.health_router)
 
     app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")

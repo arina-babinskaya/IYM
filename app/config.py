@@ -31,7 +31,7 @@ class Settings(BaseSettings):
     classifier_impl: str = "app.ml.baseline:KeywordClassifier"
     # ``tfidf`` remains accepted as a backwards-compatible alias for ``trained``.
     ml_classifier_backend: Literal["baseline", "trained", "tfidf"] = "trained"
-    ml_classifier_artifact_path: Path = Path("ml_workspace/model/tfidf_logreg/model")
+    ml_classifier_artifact_path: Path = Path("ml_workspace/model/tfidf_logreg")
     # Independent full-assortment classifier. This configuration is never read by ranking.
     catalog_matching_classifier_backend: Literal["catalog_tfidf"] = "catalog_tfidf"
     catalog_matching_artifact_path: Path = Path("ml_workspace/catalog_matching/model_v2")

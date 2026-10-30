@@ -17,7 +17,7 @@ from ml_workspace.ml_api import ProductInput, load_model, predict
 from ml_workspace.ml_api.types import Prediction
 
 
-ARTIFACT = Path(__file__).parents[1] / "ml_workspace/model/tfidf_logreg/model"
+ARTIFACT = Path(__file__).parents[1] / "ml_workspace/model/tfidf_logreg"
 
 
 @pytest.fixture(scope="module")
