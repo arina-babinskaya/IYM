@@ -1,6 +1,6 @@
 # Full-catalog model evaluation v2
 
-Run date: 2026-10-29. Artifact: `ml_workspace/catalog_matching/data/artifact`. Feature contract:
+Run date: 2026-10-29. Artifact: `ml_workspace/catalog_matching/model_v2`. Feature contract:
 product name only. Batch size: 1,024.
 
 ## Coverage and performance

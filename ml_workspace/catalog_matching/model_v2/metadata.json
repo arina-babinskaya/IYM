@@ -1,0 +1,791 @@
+{
+  "model_name": "catalog-tfidf-logreg-v1",
+  "taxonomy_version": "catalog-taxonomy-v2",
+  "input_schema": {
+    "required": [
+      "product_name"
+    ],
+    "optional": [
+      "description"
+    ],
+    "feature_mode": "name"
+  },
+  "classes": [
+    "apparel.clothing_footwear",
+    "auto.accessories",
+    "building.dry_mix",
+    "building.facade",
+    "building.insulation",
+    "building.lumber",
+    "building.masonry",
+    "building.roofing",
+    "building.sheet_materials",
+    "cleaning.chemicals",
+    "cleaning.equipment",
+    "doors_windows.doors",
+    "doors_windows.hardware",
+    "doors_windows.windows",
+    "electrical.cable",
+    "electrical.components",
+    "electrical.power",
+    "electrical.protection",
+    "electrical.smart_security",
+    "electrical.switch_socket",
+    "finishing.adhesive_sealant",
+    "finishing.coatings",
+    "finishing.decor",
+    "finishing.paint",
+    "finishing.painting_tools",
+    "finishing.primer",
+    "finishing.putty_plaster",
+    "finishing.wallpaper",
+    "flooring.accessories",
+    "flooring.carpet",
+    "flooring.laminate",
+    "flooring.linoleum",
+    "flooring.vinyl",
+    "flooring.wood",
+    "furniture.bathroom",
+    "furniture.components",
+    "furniture.home",
+    "furniture.kitchen",
+    "garden.accessories",
+    "garden.fertilizers",
+    "garden.machinery",
+    "garden.plants",
+    "garden.pots",
+    "garden.seeds",
+    "garden.soils",
+    "garden.tools",
+    "garden.watering",
+    "hardware.fasteners",
+    "hardware.furniture",
+    "hardware.metal",
+    "heating.boilers",
+    "heating.radiators",
+    "heating.ventilation",
+    "home.decor",
+    "home.household",
+    "home.rugs",
+    "home.storage",
+    "home.textiles",
+    "kitchen.appliances",
+    "kitchen.cookware",
+    "kitchen.tableware",
+    "kitchen.utensils",
+    "lighting.bulbs",
+    "lighting.decorative",
+    "lighting.indoor",
+    "lighting.outdoor",
+    "lighting.work",
+    "outdoor.furniture",
+    "outdoor.grill",
+    "outdoor.leisure",
+    "outdoor.structures",
+    "personal_care.hygiene",
+    "pets.supplies",
+    "plumbing.accessories",
+    "plumbing.bath_shower",
+    "plumbing.faucets",
+    "plumbing.pipes_fittings",
+    "plumbing.sanitary",
+    "plumbing.sinks",
+    "plumbing.water_treatment",
+    "seasonal.holiday",
+    "stationery.office_school",
+    "tile.floor_porcelain",
+    "tile.installation",
+    "tile.mosaic",
+    "tile.wall",
+    "tools.accessories",
+    "tools.hand",
+    "tools.power",
+    "tools.workwear"
+  ],
+  "class_to_index": {
+    "apparel.clothing_footwear": 0,
+    "auto.accessories": 1,
+    "building.dry_mix": 2,
+    "building.facade": 3,
+    "building.insulation": 4,
+    "building.lumber": 5,
+    "building.masonry": 6,
+    "building.roofing": 7,
+    "building.sheet_materials": 8,
+    "cleaning.chemicals": 9,
+    "cleaning.equipment": 10,
+    "doors_windows.doors": 11,
+    "doors_windows.hardware": 12,
+    "doors_windows.windows": 13,
+    "electrical.cable": 14,
+    "electrical.components": 15,
+    "electrical.power": 16,
+    "electrical.protection": 17,
+    "electrical.smart_security": 18,
+    "electrical.switch_socket": 19,
+    "finishing.adhesive_sealant": 20,
+    "finishing.coatings": 21,
+    "finishing.decor": 22,
+    "finishing.paint": 23,
+    "finishing.painting_tools": 24,
+    "finishing.primer": 25,
+    "finishing.putty_plaster": 26,
+    "finishing.wallpaper": 27,
+    "flooring.accessories": 28,
+    "flooring.carpet": 29,
+    "flooring.laminate": 30,
+    "flooring.linoleum": 31,
+    "flooring.vinyl": 32,
+    "flooring.wood": 33,
+    "furniture.bathroom": 34,
+    "furniture.components": 35,
+    "furniture.home": 36,
+    "furniture.kitchen": 37,
+    "garden.accessories": 38,
+    "garden.fertilizers": 39,
+    "garden.machinery": 40,
+    "garden.plants": 41,
+    "garden.pots": 42,
+    "garden.seeds": 43,
+    "garden.soils": 44,
+    "garden.tools": 45,
+    "garden.watering": 46,
+    "hardware.fasteners": 47,
+    "hardware.furniture": 48,
+    "hardware.metal": 49,
+    "heating.boilers": 50,
+    "heating.radiators": 51,
+    "heating.ventilation": 52,
+    "home.decor": 53,
+    "home.household": 54,
+    "home.rugs": 55,
+    "home.storage": 56,
+    "home.textiles": 57,
+    "kitchen.appliances": 58,
+    "kitchen.cookware": 59,
+    "kitchen.tableware": 60,
+    "kitchen.utensils": 61,
+    "lighting.bulbs": 62,
+    "lighting.decorative": 63,
+    "lighting.indoor": 64,
+    "lighting.outdoor": 65,
+    "lighting.work": 66,
+    "outdoor.furniture": 67,
+    "outdoor.grill": 68,
+    "outdoor.leisure": 69,
+    "outdoor.structures": 70,
+    "personal_care.hygiene": 71,
+    "pets.supplies": 72,
+    "plumbing.accessories": 73,
+    "plumbing.bath_shower": 74,
+    "plumbing.faucets": 75,
+    "plumbing.pipes_fittings": 76,
+    "plumbing.sanitary": 77,
+    "plumbing.sinks": 78,
+    "plumbing.water_treatment": 79,
+    "seasonal.holiday": 80,
+    "stationery.office_school": 81,
+    "tile.floor_porcelain": 82,
+    "tile.installation": 83,
+    "tile.mosaic": 84,
+    "tile.wall": 85,
+    "tools.accessories": 86,
+    "tools.hand": 87,
+    "tools.power": 88,
+    "tools.workwear": 89
+  },
+  "training_config": {
+    "model_name": "catalog-tfidf-logreg-v1",
+    "feature_mode": "name",
+    "word_ngram_range": [
+      1,
+      2
+    ],
+    "char_ngram_range": [
+      3,
+      5
+    ],
+    "word_max_features": 150000,
+    "char_max_features": 200000,
+    "min_df": 2,
+    "C": 2.0,
+    "class_weight": "balanced",
+    "max_iter": 500,
+    "random_state": 20261029
+  },
+  "dependency_versions": {
+    "python": "3.13.16",
+    "scikit_learn": "1.6.1",
+    "numpy": "2.1.3",
+    "joblib": "1.6.0"
+  },
+  "dataset_fingerprint": "929a3be2ac0b1ed4c12222df489efa151e7f49e4c0a4b334beefb2203f6e7827",
+  "metrics": {
+    "accuracy": 0.9792520706098887,
+    "macro_precision": 0.9744001599445116,
+    "macro_recall": 0.9752185521202025,
+    "macro_f1": 0.9741135450271443,
+    "weighted_f1": 0.9792173912832937,
+    "per_class": {
+      "apparel.clothing_footwear": {
+        "precision": 0.972972972972973,
+        "recall": 0.994475138121547,
+        "f1-score": 0.9836065573770492,
+        "support": 181.0
+      },
+      "auto.accessories": {
+        "precision": 0.9607843137254902,
+        "recall": 0.9607843137254902,
+        "f1-score": 0.9607843137254902,
+        "support": 102.0
+      },
+      "building.dry_mix": {
+        "precision": 1.0,
+        "recall": 0.75,
+        "f1-score": 0.8571428571428571,
+        "support": 4.0
+      },
+      "building.facade": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 41.0
+      },
+      "building.insulation": {
+        "precision": 1.0,
+        "recall": 0.9047619047619048,
+        "f1-score": 0.95,
+        "support": 42.0
+      },
+      "building.lumber": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 39.0
+      },
+      "building.masonry": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 1.0
+      },
+      "building.roofing": {
+        "precision": 0.9836065573770492,
+        "recall": 0.9836065573770492,
+        "f1-score": 0.9836065573770492,
+        "support": 61.0
+      },
+      "building.sheet_materials": {
+        "precision": 0.9761904761904762,
+        "recall": 1.0,
+        "f1-score": 0.9879518072289156,
+        "support": 41.0
+      },
+      "cleaning.chemicals": {
+        "precision": 0.9791666666666666,
+        "recall": 0.9894736842105263,
+        "f1-score": 0.9842931937172775,
+        "support": 95.0
+      },
+      "cleaning.equipment": {
+        "precision": 0.9459459459459459,
+        "recall": 0.9459459459459459,
+        "f1-score": 0.9459459459459459,
+        "support": 74.0
+      },
+      "doors_windows.doors": {
+        "precision": 1.0,
+        "recall": 0.9818181818181818,
+        "f1-score": 0.9908256880733946,
+        "support": 110.0
+      },
+      "doors_windows.hardware": {
+        "precision": 0.9881422924901185,
+        "recall": 0.984251968503937,
+        "f1-score": 0.9861932938856016,
+        "support": 254.0
+      },
+      "doors_windows.windows": {
+        "precision": 1.0,
+        "recall": 0.9130434782608695,
+        "f1-score": 0.9545454545454546,
+        "support": 23.0
+      },
+      "electrical.cable": {
+        "precision": 0.9785714285714285,
+        "recall": 0.9513888888888888,
+        "f1-score": 0.9647887323943662,
+        "support": 144.0
+      },
+      "electrical.components": {
+        "precision": 0.9649122807017544,
+        "recall": 0.9734513274336283,
+        "f1-score": 0.9691629955947136,
+        "support": 113.0
+      },
+      "electrical.power": {
+        "precision": 0.9506172839506173,
+        "recall": 0.9871794871794872,
+        "f1-score": 0.9685534591194969,
+        "support": 78.0
+      },
+      "electrical.protection": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 52.0
+      },
+      "electrical.smart_security": {
+        "precision": 0.75,
+        "recall": 1.0,
+        "f1-score": 0.8571428571428571,
+        "support": 3.0
+      },
+      "electrical.switch_socket": {
+        "precision": 0.9863013698630136,
+        "recall": 0.9809264305177112,
+        "f1-score": 0.9836065573770492,
+        "support": 367.0
+      },
+      "finishing.adhesive_sealant": {
+        "precision": 0.9404761904761905,
+        "recall": 1.0,
+        "f1-score": 0.9693251533742331,
+        "support": 79.0
+      },
+      "finishing.coatings": {
+        "precision": 0.967391304347826,
+        "recall": 0.978021978021978,
+        "f1-score": 0.9726775956284153,
+        "support": 91.0
+      },
+      "finishing.decor": {
+        "precision": 0.9870967741935484,
+        "recall": 1.0,
+        "f1-score": 0.9935064935064936,
+        "support": 153.0
+      },
+      "finishing.paint": {
+        "precision": 0.9954545454545455,
+        "recall": 0.9864864864864865,
+        "f1-score": 0.9909502262443439,
+        "support": 222.0
+      },
+      "finishing.painting_tools": {
+        "precision": 0.927710843373494,
+        "recall": 0.9808917197452229,
+        "f1-score": 0.9535603715170279,
+        "support": 157.0
+      },
+      "finishing.primer": {
+        "precision": 0.9230769230769231,
+        "recall": 1.0,
+        "f1-score": 0.96,
+        "support": 12.0
+      },
+      "finishing.putty_plaster": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 12.0
+      },
+      "finishing.wallpaper": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 195.0
+      },
+      "flooring.accessories": {
+        "precision": 0.9840425531914894,
+        "recall": 0.9946236559139785,
+        "f1-score": 0.9893048128342246,
+        "support": 186.0
+      },
+      "flooring.carpet": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 13.0
+      },
+      "flooring.laminate": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 43.0
+      },
+      "flooring.linoleum": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 61.0
+      },
+      "flooring.vinyl": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 29.0
+      },
+      "flooring.wood": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 4.0
+      },
+      "furniture.bathroom": {
+        "precision": 0.9767441860465116,
+        "recall": 1.0,
+        "f1-score": 0.9882352941176471,
+        "support": 42.0
+      },
+      "furniture.components": {
+        "precision": 0.9523809523809523,
+        "recall": 1.0,
+        "f1-score": 0.975609756097561,
+        "support": 60.0
+      },
+      "furniture.home": {
+        "precision": 0.9858490566037735,
+        "recall": 0.990521327014218,
+        "f1-score": 0.9881796690307328,
+        "support": 422.0
+      },
+      "furniture.kitchen": {
+        "precision": 0.9962049335863378,
+        "recall": 0.9813084112149533,
+        "f1-score": 0.9887005649717514,
+        "support": 535.0
+      },
+      "garden.accessories": {
+        "precision": 0.9523809523809523,
+        "recall": 0.975609756097561,
+        "f1-score": 0.963855421686747,
+        "support": 41.0
+      },
+      "garden.fertilizers": {
+        "precision": 0.9494949494949495,
+        "recall": 0.9894736842105263,
+        "f1-score": 0.9690721649484536,
+        "support": 95.0
+      },
+      "garden.machinery": {
+        "precision": 0.963855421686747,
+        "recall": 0.963855421686747,
+        "f1-score": 0.963855421686747,
+        "support": 83.0
+      },
+      "garden.plants": {
+        "precision": 0.9558011049723757,
+        "recall": 1.0,
+        "f1-score": 0.9774011299435028,
+        "support": 173.0
+      },
+      "garden.pots": {
+        "precision": 0.9626865671641791,
+        "recall": 0.9923076923076923,
+        "f1-score": 0.9772727272727273,
+        "support": 130.0
+      },
+      "garden.seeds": {
+        "precision": 0.9955357142857143,
+        "recall": 0.971677559912854,
+        "f1-score": 0.9834619625137817,
+        "support": 459.0
+      },
+      "garden.soils": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 20.0
+      },
+      "garden.tools": {
+        "precision": 0.9811320754716981,
+        "recall": 0.9454545454545454,
+        "f1-score": 0.9629629629629629,
+        "support": 55.0
+      },
+      "garden.watering": {
+        "precision": 0.9736842105263158,
+        "recall": 0.9652173913043478,
+        "f1-score": 0.9694323144104804,
+        "support": 115.0
+      },
+      "hardware.fasteners": {
+        "precision": 0.9806763285024155,
+        "recall": 0.9878345498783455,
+        "f1-score": 0.9842424242424243,
+        "support": 411.0
+      },
+      "hardware.furniture": {
+        "precision": 0.972972972972973,
+        "recall": 0.9664429530201343,
+        "f1-score": 0.9696969696969697,
+        "support": 149.0
+      },
+      "hardware.metal": {
+        "precision": 0.9793103448275862,
+        "recall": 0.9793103448275862,
+        "f1-score": 0.9793103448275862,
+        "support": 145.0
+      },
+      "heating.boilers": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 23.0
+      },
+      "heating.radiators": {
+        "precision": 1.0,
+        "recall": 0.9747899159663865,
+        "f1-score": 0.9872340425531915,
+        "support": 119.0
+      },
+      "heating.ventilation": {
+        "precision": 1.0,
+        "recall": 0.9745762711864406,
+        "f1-score": 0.9871244635193133,
+        "support": 118.0
+      },
+      "home.decor": {
+        "precision": 0.9829545454545454,
+        "recall": 0.9453551912568307,
+        "f1-score": 0.9637883008356546,
+        "support": 366.0
+      },
+      "home.household": {
+        "precision": 0.9347826086956522,
+        "recall": 0.9347826086956522,
+        "f1-score": 0.9347826086956522,
+        "support": 46.0
+      },
+      "home.rugs": {
+        "precision": 0.9571428571428572,
+        "recall": 0.9852941176470589,
+        "f1-score": 0.9710144927536232,
+        "support": 68.0
+      },
+      "home.storage": {
+        "precision": 0.8933333333333333,
+        "recall": 0.9781021897810219,
+        "f1-score": 0.9337979094076655,
+        "support": 137.0
+      },
+      "home.textiles": {
+        "precision": 0.99644128113879,
+        "recall": 0.9859154929577465,
+        "f1-score": 0.9911504424778761,
+        "support": 568.0
+      },
+      "kitchen.appliances": {
+        "precision": 0.9847715736040609,
+        "recall": 0.9797979797979798,
+        "f1-score": 0.9822784810126582,
+        "support": 198.0
+      },
+      "kitchen.cookware": {
+        "precision": 0.990909090909091,
+        "recall": 1.0,
+        "f1-score": 0.9954337899543378,
+        "support": 109.0
+      },
+      "kitchen.tableware": {
+        "precision": 0.9783549783549783,
+        "recall": 0.9847494553376906,
+        "f1-score": 0.9815418023887079,
+        "support": 459.0
+      },
+      "kitchen.utensils": {
+        "precision": 0.9403973509933775,
+        "recall": 0.9403973509933775,
+        "f1-score": 0.9403973509933775,
+        "support": 151.0
+      },
+      "lighting.bulbs": {
+        "precision": 0.9836065573770492,
+        "recall": 1.0,
+        "f1-score": 0.9917355371900827,
+        "support": 120.0
+      },
+      "lighting.decorative": {
+        "precision": 0.9444444444444444,
+        "recall": 0.9855072463768116,
+        "f1-score": 0.9645390070921985,
+        "support": 69.0
+      },
+      "lighting.indoor": {
+        "precision": 0.9955406911928651,
+        "recall": 0.9911209766925638,
+        "f1-score": 0.9933259176863182,
+        "support": 901.0
+      },
+      "lighting.outdoor": {
+        "precision": 0.9705882352941176,
+        "recall": 1.0,
+        "f1-score": 0.9850746268656716,
+        "support": 66.0
+      },
+      "lighting.work": {
+        "precision": 0.9629629629629629,
+        "recall": 0.9629629629629629,
+        "f1-score": 0.9629629629629629,
+        "support": 27.0
+      },
+      "outdoor.furniture": {
+        "precision": 1.0,
+        "recall": 0.9523809523809523,
+        "f1-score": 0.975609756097561,
+        "support": 21.0
+      },
+      "outdoor.grill": {
+        "precision": 0.918918918918919,
+        "recall": 1.0,
+        "f1-score": 0.9577464788732394,
+        "support": 34.0
+      },
+      "outdoor.leisure": {
+        "precision": 0.95,
+        "recall": 0.8444444444444444,
+        "f1-score": 0.8941176470588236,
+        "support": 45.0
+      },
+      "outdoor.structures": {
+        "precision": 0.95,
+        "recall": 0.8260869565217391,
+        "f1-score": 0.8837209302325582,
+        "support": 46.0
+      },
+      "personal_care.hygiene": {
+        "precision": 0.9801980198019802,
+        "recall": 0.9801980198019802,
+        "f1-score": 0.9801980198019802,
+        "support": 202.0
+      },
+      "pets.supplies": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 36.0
+      },
+      "plumbing.accessories": {
+        "precision": 0.9758064516129032,
+        "recall": 0.983739837398374,
+        "f1-score": 0.979757085020243,
+        "support": 123.0
+      },
+      "plumbing.bath_shower": {
+        "precision": 0.9802631578947368,
+        "recall": 0.9197530864197531,
+        "f1-score": 0.9490445859872612,
+        "support": 162.0
+      },
+      "plumbing.faucets": {
+        "precision": 1.0,
+        "recall": 0.9926470588235294,
+        "f1-score": 0.996309963099631,
+        "support": 136.0
+      },
+      "plumbing.pipes_fittings": {
+        "precision": 0.9627118644067797,
+        "recall": 0.9793103448275862,
+        "f1-score": 0.9709401709401709,
+        "support": 290.0
+      },
+      "plumbing.sanitary": {
+        "precision": 0.9696969696969697,
+        "recall": 0.9846153846153847,
+        "f1-score": 0.9770992366412213,
+        "support": 65.0
+      },
+      "plumbing.sinks": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 52.0
+      },
+      "plumbing.water_treatment": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 31.0
+      },
+      "seasonal.holiday": {
+        "precision": 0.96,
+        "recall": 0.9696969696969697,
+        "f1-score": 0.964824120603015,
+        "support": 99.0
+      },
+      "stationery.office_school": {
+        "precision": 0.9516129032258065,
+        "recall": 0.9833333333333333,
+        "f1-score": 0.9672131147540983,
+        "support": 120.0
+      },
+      "tile.floor_porcelain": {
+        "precision": 0.9940119760479041,
+        "recall": 1.0,
+        "f1-score": 0.996996996996997,
+        "support": 166.0
+      },
+      "tile.installation": {
+        "precision": 0.98,
+        "recall": 0.98989898989899,
+        "f1-score": 0.9849246231155779,
+        "support": 99.0
+      },
+      "tile.mosaic": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 13.0
+      },
+      "tile.wall": {
+        "precision": 0.9901960784313726,
+        "recall": 1.0,
+        "f1-score": 0.9950738916256158,
+        "support": 101.0
+      },
+      "tools.accessories": {
+        "precision": 0.9754385964912281,
+        "recall": 0.9893238434163701,
+        "f1-score": 0.9823321554770318,
+        "support": 281.0
+      },
+      "tools.hand": {
+        "precision": 0.927536231884058,
+        "recall": 0.8888888888888888,
+        "f1-score": 0.9078014184397163,
+        "support": 144.0
+      },
+      "tools.power": {
+        "precision": 1.0,
+        "recall": 0.9659090909090909,
+        "f1-score": 0.9826589595375722,
+        "support": 88.0
+      },
+      "tools.workwear": {
+        "precision": 0.9722222222222222,
+        "recall": 0.9459459459459459,
+        "f1-score": 0.958904109589041,
+        "support": 37.0
+      },
+      "accuracy": 0.9792520706098887,
+      "macro avg": {
+        "precision": 0.9744001599445116,
+        "recall": 0.9752185521202025,
+        "f1-score": 0.9741135450271443,
+        "support": 11953.0
+      },
+      "weighted avg": {
+        "precision": 0.9795495015655548,
+        "recall": 0.9792520706098887,
+        "f1-score": 0.9792173912832937,
+        "support": 11953.0
+      }
+    },
+    "top_3_accuracy": 0.9948966786580775,
+    "top_5_accuracy": 0.9969045427926043,
+    "inference_seconds": 3.751474758000086
+  },
+  "review_threshold": 0.1915502956406927,
+  "training_seconds": 264.2462993370001,
+  "probability_note": "Uncalibrated LogisticRegression predict_proba; validate reliability before interpreting as calibrated confidence."
+}

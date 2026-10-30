@@ -12,7 +12,7 @@ from ml_workspace.catalog_matching.inference.predictor import CatalogArtifactErr
 from ml_workspace.catalog_matching.taxonomy.catalog_taxonomy import CATEGORY_BY_ID, TAXONOMY_VERSION
 
 ROOT = Path(__file__).parents[3]
-ARTIFACT = ROOT / "ml_workspace/catalog_matching/data/artifact"
+ARTIFACT = ROOT / "ml_workspace/catalog_matching/model_v2"
 
 
 @pytest.fixture(scope="module")
@@ -117,4 +117,3 @@ def test_ranking_configuration_is_independent(monkeypatch):
         assert ranker.__class__.__name__ == "ContextRanker"
     finally:
         get_settings.cache_clear(); get_ranker.cache_clear()
-

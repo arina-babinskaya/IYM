@@ -234,7 +234,7 @@ def evaluate(args: argparse.Namespace) -> dict:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--catalog", default="requirments/products_final.json")
-    parser.add_argument("--artifact", default="ml_workspace/catalog_matching/data/artifact")
+    parser.add_argument("--artifact", default="ml_workspace/catalog_matching/model_v2")
     parser.add_argument("--splits", default="ml_workspace/catalog_matching/data/splits_v2")
     parser.add_argument("--output", default="ml_workspace/catalog_matching/reports/full_catalog_predictions_v2.csv")
     parser.add_argument("--batch-size", type=int, default=1024)

@@ -34,7 +34,7 @@ class Settings(BaseSettings):
     ml_classifier_artifact_path: Path = Path("ml_workspace/model/tfidf_logreg/model")
     # Independent full-assortment classifier. This configuration is never read by ranking.
     catalog_matching_classifier_backend: Literal["catalog_tfidf"] = "catalog_tfidf"
-    catalog_matching_artifact_path: Path = Path("ml_workspace/catalog_matching/data/artifact")
+    catalog_matching_artifact_path: Path = Path("ml_workspace/catalog_matching/model_v2")
     ranker_impl: str = "app.ml.ranker:ContextRanker"
     autobind_min_confidence: float = 0.7
 

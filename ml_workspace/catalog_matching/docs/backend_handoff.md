@@ -34,17 +34,19 @@ original signature and implementation.
 
 ## Artifact installation and verification
 
-The downloaded artifact in this checkout is:
+The versioned artifact in this checkout is:
 
 ```text
-ml_workspace/catalog_matching/data/artifact/
+ml_workspace/catalog_matching/model_v2/
   model.joblib
   metadata.json
   taxonomy.json
   checksums.json
 ```
 
-The directory is Git-ignored; do not commit the 177 MB model. To use another location:
+The model is tracked with Git LFS because it exceeds GitHub's regular 100 MB file limit. Install
+Git LFS and run `git lfs install` before cloning, pulling, or committing this artifact. To use
+another location:
 
 ```bash
 export RC_CATALOG_MATCHING_CLASSIFIER_BACKEND=catalog_tfidf
@@ -79,7 +81,7 @@ boundary for unresolved products.
 ## Local inference
 
 ```bash
-python -c "from app.ml.catalog_matching import CatalogMatchingClassifier as C; print(C('ml_workspace/catalog_matching/data/artifact').predict_one({'id':'demo','name':'Ножницы для живой изгороди'}))"
+python -c "from app.ml.catalog_matching import CatalogMatchingClassifier as C; print(C('ml_workspace/catalog_matching/model_v2').predict_one({'id':'demo','name':'Ножницы для живой изгороди'}))"
 ```
 
 Verified output for that literal name is `garden.tools` / `Садовый инструмент`, score
