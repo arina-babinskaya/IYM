@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from app.api import picker, routes
+from app.api import catalog_admin, picker, routes
 from app.config import get_settings
 from app.db import init_db
 

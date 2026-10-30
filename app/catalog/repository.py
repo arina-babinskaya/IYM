@@ -147,13 +147,25 @@ class CatalogRepo:
             # only when the authoritative material taxonomy confirms compatibility. Automatic
             # category/material-only bindings remain excluded from specific estimate slots.
             compatible_legacy = work_type in works_for_material(material)
-            matched = [(p, b) for p, b in rows if work_type.value in (b.work_types or [])
-                       or (b.confirmed and not (b.work_types or []) and compatible_legacy)]
-            if not matched and compatible_legacy:
-                # Nothing is bound to this work yet (e.g. fasteners, which the model binds by material
-                # only): fall back to material-only bindings rather than leave the estimate line empty.
-                matched = [(p, b) for p, b in rows if not (b.work_types or [])]
-            rows = matched
+            exact = [(p, b) for p, b in rows if work_type.value in (b.work_types or [])
+                     or (b.confirmed and not (b.work_types or []) and compatible_legacy)]
+            if exact:
+                rows = exact
+            else:
+                related = COMPATIBLE_WORK_FALLBACKS.get((material, work_type), frozenset())
+                compatible = [
+                    (p, fallback_binding(b, work_type, "compatible")) for p, b in rows
+                    if any(item.value in (b.work_types or []) for item in related)
+                ]
+                if compatible:
+                    rows = compatible
+                elif compatible_legacy:
+                    # Nothing is bound to this work yet (e.g. fasteners, which the model binds by
+                    # material only): use material-only bindings rather than leave the line empty.
+                    rows = [(p, fallback_binding(b, work_type, "material_only")) for p, b in rows
+                            if not (b.work_types or [])]
+                else:
+                    rows = []
         if required_flags:
             preload(rows)
             rows = [(p, b) for p, b in rows if has_flags(p, b, required_flags)]
@@ -194,6 +206,7 @@ class CatalogRepo:
         inserted = upsert(self.session, ProductBinding, rows, ["product_id"], update=False)
         self.session.commit()
         self._candidates.clear()
+        return inserted
 
     def admin_list(self, status: AdminStatus = "unbound", q: str | None = None, limit: int = 50,
                    offset: int = 0) -> list[Product]:
