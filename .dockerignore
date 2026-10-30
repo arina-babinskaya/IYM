@@ -5,3 +5,8 @@ data
 __pycache__
 .pytest_cache
 repaircalc.zip
+*.ipynb
+ml_workspace/catalog_matching/notebooks
+ml_workspace/catalog_matching/reports
+ml_workspace/catalog_matching/tests
+.DS_Store
