@@ -319,3 +319,14 @@ def test_pack_volume_is_enough_for_paints_and_mixes():
     assert calculable(*item(1, "paint", name="краска для потолков 5 л", specs={"volume_l": "5"}))
     assert calculable(*item(2, "putty", specs={"weight_kg": "20"}))
     assert not calculable(*item(3, "paint"))
+
+
+def test_typical_putty_excludes_automotive():
+    from app.ml.ranker import is_typical
+    from app.taxonomy import Material
+
+    assert not is_typical(Material.putty, 'Шпатлевка CHAMAELEON жидкая 400мл')
+    assert not is_typical(Material.putty, 'Шпатлевка CHAMAELEON для пластиков + отвердитель 250г')
+    assert not is_typical(Material.putty, 'Шпатлевка со стекловолокном авто 250г')
+    assert is_typical(Material.putty, 'Шпатлевка гипсовая ВОЛМА Шов 20кг')
+    assert is_typical(Material.putty, 'Шпатлевка финишная гипсо-полимерная FORMAN 25 20кг')
