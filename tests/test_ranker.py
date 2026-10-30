@@ -281,6 +281,9 @@ def test_typical_painting_tools_and_floor_skirting():
 
     assert not is_typical(Material.painting_tools, "Подушка MONA LIZA 50x70см с валиком с лузгой гречихи")
     assert is_typical(Material.painting_tools, "валик малярный велюровый 250 мм")
+    for name in ("комплект валиков 2шт ACCURATE велюр", "миди-валик 100мм", "малярная лента 48мм",
+                 "малярный скотч 25мм", "набор кистей 3шт"):
+        assert is_typical(Material.painting_tools, name)
     assert not is_typical(Material.skirting, "Плинтус ПВХ для столешницы под вставку кромки 3.05м")
     assert is_typical(Material.skirting, "плинтус напольный ПВХ 2,5м дуб")
     assert is_typical(Material.skirting, "порог алюминиевый 90 см")

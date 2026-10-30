@@ -1,12 +1,16 @@
+import pytest
 from fastapi.testclient import TestClient
 
 from app.api.deps import get_catalog_matching_classifier
+from app.config import get_settings
 from app.db import get_sessionmaker
 from app.main import app
 from app.models import ProductBinding
 
 
 def test_catalog_match_api_is_read_only_and_uses_isolated_contract(ingested):
+    if not get_settings().catalog_matching_artifact_path.exists():
+        pytest.skip("catalog_matching model is not in the repository (ml_workspace/catalog_matching/data is gitignored)")
     get_catalog_matching_classifier.cache_clear()
     with get_sessionmaker()() as session:
         before = session.get(ProductBinding, 96617)
