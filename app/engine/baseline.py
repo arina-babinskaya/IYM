@@ -363,9 +363,13 @@ def _piece_need(material: Material, room: RoomInput, area: Decimal) -> tuple[Dec
     if hasattr(Material, "cable_channel") and material == Material.cable_channel:
         return perimeter, "м"
     if hasattr(Material, "skirting") and material == Material.skirting:
-        return perimeter, "м"
+        door_w = Decimal("0.9")
+        return max(Decimal(0), perimeter - door_w), "м"
     if hasattr(Material, "damper_tape") and material == Material.damper_tape:
         return perimeter, "м"
+    if hasattr(Material, "pipes") and material == Material.pipes:
+        # СП 30.13330: трасса ХВС, ГВС и канализации для сантехприборов
+        return max(Decimal(15), Decimal(_ceil(perimeter * Decimal("1.2")))), "м"
     if material == Material.socket:
         # СП 256.1325800.2016: на кухне повышенное количество электроточек
         if room.room_type == RoomType.kitchen:
@@ -378,6 +382,8 @@ def _piece_need(material: Material, room: RoomInput, area: Decimal) -> tuple[Dec
     ):
         return Decimal(max(1, _ceil(floor / 8))), "шт"
     if hasattr(Material, "heating") and material == Material.heating:
+        if room.room_type in (RoomType.bathroom,):
+            return Decimal(1), "шт"
         return Decimal(max(1, _ceil(floor / 10))), "шт"
     if material == Material.profile or (hasattr(Material, "beacons") and material == Material.beacons):
         return Decimal(_ceil(area / Decimal("1.5"))), "шт"
@@ -396,7 +402,6 @@ def _piece_need(material: Material, room: RoomInput, area: Decimal) -> tuple[Dec
         )
         or (hasattr(Material, "doors") and material == Material.doors)
         or (hasattr(Material, "ventilation") and material == Material.ventilation)
-        or (hasattr(Material, "pipes") and material == Material.pipes)
         or (hasattr(Material, "circuit_breakers") and material == Material.circuit_breakers)
         or (hasattr(Material, "reinforcing_mesh") and material == Material.reinforcing_mesh)
         or (hasattr(Material, "mounting_foam") and material == Material.mounting_foam)
@@ -450,6 +455,19 @@ class BaselineEngine:
         if hint:
             ranked.sort(key=lambda p: not re.search(hint, p.name.lower()))
 
+        if material == Material.plaster:
+            # Для оштукатуривания стен приоритет у базовых выравнивающих смесей; декоративные (фактурные) опускаем в конец
+            ranked.sort(key=lambda p: bool(re.search(r"декоратив|фактурн|шуба|короед|микроцемент|венециан|stucco|grotto|modellier", p.name.lower())))
+        elif material == Material.putty:
+            # Для шпаклевки также исключаем декоративные пасты
+            ranked.sort(key=lambda p: bool(re.search(r"декоратив|фактурн|венециан", p.name.lower())))
+        elif hasattr(Material, "heating") and material == Material.heating and room.room_type in (RoomType.bathroom,):
+            # В ванной комнате приоритет отдаем полотенцесушителям, а не комнатным радиаторам
+            ranked.sort(key=lambda p: not bool(re.search(r"полотенцесушител", p.name.lower())))
+        elif hasattr(Material, "beacons") and material == Material.beacons and surface == Surface.wall:
+            # Для стен приоритет у стеновых маячковых профилей перед маяками для наливного пола
+            ranked.sort(key=lambda p: bool(re.search(r"наливн|для пола", p.name.lower())))
+
         base = dict(
             stage=info.stage,
             work_type=work,
@@ -489,6 +507,8 @@ class BaselineEngine:
                         pack_len = Decimal("2.5")
                     elif hasattr(Material, "damper_tape") and material == Material.damper_tape:
                         pack_len = Decimal("25.0")
+                    elif hasattr(Material, "pipes") and material == Material.pipes:
+                        pack_len = Decimal("50.0")
 
                 p_unit = (p.unit or "").lower()
                 if pack_len and pack_len > 0 and p_unit not in ("м", "м.", "пог. м", "пог.м"):
@@ -496,7 +516,24 @@ class BaselineEngine:
                 else:
                     n = _ceil(need)
             else:
-                n = _ceil(need)
+                # Поштучные позиции (маяки, крепеж, лампы): проверяем фасовку в упаковке
+                pcs = _spec(p, "pcs_in_pack")
+                if not pcs and p.name:
+                    m_pcs = re.search(r"(?<![\dх×x*])(\d+)\s*шт(?![а-яa-z\d])", p.name, re.IGNORECASE)
+                    if m_pcs:
+                        try:
+                            val = Decimal(m_pcs.group(1))
+                            if val > 1:
+                                pcs = val
+                        except Exception:
+                            pass
+                if unit in ("упак.", "пач.", "рулон"):
+                    # Если потребность уже рассчитана в упаковках/рулонах, не делим на pcs_in_pack
+                    n = _ceil(need)
+                elif pcs and pcs > 1:
+                    n = _ceil(need / pcs)
+                else:
+                    n = _ceil(need)
             reason = "влагостойкий, т.к. высокая влажность" if wet else None
         else:
             reserve = RESERVE.get(material, Decimal(5))
