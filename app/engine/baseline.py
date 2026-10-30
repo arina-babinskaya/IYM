@@ -363,9 +363,13 @@ def _piece_need(material: Material, room: RoomInput, area: Decimal) -> tuple[Dec
     if hasattr(Material, "cable_channel") and material == Material.cable_channel:
         return perimeter, "м"
     if hasattr(Material, "skirting") and material == Material.skirting:
-        return perimeter, "м"
+        door_w = Decimal("0.9")
+        return max(Decimal(0), perimeter - door_w), "м"
     if hasattr(Material, "damper_tape") and material == Material.damper_tape:
         return perimeter, "м"
+    if hasattr(Material, "pipes") and material == Material.pipes:
+        # СП 30.13330: трасса ХВС, ГВС и канализации для сантехприборов
+        return max(Decimal(15), Decimal(_ceil(perimeter * Decimal("1.2")))), "м"
     if material == Material.socket:
         # СП 256.1325800.2016: на кухне повышенное количество электроточек
         if room.room_type == RoomType.kitchen:
@@ -398,7 +402,6 @@ def _piece_need(material: Material, room: RoomInput, area: Decimal) -> tuple[Dec
         )
         or (hasattr(Material, "doors") and material == Material.doors)
         or (hasattr(Material, "ventilation") and material == Material.ventilation)
-        or (hasattr(Material, "pipes") and material == Material.pipes)
         or (hasattr(Material, "circuit_breakers") and material == Material.circuit_breakers)
         or (hasattr(Material, "reinforcing_mesh") and material == Material.reinforcing_mesh)
         or (hasattr(Material, "mounting_foam") and material == Material.mounting_foam)
@@ -504,6 +507,8 @@ class BaselineEngine:
                         pack_len = Decimal("2.5")
                     elif hasattr(Material, "damper_tape") and material == Material.damper_tape:
                         pack_len = Decimal("25.0")
+                    elif hasattr(Material, "pipes") and material == Material.pipes:
+                        pack_len = Decimal("50.0")
 
                 p_unit = (p.unit or "").lower()
                 if pack_len and pack_len > 0 and p_unit not in ("м", "м.", "пог. м", "пог.м"):
@@ -522,11 +527,11 @@ class BaselineEngine:
                                 pcs = val
                         except Exception:
                             pass
-                item_len = _spec(p, "length_m") or _spec(p, "pack_length_m")
-                if pcs and pcs > 1:
+                if unit in ("упак.", "пач.", "рулон"):
+                    # Если потребность уже рассчитана в упаковках/рулонах, не делим на pcs_in_pack
+                    n = _ceil(need)
+                elif pcs and pcs > 1:
                     n = _ceil(need / pcs)
-                elif item_len and item_len > 1 and material == Material.profile:
-                    n = _ceil(need / item_len)
                 else:
                     n = _ceil(need)
             reason = "влагостойкий, т.к. высокая влажность" if wet else None
