@@ -273,3 +273,14 @@ def test_roofing_screws_are_not_typical_fasteners():
     assert not _typical(Material.fasteners, "саморез кровельный св. 4,8х35мм 5 кг синий")
     assert _typical(Material.fasteners, "саморез по гипсокартону 3,5х25 мм 200 шт")
     assert _typical(Material.fasteners, "дюбель-хомут для кабеля 5-10 мм")
+
+
+def test_typical_painting_tools_and_floor_skirting():
+    from app.ml.ranker import is_typical
+    from app.taxonomy import Material
+
+    assert not is_typical(Material.painting_tools, "Подушка MONA LIZA 50x70см с валиком с лузгой гречихи")
+    assert is_typical(Material.painting_tools, "валик малярный велюровый 250 мм")
+    assert not is_typical(Material.skirting, "Плинтус ПВХ для столешницы под вставку кромки 3.05м")
+    assert is_typical(Material.skirting, "плинтус напольный ПВХ 2,5м дуб")
+    assert is_typical(Material.skirting, "порог алюминиевый 90 см")

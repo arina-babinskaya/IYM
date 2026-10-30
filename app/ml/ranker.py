@@ -61,7 +61,8 @@ TYPICAL: dict[Material, re.Pattern[str]] = {m: _rx(p) for m, p in {
     M.fasteners: r"^(дюбел|саморез|шуруп|анкер)(?!.*(кровельн|сэндвич|мебельн|конфирмат|профнастил|фасадн|для поликарбонат|рыболов))",
     M.mounting_foam: r"^пена",
     M.mounting_adhesive: r"^(жидкие гвозди|клей монтажн)",
-    M.skirting: r"^(плинтус|порож)",
+    M.skirting: r"^(плинтус|порог|порож)(?!.*(столешниц|мебел|для ванн|потолочн|кухонн\w* (?!.*напольн)))",
+    M.painting_tools: r"^(валик|кист[ьи]|ванночк|кювет|шпател|лента малярн|скотч малярн|набор малярн|макловиц|мини-валик)",
     M.decorative: r"^(панел|молдинг|плинтус потолоч|карниз потолоч|карниз декоратив|розетк\w* потолоч)",
     M.paint: r"^краска",
     M.primer: r"^грунт(овка)?\b(?!.*(для пластик|аэрозол|по металл|по ржавч|для osb|osb|дерев|wood|авто|-эмаль|-краска))",
@@ -277,6 +278,10 @@ def _outdoor(chars: dict[str, str], text: str) -> float:
     if "наружн" in use and "внутр" not in use:
         return 1.0
     return 1.0 if OUTDOOR.search(text) else 0.0
+
+
+def is_typical(material: Material | None, name: str | None) -> bool:
+    return _typical(material, name) == 1.0
 
 
 def _decorative(material: Material | None, name: str | None) -> float:
