@@ -1477,16 +1477,74 @@ document.getElementById("autobind").onclick = async () => {
   }
 };
 
-const D = { room: null, style: null, budget: "standard", picks: {}, skip: [], shown: false };
+const D = { room: null, style: null, zone: null, kit: null, budget: "standard", picks: {}, skip: [], shown: false };
 const BUDGET_TITLES = { economy: "Эконом", standard: "Средний", premium: "Премиум" };
 const decorBox = document.getElementById("decor-box");
 const backBtn = (label, fn) => `<button class="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold rounded-lg transition-colors py-2 px-4 text-sm shadow-sm" onclick="${fn}">${label}</button>`;
 
-function decorRooms() {
+const DECOR_ROOMS = {};
+
+async function decorRooms() {
   D.shown = true;
+  if (!Object.keys(DECOR_ROOMS).length) {
+    (await api("/api/v1/decor/rooms").catch(() => Object.entries(ROOMS).map(([id, title]) => ({ id, title })))).forEach(r => DECOR_ROOMS[r.id] = r.title);
+  }
   decorBox.innerHTML = `<h3 class="font-semibold text-lg mb-4">Какое помещение оформляем?</h3>
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">${Object.entries(ROOMS).map(([k, v]) => `<button data-room="${k}" class="border-2 border-gray-200 hover:border-brand-red rounded-xl p-4 text-left font-semibold transition-colors">${esc(v)}</button>`).join("")}</div>`;
-  decorBox.querySelectorAll("[data-room]").forEach(b => b.onclick = () => { Object.assign(D, { room: b.dataset.room, picks: {}, skip: [] }); decorStyles(); });
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">${Object.entries(DECOR_ROOMS).map(([k, v]) => `<button data-room="${k}" class="border-2 border-gray-200 hover:border-brand-red rounded-xl p-4 text-left font-semibold transition-colors">${esc(v)}</button>`).join("")}</div>`;
+  decorBox.querySelectorAll("[data-room]").forEach(b => b.onclick = () => { Object.assign(D, { room: b.dataset.room, kit: null, picks: {}, skip: [] }); decorStyles(); });
+  api("/api/v1/decor/zones").then(zones => {
+    decorBox.insertAdjacentHTML("beforeend", `<h3 class="font-semibold text-lg mt-8 mb-4">Дача и участок</h3>
+      <div class="grid md:grid-cols-3 gap-3">${zones.map(z => `<button data-zone="${z.id}" class="border-2 border-gray-200 hover:border-brand-red rounded-xl p-4 text-left transition-colors">
+        <div class="font-semibold">${esc(z.title)}</div><div class="text-sm text-gray-500 mt-1">${esc(z.description)}</div>
+        <div class="text-xs font-semibold text-gray-500 mt-2">товаров: ${num(z.total)}</div></button>`).join("")}</div>`);
+    decorBox.querySelectorAll("[data-zone]").forEach(b => b.onclick = () => decorZoneKits(b.dataset.zone));
+  }).catch(() => {});
+}
+
+const zoneCard = p => `<div class="border border-gray-200 rounded-xl p-3 flex flex-col gap-2 bg-white">
+    ${p.picture_url ? `<img src="${esc(p.picture_url)}" alt="" class="w-full h-32 object-contain bg-white rounded-lg">` : `<div class="w-full h-32 bg-gray-100 rounded-lg"></div>`}
+    <div class="text-sm font-semibold leading-snug">${esc(p.name)}</div>
+    <b class="mt-auto">${rub(p.price)}</b></div>`;
+
+async function decorZoneKits(zone) {
+  decorBox.innerHTML = `<p class="text-gray-500 animate-pulse">Загружаю…</p>`;
+  const z = (await api("/api/v1/decor/zones").catch(() => [])).find(x => x.id === zone);
+  if (!z) { decorBox.innerHTML = `<div class="warn">Зона не найдена</div>`; return; }
+  decorBox.innerHTML = `<div class="flex flex-wrap justify-between items-center gap-3 mb-2">
+      <h3 class="font-bold text-xl">${esc(z.title)}: что будем делать?</h3>${backBtn("← К помещениям", "decorRooms()")}</div>
+    <p class="text-sm text-gray-500 mb-4">Выберите готовый набор — подберём по одному товару на каждую позицию, любой можно заменить.</p>
+    <div class="flex items-center gap-2 mb-5 text-sm font-medium text-gray-700">Бюджет:
+      <div class="flex bg-gray-100 p-1 rounded-lg">${Object.entries(BUDGET_TITLES).map(([k, v]) => `<button data-budget="${k}" class="px-4 py-1.5 rounded-md ${k === D.budget ? "bg-white shadow-sm text-brand-red" : "text-gray-600"}">${v}</button>`).join("")}</div></div>
+    <div class="grid md:grid-cols-2 gap-4">${z.kits.map(k => `<button data-kit="${k.id}" class="border-2 border-gray-200 hover:border-brand-red rounded-xl p-5 text-left transition-colors">
+      <div class="font-bold text-lg">${esc(k.title)}</div><div class="text-sm text-gray-500 mt-1">${esc(k.description)}</div>
+      <div class="text-xs font-semibold text-gray-500 mt-3">позиций: ${k.positions}</div></button>`).join("")}</div>
+    <button id="zone-all" class="mt-6 text-sm font-semibold text-brand-red underline">Смотреть все товары зоны (${num(z.total)})</button>`;
+  decorBox.querySelectorAll("[data-budget]").forEach(b => b.onclick = () => { D.budget = b.dataset.budget; decorZoneKits(zone); });
+  decorBox.querySelectorAll("[data-kit]").forEach(b => b.onclick = () => { Object.assign(D, { zone, kit: b.dataset.kit, picks: {}, skip: [] }); decorResult(); });
+  document.getElementById("zone-all").onclick = () => decorZone(zone);
+}
+
+async function decorZone(zone) {
+  decorBox.innerHTML = `<p class="text-gray-500 animate-pulse">Собираю товары…</p>`;
+  let z;
+  try { z = await api(`/api/v1/decor/zones/${zone}`); }
+  catch (e) { decorBox.innerHTML = `<div class="warn">${esc(e.message)}</div>`; return; }
+  decorBox.innerHTML = `<div class="flex flex-wrap justify-between items-center gap-3 mb-2">
+      <h3 class="font-bold text-xl">${esc(z.title)}: все товары</h3>${backBtn("← К наборам", `decorZoneKits('${zone}')`)}</div>
+    <p class="text-sm text-gray-500 mb-4">${esc(z.description)} Всего товаров: ${num(z.total)}.</p>
+    <div class="flex flex-wrap gap-2 mb-6">${z.groups.map(g => `<a href="#zg-${g.id}" class="pill hover:bg-gray-200">${esc(g.title)} · ${g.total}</a>`).join("")}</div>
+    ${z.groups.map(g => `<section id="zg-${g.id}" class="mb-8">
+      <div class="flex justify-between items-baseline mb-3"><h4 class="font-semibold text-lg">${esc(g.title)}</h4><span class="text-sm text-gray-500">${g.total} шт.</span></div>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3" data-group-grid="${g.id}">${g.products.map(zoneCard).join("")}</div>
+      ${g.total > g.products.length ? `<button data-more="${g.id}" data-shown="${g.products.length}" data-total="${g.total}" class="mt-3 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg py-2 px-4 text-sm font-semibold">Показать ещё</button>` : ""}
+    </section>`).join("")}`;
+  decorBox.querySelectorAll("[data-more]").forEach(b => b.onclick = async () => {
+    const shown = Number(b.dataset.shown);
+    const rows = await api(`/api/v1/decor/zones/${zone}/${b.dataset.more}?offset=${shown}&limit=24`);
+    decorBox.querySelector(`[data-group-grid="${b.dataset.more}"]`).insertAdjacentHTML("beforeend", rows.map(zoneCard).join(""));
+    b.dataset.shown = shown + rows.length;
+    if (shown + rows.length >= Number(b.dataset.total) || !rows.length) b.remove();
+  });
 }
 
 async function decorStyles() {
@@ -1494,7 +1552,7 @@ async function decorStyles() {
   const styles = await api(`/api/v1/decor/styles?room_type=${D.room}`).catch(e => { decorBox.innerHTML = `<div class="warn">${esc(e.message)}</div>`; return null; });
   if (!styles) return;
   decorBox.innerHTML = `<div class="flex flex-wrap justify-between items-center gap-3 mb-4">
-      <h3 class="font-semibold text-lg">${esc(ROOMS[D.room])}: выберите стиль</h3>${backBtn("← Другое помещение", "decorRooms()")}</div>
+      <h3 class="font-semibold text-lg">${esc(DECOR_ROOMS[D.room])}: выберите стиль</h3>${backBtn("← Другое помещение", "decorRooms()")}</div>
     <div class="flex items-center gap-2 mb-5 text-sm font-medium text-gray-700">Бюджет:
       <div class="flex bg-gray-100 p-1 rounded-lg">${Object.entries(BUDGET_TITLES).map(([k, v]) => `<button data-budget="${k}" class="px-4 py-1.5 rounded-md ${k === D.budget ? "bg-white shadow-sm text-brand-red" : "text-gray-600"}">${v}</button>`).join("")}</div></div>
     <div class="grid md:grid-cols-3 gap-4">${styles.map(s => `<button data-style="${s.id}" ${s.slots_found ? "" : "disabled"} class="border-2 border-gray-200 hover:border-brand-red disabled:opacity-40 disabled:hover:border-gray-200 rounded-xl p-5 text-left transition-colors">
@@ -1503,13 +1561,16 @@ async function decorStyles() {
       <div class="text-sm text-gray-500 mt-1">${esc(s.description)}</div>
       <div class="text-xs font-semibold mt-3 ${s.slots_found === s.slots_total ? "text-green-700" : "text-gray-500"}">в стиле найдено ${s.slots_found} из ${s.slots_total} позиций</div></button>`).join("")}</div>`;
   decorBox.querySelectorAll("[data-budget]").forEach(b => b.onclick = () => { D.budget = b.dataset.budget; decorStyles(); });
-  decorBox.querySelectorAll("[data-style]").forEach(b => b.onclick = () => { Object.assign(D, { style: b.dataset.style, picks: {}, skip: [] }); decorResult(); });
+  decorBox.querySelectorAll("[data-style]").forEach(b => b.onclick = () => { Object.assign(D, { style: b.dataset.style, kit: null, picks: {}, skip: [] }); decorResult(); });
 }
 
 async function decorResult() {
   decorBox.innerHTML = `<p class="text-gray-500 animate-pulse">Подбираю товары…</p>`;
   let r;
-  try { r = await api("/api/v1/decor", { method: "POST", body: JSON.stringify({ room_type: D.room, style: D.style, budget: D.budget, picks: D.picks, skip: D.skip }) }); }
+  try {
+    r = D.kit ? await api(`/api/v1/decor/zones/${D.zone}/kits/${D.kit}`, { method: "POST", body: JSON.stringify({ budget: D.budget, picks: D.picks, skip: D.skip }) })
+      : await api("/api/v1/decor", { method: "POST", body: JSON.stringify({ room_type: D.room, style: D.style, budget: D.budget, picks: D.picks, skip: D.skip }) });
+  }
   catch (e) { decorBox.innerHTML = `<div class="warn">${esc(e.message)}</div>`; return; }
   const img = p => p.picture_url ? `<img src="${esc(p.picture_url)}" alt="" class="w-full h-40 object-contain bg-white rounded-lg">` : `<div class="w-full h-40 bg-gray-100 rounded-lg"></div>`;
   const card = x => x.product ? `<div class="border border-gray-200 rounded-xl p-4 flex flex-col gap-2 bg-white">
@@ -1521,8 +1582,8 @@ async function decorResult() {
       <div class="flex gap-2"><button data-replace="${x.slot}" class="flex-1 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg py-1.5 text-sm font-semibold">Заменить</button><button data-skip="${x.slot}" class="bg-white border border-gray-300 hover:bg-gray-50 rounded-lg py-1.5 px-3 text-sm" title="Убрать из подборки">✕</button></div>
     </div>` : `<div class="border border-dashed border-gray-300 rounded-xl p-4 text-sm text-gray-400 flex flex-col justify-between"><div><div class="text-xs font-semibold uppercase tracking-wide">${esc(x.title)}</div><div class="mt-2">в каталоге не нашлось</div></div><button data-skip="${x.slot}" class="text-left underline mt-3">убрать</button></div>`;
   decorBox.innerHTML = `<div class="flex flex-wrap justify-between items-center gap-3 mb-5">
-      <div><h3 class="font-bold text-xl">${esc(r.room_title)} · ${esc(r.style_title)}</h3><div class="text-sm text-gray-500">бюджет: ${BUDGET_TITLES[r.budget]} · позиций: ${r.items.filter(x => x.product).length}</div></div>
-      <div class="flex flex-wrap gap-2 items-center"><div class="flex bg-gray-100 p-1 rounded-lg text-sm">${Object.entries(BUDGET_TITLES).map(([k, v]) => `<button data-budget="${k}" class="px-3 py-1.5 rounded-md ${k === D.budget ? "bg-white shadow-sm text-brand-red font-semibold" : "text-gray-600"}">${v}</button>`).join("")}</div>${D.skip.length ? backBtn("Вернуть убранные", "D.skip=[];decorResult()") : ""}${backBtn("← Другой стиль", "decorStyles()")}</div></div>
+      <div><h3 class="font-bold text-xl">${esc(D.kit ? r.zone_title : r.room_title)} · ${esc(D.kit ? r.kit_title : r.style_title)}</h3><div class="text-sm text-gray-500">бюджет: ${BUDGET_TITLES[r.budget]} · позиций: ${r.items.filter(x => x.product).length}</div></div>
+      <div class="flex flex-wrap gap-2 items-center"><div class="flex bg-gray-100 p-1 rounded-lg text-sm">${Object.entries(BUDGET_TITLES).map(([k, v]) => `<button data-budget="${k}" class="px-3 py-1.5 rounded-md ${k === D.budget ? "bg-white shadow-sm text-brand-red font-semibold" : "text-gray-600"}">${v}</button>`).join("")}</div>${D.skip.length ? backBtn("Вернуть убранные", "D.skip=[];decorResult()") : ""}${D.kit ? backBtn("← Другой набор", `decorZoneKits('${D.zone}')`) : backBtn("← Другой стиль", "decorStyles()")}</div></div>
     <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">${r.items.map(card).join("")}</div>
     <div class="mt-6 flex justify-end items-center gap-3 text-lg">Итого: <b class="text-2xl text-brand-red">${rub(r.total)}</b></div>`;
   decorBox.querySelectorAll("[data-budget]").forEach(b => b.onclick = () => { D.budget = b.dataset.budget; D.picks = {}; decorResult(); });
@@ -1542,7 +1603,8 @@ async function decorReplace(line) {
   document.getElementById("picker-bg").onclick = closePicker;
   const load = async () => {
     const q = document.getElementById("decor-q").value;
-    const rows = await api(`/api/v1/decor/options?style=${D.style}&slot=${line.slot}&limit=60` + (q ? `&q=${encodeURIComponent(q)}` : ""));
+    const url = D.kit ? `/api/v1/decor/zones/${D.zone}/kits/${D.kit}/${line.slot}?limit=60` : `/api/v1/decor/options?style=${D.style}&slot=${line.slot}&limit=60`;
+    const rows = await api(url + (q ? `&q=${encodeURIComponent(q)}` : ""));
     document.getElementById("decor-options").innerHTML = rows.length ? rows.map(p => `<button data-pick="${p.id}" class="flex gap-3 items-center text-left bg-white border ${p.id === line.product?.id ? "border-brand-red" : "border-gray-200"} hover:border-brand-red rounded-xl p-3">
         ${p.picture_url ? `<img src="${esc(p.picture_url)}" alt="" class="w-16 h-16 object-contain">` : `<div class="w-16 h-16 bg-gray-100 rounded"></div>`}
         <div class="flex-1"><div class="font-semibold text-sm">${esc(p.name)}</div><div class="text-xs text-gray-500 mt-1">${p.why.map(esc).join(" · ")}</div></div><b class="whitespace-nowrap">${rub(p.price)}</b></button>`).join("") : `<p class="text-gray-500">Ничего не нашлось.</p>`;

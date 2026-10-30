@@ -38,6 +38,10 @@ def client(tmp_path):
         add(s, 11, "ковер Оливия 1600х2300мм бежевый", "Ковры", 6000, дизайн_ковров="классический",
             цвет_ковровых_изделий="бежевый")
         add(s, 20, "ваза стеклянная прозрачная", "Вазы", 800, материал="стекло", цвет="прозрачный")
+        add(s, 30, "мангал разборный 3мм", "Мангалы", 4500)
+        add(s, 31, "набор шампуров 6шт", "Шампуры", 600)
+        add(s, 32, "семена Томат Бычье сердце", "Семена овощей", 40)
+        add(s, 33, "семена Огурец Кураж", "Семена овощей", 60)
         s.commit()
 
     def session():
@@ -93,7 +97,7 @@ def test_manual_pick_skip_and_options(client):
 
 def test_styles_report_how_many_slots_are_covered(client):
     styles = {s["id"]: s for s in client.get("/api/v1/decor/styles?room_type=living_room").json()}
-    assert set(styles) == set(STYLES)
+    assert set(styles) == set(STYLES) - {"kids"}
     assert styles["loft"]["slots_found"] >= 2
     assert styles["loft"]["slots_total"] == 15
 
@@ -114,3 +118,61 @@ def test_prints_and_off_palette_colours_lose():
     assert family(item("люстра", colors="золотой, белый")) == "gold"
     branded = item("штора-плиссе РЫЖИЙ КОТ Сканди белая", brand="РЫЖИЙ КОТ", colors="белый")
     assert score(branded, STYLES["scandi"]).score >= 3  # the brand name is not a cat print
+
+
+def test_outdoor_zones_list_everything_without_style(client):
+    zones = {z["id"]: z for z in client.get("/api/v1/decor/zones").json()}
+    assert zones["grill"]["total"] == 2 and zones["vegetable_garden"]["total"] == 2
+    grill = client.get("/api/v1/decor/zones/grill").json()
+    assert [(g["id"], g["total"]) for g in grill["groups"]] == [("grills", 1), ("tools", 1)]
+    seeds = client.get("/api/v1/decor/zones/vegetable_garden/seeds?q=томат").json()
+    assert [x["id"] for x in seeds] == [32]
+    assert client.get("/api/v1/decor/zones/nope").status_code == 404
+
+
+def test_zone_kit_picks_one_product_per_position(client):
+    r = client.post("/api/v1/decor/zones/grill/kits/shashlik", json={"budget": "standard"}).json()
+    items = {x["slot"]: x for x in r["items"]}
+    assert r["kit_title"] == "Шашлык на компанию"
+    assert items["grill"]["product"]["id"] == 30 and items["skewers"]["product"]["id"] == 31
+    assert items["fuel"]["product"] is None
+    assert Decimal(str(r["total"])) == Decimal(4500 + 600)
+    r = client.post("/api/v1/decor/zones/grill/kits/shashlik", json={"skip": ["grill"]}).json()
+    assert "grill" not in {x["slot"] for x in r["items"]}
+    seeds = client.get("/api/v1/decor/zones/vegetable_garden/kits/season/tomato").json()
+    assert [x["id"] for x in seeds] == [32]
+    zones = {z["id"]: z for z in client.get("/api/v1/decor/zones").json()}
+    assert {k["id"] for k in zones["grill"]["kits"]} == {"shashlik", "bbq", "evening"}
+    assert client.post("/api/v1/decor/zones/grill/kits/nope", json={}).status_code == 404
+
+
+def test_themed_styles_accept_motifs_but_not_cartoons():
+    def item(name, colors):
+        return Item(1, name, Decimal(1), 0, None, None, None, colors=colors)
+
+    marine, forest = STYLES["marine"], STYLES["forest"]
+    assert score(item("подушка декоративная Якорь синяя", "синий"), marine).score >= 3
+    assert score(item("подушка декоративная Олень", "зеленый"), forest).score >= 3
+    assert score(item("подушка декоративная Единорог", "зеленый"), forest).score < 3
+    assert score(item("ваза хрусталь золото", "золотой"), marine).score < 0
+
+
+def test_kids_room_offers_kids_style_first(client):
+    rooms = {r["id"]: r["title"] for r in client.get("/api/v1/decor/rooms").json()}
+    assert rooms["kids_room"] == "Детская" and "living_room" in rooms
+    styles = client.get("/api/v1/decor/styles?room_type=kids_room").json()
+    assert styles[0]["id"] == "kids"
+    r = client.post("/api/v1/decor", json={"room_type": "kids_room", "style": "kids"})
+    assert r.status_code == 200 and r.json()["room_title"] == "Детская"
+    assert client.get("/api/v1/decor/styles?room_type=nope").status_code == 404
+    unicorn = Item(1, "ночник Единорог LED", Decimal(1), 0, None, None, None, colors="розовый")
+    assert score(unicorn, STYLES["kids"]).score >= 3 and score(unicorn, STYLES["modern"]).score < 0
+
+
+def test_colour_alone_does_not_make_a_style():
+    white_candle = Item(1, "свеча-столбик белая", Decimal(1), 0, None, None, None, colors="белый")
+    anchor = Item(2, "подушка декоративная Якорь белая", Decimal(1), 0, None, None, None, colors="белый")
+    assert not score(white_candle, STYLES["marine"]).strong
+    assert score(anchor, STYLES["marine"]).strong
+    lamp = Item(3, "светильник подвесной журнальный напольный", Decimal(1), 0, None, None, None)
+    assert not score(lamp, STYLES["marine"]).why  # «льн» inside words is not linen
