@@ -1,9 +1,13 @@
+import asyncio
+import logging
 import time
+import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from sqlalchemy import text
 
-from app.api.deps import get_classifier, get_estimate_engine, get_gigachat, get_repo
+from app.api.deps import (get_catalog_matching_classifier, get_classifier, get_estimate_engine,
+                          get_gigachat, get_repo)
 from app.api.picker import add_why, apply_explanations, explanation_signals
 from app.catalog.repository import MANUAL_ID_START, AdminStatus, CatalogRepo, to_brief
 from app.config import get_settings
@@ -15,8 +19,11 @@ from app.ml.tfidf import publishable
 from app.schemas import (
     AdminProductRow,
     AdminStats,
+    AutobindJob,
     BindingIn,
     BindingOut,
+    CatalogMatchAlternative,
+    CatalogMatchOut,
     EstimateRequest,
     EstimateResponse,
     ProductBrief,
@@ -33,11 +40,20 @@ from app.schemas import (
     WorkOption,
     WorkOptionsOut,
 )
+from app.db import get_sessionmaker
 from app.plans import RENOVATION_STAGES, work_materials, works_for_room
 from app.taxonomy import (MATERIAL_TITLES, PRODUCT_CATEGORY_TITLES, RENOVATION_TITLES, STAGE_ORDER,
                           STAGE_TITLES, WORKS, Material, RenovationType)
 
 router = APIRouter(prefix="/api/v1")
+logger = logging.getLogger(__name__)
+
+# One bulk writer per application process. The operation is idempotent at the database layer
+# (save_ml_bindings only inserts missing rows), while this guard prevents duplicate expensive
+# classifier/provider work from repeated clicks.
+_autobind_task: asyncio.Task[None] | None = None
+_autobind_job: AutobindJob | None = None
+_autobind_sync_lock = asyncio.Lock()
 
 
 @router.post("/estimate", response_model=EstimateResponse, tags=["calculator"])
@@ -185,6 +201,42 @@ def admin_suggest(product_id: int, repo: CatalogRepo = Depends(get_repo)) -> Sug
     return get_classifier().predict([product])[0]
 
 
+@router.get("/admin/products/{product_id}/catalog-match", response_model=CatalogMatchOut, tags=["admin"])
+def admin_catalog_match(product_id: int, repo: CatalogRepo = Depends(get_repo)) -> CatalogMatchOut:
+    """Assign a full-catalog leaf without changing renovation bindings or ranking state."""
+    product = repo.get(product_id)
+    if product is None:
+        raise HTTPException(404, "товар не найден")
+    try:
+        result = get_catalog_matching_classifier().predict_one(product, top_k=3)
+    except (RuntimeError, ValueError) as exc:
+        raise HTTPException(503, f"catalog matching unavailable: {exc}") from exc
+    prediction = result.prediction
+    return CatalogMatchOut(
+        product_id=result.product_id,
+        category_id=prediction.category_id,
+        category_name=prediction.category_name,
+        score=prediction.confidence,
+        top_3=[
+            CatalogMatchAlternative(
+                category_id=prediction.category_id,
+                category_name=prediction.category_name,
+                score=prediction.confidence,
+            ),
+            *[
+                CatalogMatchAlternative(
+                    category_id=item.category_id, category_name=item.category_name, score=item.confidence
+                )
+                for item in prediction.alternatives
+            ],
+        ],
+        review_recommended=prediction.needs_review,
+        score_type=prediction.score_type,
+        model=prediction.model,
+        taxonomy_version=result.taxonomy_version,
+    )
+
+
 @router.put("/admin/products/{product_id}/binding", response_model=BindingOut, tags=["admin"])
 def admin_bind(product_id: int, data: BindingIn, repo: CatalogRepo = Depends(get_repo)) -> BindingOut:
     if repo.get(product_id) is None:
@@ -192,27 +244,53 @@ def admin_bind(product_id: int, data: BindingIn, repo: CatalogRepo = Depends(get
     return BindingOut.model_validate(repo.set_binding(product_id, data, "manual", None, confirmed=True))
 
 
-@router.post("/admin/autobind", response_model=AdminStats, tags=["admin"])
-async def admin_autobind(
-    min_confidence: float | None = Query(None, ge=0, le=1),
-    batch: int = Query(1000, le=5000),
-    use_gigachat: bool | None = None,
-    repo: CatalogRepo = Depends(get_repo),
+def _autobind_rejection(suggestion: Suggestion, min_confidence: float) -> str | None:
+    """Return the first publication rule that rejects a renovation binding."""
+    if not suggestion.flags.get("domain_renovation", False):
+        return "outside_renovation_domain"
+    if suggestion.flags.get("ml_unknown", False):
+        return "unknown_or_uncertain"
+    if suggestion.product_category is None:
+        return "missing_product_category"
+    if suggestion.material == Material.other:
+        return "unsupported_material"
+    if suggestion.confidence < min_confidence:
+        return "below_confidence_threshold"
+    if suggestion.flags.get("taxonomy_inconsistent", False):
+        return "taxonomy_inconsistent"
+    return None
+
+
+async def _run_autobind(
+    repo: CatalogRepo, min_confidence: float, batch: int, use_gigachat: bool,
+    progress: AutobindJob | None = None,
 ) -> AdminStats:
-    if min_confidence is None:
-        min_confidence = get_settings().autobind_min_confidence
+    started = time.perf_counter()
     settings = get_settings()
     clf = get_classifier()
-    if use_gigachat is None:
-        use_gigachat = settings.gigachat_enabled
     giga = get_gigachat() if use_gigachat else None
     giga_considered = 0
     after_id = -1
     while products := repo.unbound(batch, after_id):
+        batch_started = time.perf_counter()
         after_id = products[-1].id
-        predictions = clf.predict(products)
+        predict_started = time.perf_counter()
+        # Trained inference is CPU-bound. Keeping it off the event loop preserves API health.
+        predictions = await asyncio.to_thread(clf.predict, products)
+        if not isinstance(predictions, list):
+            raise ValueError(f"classifier returned {type(predictions).__name__}, expected a list")
+        if len(predictions) != len(products) or not all(isinstance(item, Suggestion) for item in predictions):
+            raise ValueError(
+                f"classifier returned {len(predictions)} validatable outputs for {len(products)} products"
+            )
+        classifier_ms = int((time.perf_counter() - predict_started) * 1000)
         pairs = [(p.id, s) for p, s in zip(products, predictions, strict=True)
                  if publishable(s, min_confidence)]
+        dependency_ms = 0
+        if progress is not None:
+            progress.processed += len(products)
+            progress.classifier_ms += classifier_ms
+            progress.phase = "external fallback" if giga is not None and giga.configured else "saving"
         if giga is not None and giga.configured:
             for product, ml in zip(products, predictions, strict=True):
                 if publishable(ml, min_confidence) or not eligible_for_gigachat(ml, min_confidence):
@@ -220,17 +298,116 @@ async def admin_autobind(
                 if giga_considered >= settings.gigachat_autobind_max_products:
                     break
                 giga_considered += 1
+                if progress is not None:
+                    progress.gigachat_considered = giga_considered
+                dependency_started = time.perf_counter()
                 try:
                     result = await giga.classify(product, ml)
                     decision = decide_hybrid(ml, result, min_confidence)
                     if decision.action == "accept_gigachat":
                         pairs.append((product.id, gigachat_suggestion(result,
                             model=settings.gigachat_model, confidence=settings.gigachat_binding_confidence)))
-                except (GigaChatError, ValueError):
-                    # The product remains unbound for admin review; ML autobinding continues.
-                    continue
-        repo.save_ml_bindings(pairs)
-    return admin_stats(repo)
+                except (GigaChatError, ValueError) as exc:
+                    logger.warning("autobind GigaChat failed product_id=%s: %s", product.id, exc)
+                    if progress is not None:
+                        progress.errors += 1
+                finally:
+                    dependency_ms += int((time.perf_counter() - dependency_started) * 1000)
+        candidate_ids = {product_id for product_id, _ in pairs}
+        rejection_reasons: dict[str, int] = {}
+        for product, suggestion in zip(products, predictions, strict=True):
+            if product.id in candidate_ids:
+                continue
+            reason = _autobind_rejection(suggestion, min_confidence) or "not_publishable"
+            rejection_reasons[reason] = rejection_reasons.get(reason, 0) + 1
+        inserted = repo.save_ml_bindings(pairs)
+        if progress is not None:
+            progress.candidates += len(candidate_ids)
+            progress.bound += inserted
+            progress.rejected += len(products) - len(candidate_ids)
+            progress.persistence_conflicts += len(candidate_ids) - inserted
+            progress.skipped = progress.rejected + progress.persistence_conflicts
+            for reason, count in rejection_reasons.items():
+                progress.rejection_reasons[reason] = progress.rejection_reasons.get(reason, 0) + count
+            progress.gigachat_considered = giga_considered
+            progress.batches += 1
+            progress.dependency_ms += dependency_ms
+            progress.elapsed_ms = int((time.perf_counter() - started) * 1000)
+            progress.phase = "external fallback" if dependency_ms else "classifying"
+        logger.info(
+            "autobind batch=%s processed=%s candidates=%s inserted=%s rejected=%s reasons=%s "
+            "classifier_ms=%s dependency_ms=%s batch_ms=%s",
+            progress.batches if progress else "sync", len(products), len(candidate_ids), inserted,
+            len(products) - len(candidate_ids), rejection_reasons, classifier_ms, dependency_ms,
+            int((time.perf_counter() - batch_started) * 1000),
+        )
+    result = admin_stats(repo)
+    logger.info("autobind complete processed=%s bound=%s elapsed_ms=%s", progress.processed if progress else "unknown",
+                progress.bound if progress else "unknown", int((time.perf_counter() - started) * 1000))
+    return result
+
+
+async def _run_autobind_job(job: AutobindJob, min_confidence: float, batch: int, use_gigachat: bool) -> None:
+    global _autobind_task
+    try:
+        with get_sessionmaker()() as session:
+            job.stats = await _run_autobind(CatalogRepo(session), min_confidence, batch, use_gigachat, job)
+        job.status, job.phase = "completed", "completed"
+    except asyncio.CancelledError:
+        logger.warning("autobind job %s cancelled", job.id)
+        job.status, job.phase, job.error = "cancelled", "cancelled", "autobind was cancelled"
+        raise
+    except Exception as exc:
+        logger.exception("autobind job %s failed", job.id)
+        job.status, job.phase, job.error = "failed", "failed", f"{type(exc).__name__}: {exc}"
+    finally:
+        job.elapsed_ms = int((time.perf_counter() - _job_started[job.id]) * 1000)
+        _autobind_task = None
+
+
+_job_started: dict[str, float] = {}
+
+
+@router.post("/admin/autobind", response_model=AdminStats | AutobindJob, tags=["admin"])
+async def admin_autobind(
+    min_confidence: float | None = Query(None, ge=0, le=1),
+    batch: int = Query(1000, le=5000),
+    use_gigachat: bool | None = None,
+    background: bool = False,
+    response: Response = None,
+    repo: CatalogRepo = Depends(get_repo),
+) -> AdminStats | AutobindJob:
+    global _autobind_job, _autobind_task
+    if min_confidence is None:
+        min_confidence = get_settings().autobind_min_confidence
+    settings = get_settings()
+    if use_gigachat is None:
+        use_gigachat = settings.gigachat_enabled
+    if _autobind_task is not None and not _autobind_task.done():
+        if response is not None:
+            response.status_code = status.HTTP_202_ACCEPTED
+        return _autobind_job
+    if _autobind_sync_lock.locked():
+        raise HTTPException(409, "autobind is already running")
+    if not background:
+        async with _autobind_sync_lock:
+            return await _run_autobind(repo, min_confidence, batch, use_gigachat)
+    job = AutobindJob(id=str(uuid.uuid4()), status="running", phase="starting")
+    _autobind_job = job
+    _job_started[job.id] = time.perf_counter()
+    _autobind_task = asyncio.create_task(_run_autobind_job(job, min_confidence, batch, use_gigachat))
+    if response is not None:
+        response.status_code = status.HTTP_202_ACCEPTED
+    return job
+
+
+@router.get("/admin/autobind/status", response_model=AutobindJob, tags=["admin"])
+def admin_autobind_status() -> AutobindJob:
+    if _autobind_job is None:
+        raise HTTPException(404, "autobind has not been started")
+    if _autobind_job.status == "running":
+        _autobind_job.elapsed_ms = int((time.perf_counter() - _job_started[_autobind_job.id]) * 1000)
+    return _autobind_job
 
 
 @router.get("/admin/stats", response_model=AdminStats, tags=["admin"])

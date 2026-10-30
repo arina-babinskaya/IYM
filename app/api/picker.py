@@ -64,6 +64,8 @@ def why(s: Scored, check_moisture: bool = False) -> list[str]:
         out.append("одна из лучших цен за единицу")
     if s.parts.get("outdoor", 0) < 0:
         out.append("уличный — для помещения подходит хуже")
+    if s.parts.get("decorative", 0) < 0:
+        out.append("декоративный — для этой работы обычно не нужен")
     if check_moisture and not s.parts.get("moisture_resistant"):
         out.append("влагостойкость не указана — проверьте перед покупкой")
     return out
@@ -172,6 +174,8 @@ def add_why(resp: EstimateResponse, repo: CatalogRepo) -> EstimateResponse:
                 if selected is None:
                     selected = ranker.score([(p, b)], room)[0]
                 item.why = why(selected, needs_moisture(room, item.material))
+                if not (b.work_types or []) and not b.confirmed:
+                    item.why.append("подобран по материалу: вид работ у товара не указан — проверьте")
                 evidence, explanation = recommendation_evidence(item, request_room, p, b, selected, scored)
                 item.recommendation_evidence = evidence
                 item.recommendation_explanation = explanation

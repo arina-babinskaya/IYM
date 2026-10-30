@@ -62,9 +62,9 @@ def upsert(
     index_elements: Sequence[str],
     chunk_size: int = 200,
     update: bool = True,
-) -> None:
+) -> int:
     if not rows:
-        return
+        return 0
     dialect = session.get_bind().dialect.name
     if dialect == "postgresql":
         from sqlalchemy.dialects.postgresql import insert
@@ -73,6 +73,7 @@ def upsert(
     else:
         raise NotImplementedError(f"upsert не поддерживает {dialect}")
 
+    affected = 0
     for start in range(0, len(rows), chunk_size):
         chunk = rows[start : start + chunk_size]
         stmt = insert(model).values(list(chunk))
@@ -83,4 +84,7 @@ def upsert(
             stmt = stmt.on_conflict_do_update(index_elements=list(index_elements), set_=update_cols)
         else:
             stmt = stmt.on_conflict_do_nothing(index_elements=list(index_elements))
-        session.execute(stmt)
+        result = session.execute(stmt)
+        if result.rowcount is not None and result.rowcount >= 0:
+            affected += result.rowcount
+    return affected

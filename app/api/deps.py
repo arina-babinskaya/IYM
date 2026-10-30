@@ -30,6 +30,16 @@ def get_classifier() -> Any:
 
 
 @lru_cache
+def get_catalog_matching_classifier() -> Any:
+    """Independent full-catalog matcher; intentionally not used by bindings or ranking."""
+    settings = get_settings()
+    if settings.catalog_matching_classifier_backend != "catalog_tfidf":
+        raise ValueError(f"Unsupported catalog matching backend: {settings.catalog_matching_classifier_backend}")
+    classifier = load("app.ml.catalog_matching:CatalogMatchingClassifier")
+    return classifier(settings.catalog_matching_artifact_path)
+
+
+@lru_cache
 def get_estimate_engine() -> Any:
     return load(get_settings().engine_impl)(ranker=get_ranker())
 

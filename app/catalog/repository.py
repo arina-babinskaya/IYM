@@ -3,17 +3,47 @@ from collections.abc import Sequence
 from typing import Literal
 
 from sqlalchemy import delete, func, or_, select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, defer
 
 from app.catalog import normalize as nz
 from app.db import upsert
-from app.ml.ranker import moisture_rejected, signals
+from app.ml.ranker import has_flags, preload
 from app.models import Product, ProductBinding, ProductCategory, ProductCharacteristic
 from app.schemas import BindingIn, BindingOut, Characteristic, ProductBrief, ProductCreate, ProductOut, Suggestion
 from app.taxonomy import Material, WorkType, works_for_material
 
 MANUAL_ID_START = 9_000_000_000_000
 AdminStatus = Literal["unbound", "ml", "confirmed", "all"]
+
+# A persisted work label describes where the classifier saw the strongest evidence; it is not an
+# exhaustive list of every estimate slot in which an auxiliary material can be used.  These narrow
+# relations are consulted only when an exact candidate pool is empty.  Material identity remains
+# exact, so (for example) a paint product can never enter a primer slot.
+COMPATIBLE_WORK_FALLBACKS: dict[tuple[Material, WorkType], frozenset[WorkType]] = {
+    (Material.primer, WorkType.waterproofing): frozenset({WorkType.priming}),
+    (Material.primer, WorkType.floor_screed): frozenset({WorkType.priming}),
+    (Material.primer, WorkType.tiling): frozenset({WorkType.priming}),
+    (Material.primer, WorkType.wall_plastering): frozenset({WorkType.priming}),
+    (Material.primer, WorkType.wall_putty): frozenset({WorkType.priming}),
+    (Material.primer, WorkType.wall_painting): frozenset({WorkType.priming}),
+    (Material.primer, WorkType.wallpapering): frozenset({WorkType.priming}),
+    (Material.electrical_boxes, WorkType.lighting_install): frozenset({
+        WorkType.electrical_wiring, WorkType.electrical_fittings,
+    }),
+}
+
+
+def fallback_binding(binding: ProductBinding, work_type: WorkType, tier: str) -> ProductBinding:
+    """Create a detached ranking view with auditable fallback provenance."""
+    flags = dict(binding.flags or {})
+    flags[f"candidate_{tier}_fallback"] = True
+    flags[f"candidate_requested_work__{work_type.value}"] = True
+    return ProductBinding(
+        product_id=binding.product_id, product_category=binding.product_category,
+        material=binding.material, work_types=list(binding.work_types or []),
+        room_types=list(binding.room_types or []), flags=flags, source=binding.source,
+        confidence=binding.confidence, confirmed=binding.confirmed,
+    )
 
 
 def to_brief(p: Product) -> ProductBrief:
@@ -23,18 +53,13 @@ def to_brief(p: Product) -> ProductBrief:
     )
 
 
-def has_flags(p: Product, b: ProductBinding, required: Sequence[str]) -> bool:
-    flags = b.flags or {}
-    found = signals(p, b)
-    return all(
-        flags.get(f) or found.get(f, 0) >= 1 or (f == "moisture_resistant" and not moisture_rejected(p))
-        for f in required
-    )
 
 
 class CatalogRepo:
     def __init__(self, session: Session):
         self.session = session
+        # One repo serves one request: the engine and the "!" hints ask for the same candidate lists.
+        self._candidates: dict[tuple, list[tuple[Product, ProductBinding]]] = {}
 
     def get(self, product_id: int) -> Product | None:
         return self.session.get(Product, product_id)
@@ -88,9 +113,28 @@ class CatalogRepo:
         in_stock_only: bool = True,
         limit: int = 200,
     ) -> list[tuple[Product, ProductBinding]]:
+        key = (material, work_type, tuple(required_flags), min_confidence, in_stock_only, limit)
+        if key not in self._candidates:
+            self._candidates[key] = self._load_candidates(material, work_type, required_flags, min_confidence,
+                                                          in_stock_only, limit)
+        return list(self._candidates[key])
+
+    def _load_candidates(
+        self,
+        material: Material,
+        work_type: WorkType | None,
+        required_flags: Sequence[str],
+        min_confidence: float,
+        in_stock_only: bool,
+        limit: int,
+    ) -> list[tuple[Product, ProductBinding]]:
         stmt = (
             select(Product, ProductBinding)
             .join(ProductBinding, ProductBinding.product_id == Product.id)
+            # The full card is only needed for products the ranker has not profiled yet; it is then
+            # loaded on access.
+            .options(defer(Product.raw), defer(Product.description), defer(Product.categories),
+                     defer(Product.categories_tree))
             .where(ProductBinding.material == material.value)
             .where(Product.status.isnot(False), Product.result_price.isnot(None), Product.result_price > 0)
             .where(or_(ProductBinding.confirmed.is_(True), ProductBinding.confidence >= min_confidence))
@@ -103,9 +147,27 @@ class CatalogRepo:
             # only when the authoritative material taxonomy confirms compatibility. Automatic
             # category/material-only bindings remain excluded from specific estimate slots.
             compatible_legacy = work_type in works_for_material(material)
-            rows = [(p, b) for p, b in rows if work_type.value in (b.work_types or [])
-                    or (b.confirmed and not (b.work_types or []) and compatible_legacy)]
+            exact = [(p, b) for p, b in rows if work_type.value in (b.work_types or [])
+                     or (b.confirmed and not (b.work_types or []) and compatible_legacy)]
+            if exact:
+                rows = exact
+            else:
+                related = COMPATIBLE_WORK_FALLBACKS.get((material, work_type), frozenset())
+                compatible = [
+                    (p, fallback_binding(b, work_type, "compatible")) for p, b in rows
+                    if any(item.value in (b.work_types or []) for item in related)
+                ]
+                if compatible:
+                    rows = compatible
+                elif compatible_legacy:
+                    # Nothing is bound to this work yet (e.g. fasteners, which the model binds by
+                    # material only): use material-only bindings rather than leave the line empty.
+                    rows = [(p, fallback_binding(b, work_type, "material_only")) for p, b in rows
+                            if not (b.work_types or [])]
+                else:
+                    rows = []
         if required_flags:
+            preload(rows)
             rows = [(p, b) for p, b in rows if has_flags(p, b, required_flags)]
         return rows[:limit]
 
@@ -122,9 +184,10 @@ class CatalogRepo:
         b.source, b.confidence, b.confirmed = source, confidence, confirmed
         self.session.add(b)
         self.session.commit()
+        self._candidates.clear()
         return b
 
-    def save_ml_bindings(self, pairs: Sequence[tuple[int, Suggestion]]) -> None:
+    def save_ml_bindings(self, pairs: Sequence[tuple[int, Suggestion]]) -> int:
         rows = [
             {
                 "product_id": pid,
@@ -140,8 +203,10 @@ class CatalogRepo:
             for pid, s in pairs
         ]
         # Classification only fills missing bindings; it must never replace manual/confirmed data.
-        upsert(self.session, ProductBinding, rows, ["product_id"], update=False)
+        inserted = upsert(self.session, ProductBinding, rows, ["product_id"], update=False)
         self.session.commit()
+        self._candidates.clear()
+        return inserted
 
     def admin_list(self, status: AdminStatus = "unbound", q: str | None = None, limit: int = 50,
                    offset: int = 0) -> list[Product]:
@@ -179,6 +244,7 @@ class CatalogRepo:
         if rows:
             upsert(self.session, ProductCharacteristic, rows, ["product_id", "code"])
         self.session.commit()
+        self._candidates.clear()
         return p
 
     def delete_manual(self, product_id: int) -> bool:
@@ -188,6 +254,7 @@ class CatalogRepo:
             self.session.execute(delete(model).where(model.product_id == product_id))
         self.session.execute(delete(Product).where(Product.id == product_id))
         self.session.commit()
+        self._candidates.clear()
         return True
 
     def unbound(self, limit: int = 100, after_id: int = -1) -> list[Product]:

@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 from app.catalog import json_catalog, yml
 from app.catalog.repository import MANUAL_ID_START
 from app.db import upsert
+from app.ml.ranker import clear_cache as clear_ranker_cache
 from app.models import Category, IngestRun, Product, ProductCategory, ProductCharacteristic
 
 log = logging.getLogger(__name__)
@@ -182,4 +183,5 @@ def load_catalog(
             )
         )
         session.commit()
+    clear_ranker_cache()
     return stats
