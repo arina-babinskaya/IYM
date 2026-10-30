@@ -1,4 +1,7 @@
 import asyncio
+from decimal import Decimal
+from typing import Any
+from pydantic import BaseModel
 import logging
 import time
 import uuid
@@ -42,6 +45,16 @@ from app.schemas import (
 )
 from app.db import get_sessionmaker
 from app.plans import RENOVATION_STAGES, work_materials, works_for_room
+from app.engine.geometry import (
+    Point2D,
+    analyze_room_geometry,
+    preset_bay_window,
+    preset_circle,
+    preset_l_shaped,
+    preset_rectangle,
+    preset_trapezoid,
+    preset_with_niche,
+)
 from app.taxonomy import (MATERIAL_TITLES, PRODUCT_CATEGORY_TITLES, RENOVATION_TITLES, STAGE_ORDER,
                           STAGE_TITLES, WORKS, Material, RenovationType)
 
@@ -417,6 +430,53 @@ def admin_stats(repo: CatalogRepo = Depends(get_repo)) -> AdminStats:
         products_total=total, bound_manual=manual, bound_ml=ml, unbound=total - manual - ml,
         auto_bound_share=round(ml / total, 4) if total else 0.0,
     )
+
+
+
+# ---------------------------------------------------------------------------
+# 2D Geometry & Custom Wall Drawing API
+# ---------------------------------------------------------------------------
+
+
+class GeometryAnalyzeRequest(BaseModel):
+    vertices: list[dict[str, float]]
+    height_m: float = 2.7
+    openings_area_m2: float = 0.0
+
+
+@router.get("/geometry/presets", tags=["geometry"])
+def geometry_presets() -> dict[str, Any]:
+    """Типовые архитектурные шаблоны планировок для 2D-редактора."""
+    return {
+        "rectangle": [{"x": p.x, "y": p.y} for p in preset_rectangle(5.0, 4.0)],
+        "l_shaped": [{"x": p.x, "y": p.y} for p in preset_l_shaped(5.0, 4.0, 2.0, 2.0)],
+        "niche": [{"x": p.x, "y": p.y} for p in preset_with_niche(4.0, 3.5, 2.0, 0.6)],
+        "bay_window": [{"x": p.x, "y": p.y} for p in preset_bay_window(5.0, 4.0, 1.2, 0.8)],
+        "trapezoid": [{"x": p.x, "y": p.y} for p in preset_trapezoid(5.0, 3.5, 4.0)],
+        "circle": [{"x": p.x, "y": p.y} for p in preset_circle(2.5, 16)],
+    }
+
+
+@router.post("/geometry/analyze", tags=["geometry"])
+def geometry_analyze(req: GeometryAnalyzeRequest) -> dict[str, Any]:
+    """Анализ произвольного 2D-полигона стен по формуле Гаусса и нормам СНиП."""
+    pts = [Point2D(p["x"], p["y"]) for p in req.vertices]
+    m = analyze_room_geometry(
+        pts,
+        height_m=Decimal(str(req.height_m)),
+        openings_area_m2=Decimal(str(req.openings_area_m2)),
+    )
+    return {
+        "floor_area": float(m.floor_area),
+        "perimeter": float(m.perimeter),
+        "wall_count": m.wall_count,
+        "gross_wall_area": float(m.gross_wall_area),
+        "net_wall_area": float(m.net_wall_area),
+        "is_orthogonal": m.is_orthogonal,
+        "interior_angles": m.interior_angles,
+        "wall_lengths": [float(l) for l in m.wall_lengths],
+        "geometry_notes": m.geometry_notes,
+    }
 
 
 health_router = APIRouter(tags=["service"])

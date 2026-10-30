@@ -267,38 +267,835 @@ function stepRoom() {
   bindNav(() => { W.room = {}; W.editing = null; showStep(4); });
 }
 
+// --- 2D Geometry & Shoelace Helper Functions (Client-side) ---
+function polyArea(pts) {
+  let a = 0;
+  for (let i = 0, n = pts.length; i < n; i++) {
+    const j = (i + 1) % n;
+    a += pts[i].x * pts[j].y - pts[j].x * pts[i].y;
+  }
+  return Math.abs(a) * 0.5;
+}
+
+function polyPerimeter(pts) {
+  let p = 0;
+  for (let i = 0, n = pts.length; i < n; i++) {
+    const j = (i + 1) % n;
+    p += Math.hypot(pts[j].x - pts[i].x, pts[j].y - pts[i].y);
+  }
+  return p;
+}
+
+function polyIsOrthogonal(pts, tol = 3.0) {
+  const n = pts.length;
+  if (n < 3) return true;
+  for (let i = 0; i < n; i++) {
+    const pPrev = pts[(i - 1 + n) % n];
+    const pCurr = pts[i];
+    const pNext = pts[(i + 1) % n];
+    const v1x = pPrev.x - pCurr.x, v1y = pPrev.y - pCurr.y;
+    const v2x = pNext.x - pCurr.x, v2y = pNext.y - pCurr.y;
+    const dot = v1x * v2x + v1y * v2y;
+    const l1 = Math.hypot(v1x, v1y), l2 = Math.hypot(v2x, v2y);
+    if (l1 === 0 || l2 === 0) continue;
+    const cosVal = Math.max(-1, Math.min(1, dot / (l1 * l2)));
+    const angleDeg = Math.acos(cosVal) * (180 / Math.PI);
+    if (Math.abs(angleDeg - 90) > tol && Math.abs(angleDeg - 270) > tol) {
+      return false;
+    }
+  }
+  return true;
+}
+
+const GEOMETRY_PRESETS = {
+  rectangle: () => [
+    {x: 0, y: 0}, {x: 4.0, y: 0}, {x: 4.0, y: 5.0}, {x: 0, y: 5.0}
+  ],
+  l_shaped: () => [
+    {x: 0, y: 0}, {x: 4.5, y: 0}, {x: 4.5, y: 3.0}, {x: 2.5, y: 3.0}, {x: 2.5, y: 5.5}, {x: 0, y: 5.5}
+  ],
+  niche: () => [
+    {x: 0, y: 0}, {x: 4.0, y: 0}, {x: 4.0, y: 4.5}, {x: 3.0, y: 4.5}, {x: 3.0, y: 5.2}, {x: 1.2, y: 5.2}, {x: 1.2, y: 4.5}, {x: 0, y: 4.5}
+  ],
+  bay_window: () => [
+    {x: 0, y: 0}, {x: 4.0, y: 0}, {x: 4.0, y: 4.5}, {x: 3.2, y: 5.7}, {x: 0.8, y: 5.7}, {x: 0, y: 4.5}
+  ],
+  trapezoid: () => [
+    {x: 0, y: 0}, {x: 5.0, y: 0}, {x: 4.0, y: 4.5}, {x: 1.0, y: 4.5}
+  ],
+  circle: () => {
+    const pts = [];
+    const r = 2.5, cx = 2.5, cy = 2.5, n = 16;
+    for (let i = 0; i < n; i++) {
+      const th = (2 * Math.PI * i) / n;
+      pts.push({
+        x: Math.round((cx + r * Math.cos(th)) * 100) / 100,
+        y: Math.round((cy + r * Math.sin(th)) * 100) / 100
+      });
+    }
+    return pts;
+  }
+};
+
+// --- Библиотека стандартных размеров окон и дверей (ГОСТ) без смайликов ---
+const OPENING_PRESETS = {
+  window: [
+    { id: "window_std", title: "Стандартное (1.50 × 1.40 м)", w: 1.5, h: 1.4, desc: "2.10 м² (ГОСТ типовое)" },
+    { id: "window_wide", title: "Широкое трехстворчатое (2.05 × 1.40 м)", w: 2.05, h: 1.4, desc: "2.87 м² (гостиная)" },
+    { id: "window_narrow", title: "Узкое одностворчатое (0.85 × 1.40 м)", w: 0.85, h: 1.4, desc: "1.19 м² (кухня/кабинет)" },
+    { id: "window_panoramic", title: "Панорамное / в пол (2.00 × 2.10 м)", w: 2.0, h: 2.1, desc: "4.20 м² (в пол / новостройки)" },
+    { id: "window_small", title: "Маленькое / форточка (0.60 × 0.80 м)", w: 0.6, h: 0.8, desc: "0.48 м² (санузел)" },
+    { id: "custom", title: "Свой размер...", w: 1.5, h: 1.4, desc: "Произвольные габариты" }
+  ],
+  door: [
+    { id: "door_std", title: "Межкомнатная (0.80 × 2.00 м)", w: 0.8, h: 2.0, desc: "1.60 м² (полотно 80 см)" },
+    { id: "door_bath", title: "Санузел / узкая (0.60 × 2.00 м)", w: 0.6, h: 2.0, desc: "1.20 м² (полотно 60 см)" },
+    { id: "door_wide", title: "Широкая комнатная (0.90 × 2.00 м)", w: 0.9, h: 2.0, desc: "1.80 м² (полотно 90 см)" },
+    { id: "door_double", title: "Двустворчатая распашная (1.30 × 2.00 м)", w: 1.3, h: 2.0, desc: "2.60 м² (зал / гостиная)" },
+    { id: "door_entrance", title: "Входная дверь (0.90 × 2.10 м)", w: 0.9, h: 2.1, desc: "1.89 м² (входной проем)" },
+    { id: "custom", title: "Свой размер...", w: 0.8, h: 2.0, desc: "Произвольные габариты" }
+  ]
+};
+
 function stepSize() {
   const r = W.room;
-  const inputCls = "mt-1 w-full bg-white border border-gray-300 rounded-lg p-3 text-lg font-medium outline-none focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/20";
-  wizard.innerHTML = `<p class="text-xl font-bold mb-6">Размеры: ${esc(ROOMS[r.room_type])}</p>
-    <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-4">
-      <label class="text-sm font-semibold text-gray-600">Длина, м<input type="number" id="w-len" value="${r.length_m ?? ""}" step="0.1" min="0" class="${inputCls}"></label>
-      <label class="text-sm font-semibold text-gray-600">Ширина, м<input type="number" id="w-wid" value="${r.width_m ?? ""}" step="0.1" min="0" class="${inputCls}"></label>
-      <label class="text-sm font-semibold text-gray-600">Высота, м<input type="number" id="w-hei" value="${r.height_m ?? 2.7}" step="0.1" min="0" class="${inputCls}"></label>
-      <label class="text-sm font-semibold text-gray-600">Окон, шт<input type="number" id="w-win" value="${r.windows ?? (ROOM_OPENINGS[r.room_type] || [1, 1])[0]}" step="1" min="0" max="30" class="${inputCls}"></label>
-      <label class="text-sm font-semibold text-gray-600">Дверей, шт<input type="number" id="w-door" value="${r.doors ?? (ROOM_OPENINGS[r.room_type] || [1, 1])[1]}" step="1" min="0" max="30" class="${inputCls}"></label>
-    </div>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center bg-gray-50 p-4 rounded-xl">
-      <label class="text-sm font-semibold text-gray-600">Влажность<select id="w-hum" class="mt-1 w-full bg-white border border-gray-300 rounded-lg p-2.5 outline-none focus:border-brand-blue"><option value="">По типу комнаты</option>${opts({ low: "Низкая", normal: "Обычная", high: "Высокая" }, r.humidity || "")}</select></label>
-      <p class="text-sm text-gray-500 font-medium" id="w-area">Укажите габариты</p>
-    </div>
-    ${nav(true, true)}`;
-  const v = id => Number(document.getElementById(id).value);
-  const openings = () => v("w-win") * 2.1 + v("w-door") * 1.6;
-  const area = () => {
-    const ok = v("w-len") > 0 && v("w-wid") > 0 && v("w-hei") > 0;
-    document.getElementById("w-area").innerHTML = ok ? `<b>Пол:</b> ${num(v("w-len") * v("w-wid"))} м²<br><b>Стены:</b> ${num(Math.max(2 * (v("w-len") + v("w-wid")) * v("w-hei") - openings(), 0))} м² <span class="text-xs text-gray-400">(без окон и дверей; окно 1.5×1.4, дверь 0.8×2)</span>` : "Укажите длину, ширину и высоту";
-    wizard.querySelector("[data-next]").disabled = !ok;
+  let mode = r.polygon ? "2d" : "simple";
+  
+  // Инициализируем полигон текущей комнаты
+  let poly = r.polygon ? structuredClone(r.polygon) : [
+    {x: 0, y: 0},
+    {x: Number(r.width_m) || 4.0, y: 0},
+    {x: Number(r.width_m) || 4.0, y: Number(r.length_m) || 5.0},
+    {x: 0, y: Number(r.length_m) || 5.0}
+  ];
+
+  // Инициализируем проемы (окна и двери)
+  let openings = r.openings ? structuredClone(r.openings) : [];
+  if (!openings.length) {
+    const [defWin, defDoor] = ROOM_OPENINGS[r.room_type] || [1, 1];
+    if (defWin > 0) {
+      openings.push({
+        kind: "window",
+        preset_id: "window_std",
+        title: "Стандартное (1.50 × 1.40 м)",
+        width_m: 1.5,
+        height_m: 1.4,
+        count: defWin
+      });
+    }
+    if (defDoor > 0) {
+      const isBath = r.room_type === "bathroom";
+      openings.push({
+        kind: "door",
+        preset_id: isBath ? "door_bath" : "door_std",
+        title: isBath ? "Санузел / узкая (0.60 × 2.00 м)" : "Межкомнатная (0.80 × 2.00 м)",
+        width_m: isBath ? 0.6 : 0.8,
+        height_m: 2.0,
+        count: defDoor
+      });
+    }
+  }
+
+  const calcOpeningsTotalArea = () => {
+    return openings.reduce((acc, op) => acc + (Number(op.width_m) || 0) * (Number(op.height_m) || 0) * (Number(op.count) || 1), 0);
   };
-  wizard.querySelectorAll("input").forEach(el => el.oninput = area);
-  area();
-  bindNav(() => {
-    Object.assign(r, { length_m: v("w-len"), width_m: v("w-wid"), height_m: v("w-hei"), windows: v("w-win"), doors: v("w-door") });
-    delete r.openings_area_m2;
-    const hum = document.getElementById("w-hum").value;
-    if (hum) r.humidity = hum; else delete r.humidity;
-    showStep(2);
+
+  const calcTotalWindows = () => {
+    return openings.filter(o => o.kind === "window").reduce((acc, o) => acc + (Number(o.count) || 0), 0);
+  };
+
+  const calcTotalDoors = () => {
+    return openings.filter(o => o.kind === "door").reduce((acc, o) => acc + (Number(o.count) || 0), 0);
+  };
+
+  const renderUI = () => {
+    const inputCls = "mt-1 w-full bg-white border border-gray-300 rounded-lg p-2.5 text-base font-medium outline-none focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/20";
+    
+    wizard.innerHTML = `
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
+        <div>
+          <p class="text-xl font-bold">Размеры: ${esc(ROOMS[r.room_type])}</p>
+          <p class="text-xs text-gray-500 mt-0.5">Укажите габариты или используйте интерактивный 2D-план стен</p>
+        </div>
+        <div class="inline-flex bg-gray-100 p-1 rounded-xl text-sm font-semibold border border-gray-200">
+          <button id="btn-mode-simple" class="px-3.5 py-1.5 rounded-lg transition-all ${mode === "simple" ? "bg-white shadow text-brand-red font-bold" : "text-gray-600 hover:text-gray-900"}">Простые размеры</button>
+          <button id="btn-mode-2d" class="px-3.5 py-1.5 rounded-lg transition-all ${mode === "2d" ? "bg-white shadow text-brand-red font-bold" : "text-gray-600 hover:text-gray-900"}">2D-план стен</button>
+        </div>
+      </div>
+
+      ${mode === "simple" ? `
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          <label class="text-sm font-semibold text-gray-600">Длина комнаты, м<input type="number" id="w-len" value="${r.length_m ?? ""}" step="0.1" min="0.5" class="${inputCls}"></label>
+          <label class="text-sm font-semibold text-gray-600">Ширина комнаты, м<input type="number" id="w-wid" value="${r.width_m ?? ""}" step="0.1" min="0.5" class="${inputCls}"></label>
+          <label class="text-sm font-semibold text-gray-600">Высота стен, м<input type="number" id="w-hei" value="${r.height_m ?? 2.7}" step="0.1" min="1.8" class="${inputCls}"></label>
+        </div>
+      ` : `
+        <!-- 2D Canvas Editor Container -->
+        <div class="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm mb-4">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+            <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">Шаблоны планировки:</span>
+            <div class="flex flex-wrap gap-1.5">
+              <button data-preset="rectangle" class="px-2.5 py-1 text-xs font-semibold bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg transition-colors border border-gray-200">Прямоугольная</button>
+              <button data-preset="l_shaped" class="px-2.5 py-1 text-xs font-semibold bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg transition-colors border border-gray-200">Г-образная</button>
+              <button data-preset="niche" class="px-2.5 py-1 text-xs font-semibold bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg transition-colors border border-gray-200">С нишей / коробом</button>
+              <button data-preset="bay_window" class="px-2.5 py-1 text-xs font-semibold bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg transition-colors border border-gray-200">Эркер (скос)</button>
+              <button data-preset="trapezoid" class="px-2.5 py-1 text-xs font-semibold bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg transition-colors border border-gray-200">Трапеция</button>
+              <button data-preset="circle" class="px-2.5 py-1 text-xs font-semibold bg-blue-50 hover:bg-blue-100 text-brand-blue rounded-lg transition-colors border border-blue-200">Круглая (ротонда)</button>
+            </div>
+          </div>
+
+          <!-- Canvas -->
+          <div class="relative w-full aspect-[16/9] max-h-[340px] bg-slate-50 border border-slate-200 rounded-xl overflow-hidden shadow-inner">
+            <canvas id="room-canvas" class="w-full h-full block cursor-crosshair touch-none"></canvas>
+            <div class="absolute bottom-2 right-2 text-[11px] bg-white/95 backdrop-blur px-2.5 py-1 rounded-md text-gray-600 border border-gray-300 shadow-sm pointer-events-none font-medium">
+              Тяните углы мышкой. Клик по стене: добавить угол. Двойной клик по углу: удалить.
+            </div>
+          </div>
+
+          <!-- 2D Live Metrics Bar -->
+          <div id="canvas-metrics" class="flex flex-wrap items-center justify-between gap-3 mt-3 pt-3 border-t border-gray-100 text-sm">
+            <!-- Dynamic stats injected here -->
+          </div>
+        </div>
+
+        <div class="mb-4">
+          <label class="block text-sm font-semibold text-gray-600 max-w-xs">Высота стен, м<input type="number" id="w-hei" value="${r.height_m ?? 2.7}" step="0.1" min="1.8" class="${inputCls}"></label>
+        </div>
+      `}
+
+      <!-- Блок Окон и Дверей без смайликов -->
+      <div class="bg-slate-50 border border-gray-200 rounded-2xl p-4 mb-4">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+          <div>
+            <h4 class="text-sm font-bold text-gray-800 flex items-center gap-1.5">
+              <span>Оконные и дверные проемы</span>
+              <span class="text-xs font-normal text-gray-500">(вычитаются из площади стен по СНиП)</span>
+            </h4>
+          </div>
+          <div class="flex gap-2">
+            <button id="btn-add-window" class="inline-flex items-center gap-1 px-3 py-1.5 bg-white border border-gray-300 hover:border-brand-blue text-gray-700 hover:text-brand-blue rounded-lg text-xs font-semibold shadow-xs transition-colors">
+              + Добавить окно
+            </button>
+            <button id="btn-add-door" class="inline-flex items-center gap-1 px-3 py-1.5 bg-white border border-gray-300 hover:border-brand-blue text-gray-700 hover:text-brand-blue rounded-lg text-xs font-semibold shadow-xs transition-colors">
+              + Добавить дверь
+            </button>
+          </div>
+        </div>
+
+        <!-- Список добавленных проемов -->
+        <div id="openings-list" class="space-y-2 mb-3">
+          <!-- Rendered dynamically -->
+        </div>
+
+        <!-- Сводка по проемам -->
+        <div id="openings-summary" class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-gray-200 text-xs text-gray-600">
+          <!-- Live summary -->
+        </div>
+      </div>
+
+      <!-- Влажность и итоговые площади -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center bg-gray-50 p-4 rounded-xl">
+        <label class="text-sm font-semibold text-gray-600">Влажность
+          <select id="w-hum" class="mt-1 w-full bg-white border border-gray-300 rounded-lg p-2.5 outline-none focus:border-brand-blue">
+            <option value="">По типу комнаты</option>
+            ${opts({ low: "Низкая", normal: "Обычная", high: "Высокая" }, r.humidity || "")}
+          </select>
+        </label>
+        <p class="text-sm text-gray-500 font-medium" id="w-area">Укажите габариты</p>
+      </div>
+      ${nav(true, true)}
+    `;
+
+    document.getElementById("btn-mode-simple")?.addEventListener("click", () => {
+      mode = "simple";
+      renderUI();
+    });
+
+    document.getElementById("btn-mode-2d")?.addEventListener("click", () => {
+      mode = "2d";
+      renderUI();
+    });
+
+    const v = id => Number(document.getElementById(id)?.value || 0);
+
+    const renderOpeningsList = () => {
+      const container = document.getElementById("openings-list");
+      if (!container) return;
+
+      if (!openings.length) {
+        container.innerHTML = `<p class="text-xs text-gray-500 italic p-2 bg-white rounded-lg border border-dashed border-gray-300">В помещении нет окон и дверей. Нажмите «+ Добавить окно» или «+ Добавить дверь».</p>`;
+      } else {
+        container.innerHTML = openings.map((op, idx) => {
+          const presets = OPENING_PRESETS[op.kind] || [];
+          const isCustom = op.preset_id === "custom";
+          const areaOne = (Number(op.width_m) || 0) * (Number(op.height_m) || 0);
+          const areaTotal = areaOne * (Number(op.count) || 1);
+
+          return `
+            <div class="flex flex-wrap items-center gap-2.5 p-2.5 bg-white border border-gray-200 rounded-xl shadow-xs transition-all hover:border-gray-300" data-op-idx="${idx}">
+              <!-- Тип: Окно / Дверь -->
+              <select class="op-kind bg-gray-100 hover:bg-gray-200 border border-gray-300 rounded-lg py-1.5 px-2 text-xs font-bold text-gray-800 outline-none cursor-pointer">
+                <option value="window" ${op.kind === "window" ? "selected" : ""}>Окно</option>
+                <option value="door" ${op.kind === "door" ? "selected" : ""}>Дверь</option>
+              </select>
+
+              <!-- Выбор стандартного размера -->
+              <select class="op-preset flex-1 min-w-[210px] bg-white border border-gray-300 rounded-lg py-1.5 px-2 text-xs font-medium text-gray-800 outline-none focus:border-brand-blue">
+                ${presets.map(p => `
+                  <option value="${p.id}" ${op.preset_id === p.id ? "selected" : ""}>
+                    ${esc(p.title)} (${esc(p.desc)})
+                  </option>
+                `).join("")}
+              </select>
+
+              <!-- Поля своего размера (если выбран custom) -->
+              ${isCustom ? `
+                <div class="flex items-center gap-1.5 text-xs bg-amber-50/70 border border-amber-200 px-2 py-1 rounded-lg">
+                  <span class="font-bold text-amber-800 text-[11px]">Размер:</span>
+                  <label class="flex items-center gap-1 text-gray-600">
+                    <span>Ш:</span>
+                    <input type="number" step="0.05" min="0.2" max="10" value="${op.width_m}" class="op-w w-14 p-1 bg-white border border-gray-300 rounded text-center font-bold text-xs">
+                    <span>м</span>
+                  </label>
+                  <span class="text-gray-400">×</span>
+                  <label class="flex items-center gap-1 text-gray-600">
+                    <span>В:</span>
+                    <input type="number" step="0.05" min="0.2" max="10" value="${op.height_m}" class="op-h w-14 p-1 bg-white border border-gray-300 rounded text-center font-bold text-xs">
+                    <span>м</span>
+                  </label>
+                </div>
+              ` : `
+                <span class="text-[11px] text-gray-500 font-medium px-1.5 py-0.5 bg-gray-50 border border-gray-200 rounded whitespace-nowrap">
+                  ${Number(op.width_m).toFixed(2)} × ${Number(op.height_m).toFixed(2)} м
+                </span>
+              `}
+
+              <!-- Количество -->
+              <div class="flex items-center gap-1 text-xs font-semibold">
+                <span class="text-gray-500">Кол-во:</span>
+                <input type="number" min="1" max="30" value="${op.count || 1}" class="op-count w-12 p-1 border border-gray-300 rounded-lg text-center font-bold text-xs">
+                <span class="text-gray-500">шт</span>
+              </div>
+
+              <!-- Площадь этой строки -->
+              <span class="text-xs font-bold text-brand-blue bg-blue-50/80 border border-blue-100 px-2 py-1 rounded-md whitespace-nowrap">
+                ${areaTotal.toFixed(2)} м²
+              </span>
+
+              <!-- Кнопка удаления -->
+              <button class="op-del px-2 py-1 text-xs text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors font-medium ml-auto" title="Удалить проем">Удалить</button>
+            </div>
+          `;
+        }).join("");
+      }
+
+      // Обновляем сводку проемов
+      const sumEl = document.getElementById("openings-summary");
+      if (sumEl) {
+        const totalW = calcTotalWindows();
+        const totalD = calcTotalDoors();
+        const totalA = calcOpeningsTotalArea();
+        sumEl.innerHTML = `
+          <div class="flex items-center gap-3">
+            <span>Окон: <b class="text-gray-800">${totalW} шт.</b></span>
+            <span>Дверей: <b class="text-gray-800">${totalD} шт.</b></span>
+          </div>
+          <div>
+            Общая площадь проемов к вычету: <b class="text-brand-red text-sm">${totalA.toFixed(2)} м²</b>
+          </div>
+        `;
+      }
+
+      // Привязка обработчиков на строки проемов
+      container.querySelectorAll("[data-op-idx]").forEach(row => {
+        const idx = Number(row.dataset.opIdx);
+        const op = openings[idx];
+
+        // Смена типа (окно / дверь)
+        row.querySelector(".op-kind")?.addEventListener("change", e => {
+          const newKind = e.target.value;
+          op.kind = newKind;
+          const defaultPreset = OPENING_PRESETS[newKind][0];
+          op.preset_id = defaultPreset.id;
+          op.title = defaultPreset.title;
+          op.width_m = defaultPreset.w;
+          op.height_m = defaultPreset.h;
+          renderOpeningsList();
+          recalcArea();
+        });
+
+        // Смена пресета
+        row.querySelector(".op-preset")?.addEventListener("change", e => {
+          const pId = e.target.value;
+          op.preset_id = pId;
+          const found = (OPENING_PRESETS[op.kind] || []).find(p => p.id === pId);
+          if (found) {
+            op.title = found.title;
+            if (pId !== "custom") {
+              op.width_m = found.w;
+              op.height_m = found.h;
+            }
+          }
+          renderOpeningsList();
+          recalcArea();
+        });
+
+        // Свой размер: ширина и высота
+        row.querySelector(".op-w")?.addEventListener("input", e => {
+          op.width_m = Math.max(0.1, Number(e.target.value) || 0.1);
+          renderOpeningsList();
+          recalcArea();
+        });
+        row.querySelector(".op-h")?.addEventListener("input", e => {
+          op.height_m = Math.max(0.1, Number(e.target.value) || 0.1);
+          renderOpeningsList();
+          recalcArea();
+        });
+
+        // Изменение количества
+        row.querySelector(".op-count")?.addEventListener("input", e => {
+          op.count = Math.max(1, parseInt(e.target.value) || 1);
+          renderOpeningsList();
+          recalcArea();
+        });
+
+        // Удаление
+        row.querySelector(".op-del")?.addEventListener("click", () => {
+          openings.splice(idx, 1);
+          renderOpeningsList();
+          recalcArea();
+        });
+      });
+    };
+
+    // Кнопки добавления новых проемов
+    document.getElementById("btn-add-window")?.addEventListener("click", () => {
+      openings.push({
+        kind: "window",
+        preset_id: "window_std",
+        title: "Стандартное (1.50 × 1.40 м)",
+        width_m: 1.5,
+        height_m: 1.4,
+        count: 1
+      });
+      renderOpeningsList();
+      recalcArea();
+    });
+
+    document.getElementById("btn-add-door")?.addEventListener("click", () => {
+      openings.push({
+        kind: "door",
+        preset_id: "door_std",
+        title: "Межкомнатная (0.80 × 2.00 м)",
+        width_m: 0.8,
+        height_m: 2.0,
+        count: 1
+      });
+      renderOpeningsList();
+      recalcArea();
+    });
+
+    const recalcArea = () => {
+      const openArea = calcOpeningsTotalArea();
+      const hei = v("w-hei") || 2.7;
+
+      if (mode === "simple") {
+        const ok = v("w-len") > 0 && v("w-wid") > 0 && hei > 0;
+        const grossWalls = 2 * (v("w-len") + v("w-wid")) * hei;
+        const netWalls = Math.max(0, grossWalls - openArea);
+        document.getElementById("w-area").innerHTML = ok 
+          ? `<b>Пол:</b> ${num(v("w-len") * v("w-wid"))} м²<br><b>Стены:</b> ${num(netWalls)} м² <span class="text-xs text-gray-400">(периметр ${num(2 * (v("w-len") + v("w-wid")))}м × ${hei}м - вычет проемов ${num(openArea)}м²)</span>` 
+          : "Укажите длину, ширину и высоту";
+        wizard.querySelector("[data-next]").disabled = !ok;
+      } else {
+        // В 2D-режиме
+        const fArea = polyArea(poly);
+        const perim = polyPerimeter(poly);
+        const netWalls = Math.max(0, perim * hei - openArea);
+        const areaEl = document.getElementById("w-area");
+        if (areaEl) {
+          areaEl.innerHTML = `<b>Пол:</b> ${fArea.toFixed(2)} м² (Гаусс)<br><b>Стены:</b> ${netWalls.toFixed(2)} м² <span class="text-xs text-gray-400">(периметр ${perim.toFixed(1)}м × ${hei}м - вычет проемов ${openArea.toFixed(2)}м²)</span>`;
+        }
+        const nextBtn = wizard.querySelector("[data-next]");
+        if (nextBtn) nextBtn.disabled = fArea <= 0.1 || poly.length < 3;
+      }
+    };
+
+    renderOpeningsList();
+
+    if (mode === "simple") {
+      wizard.querySelectorAll("input").forEach(el => el.oninput = recalcArea);
+      recalcArea();
+
+      bindNav(() => {
+        Object.assign(r, { 
+          length_m: v("w-len"), 
+          width_m: v("w-wid"), 
+          height_m: v("w-hei"), 
+          openings: structuredClone(openings),
+          openings_area_m2: Math.round(calcOpeningsTotalArea() * 100) / 100,
+          windows: calcTotalWindows(),
+          doors: calcTotalDoors()
+        });
+        delete r.polygon;
+        delete r.custom_floor_area;
+        delete r.custom_perimeter;
+        delete r.is_orthogonal;
+        const hum = document.getElementById("w-hum").value;
+        if (hum) r.humidity = hum; else delete r.humidity;
+        showStep(2);
+      });
+    } else {
+      // 2D Canvas Editor Logic
+      init2DCanvas(poly, v, calcOpeningsTotalArea);
+
+      bindNav(() => {
+        const fArea = polyArea(poly);
+        const perim = polyPerimeter(poly);
+        const isOrth = polyIsOrthogonal(poly);
+        const hei = v("w-hei") || 2.7;
+        const xs = poly.map(p => p.x), ys = poly.map(p => p.y);
+        const bboxW = Math.max(0.5, Math.max(...xs) - Math.min(...xs));
+        const effLen = Math.round((fArea / bboxW) * 10) / 10;
+
+        Object.assign(r, {
+          polygon: poly,
+          custom_floor_area: Math.round(fArea * 100) / 100,
+          custom_perimeter: Math.round(perim * 100) / 100,
+          is_orthogonal: isOrth,
+          length_m: effLen || 4.0,
+          width_m: Math.round(bboxW * 10) / 10 || 4.0,
+          height_m: hei,
+          openings: structuredClone(openings),
+          openings_area_m2: Math.round(calcOpeningsTotalArea() * 100) / 100,
+          windows: calcTotalWindows(),
+          doors: calcTotalDoors()
+        });
+        const hum = document.getElementById("w-hum").value;
+        if (hum) r.humidity = hum; else delete r.humidity;
+        showStep(2);
+      });
+    }
+  };
+
+  renderUI();
+}
+
+// ---------------------------------------------------------------------------
+// ИНТЕРАКТИВНЫЙ 2D-ХОЛСТ (ЧИСТАЯ ГРАФИКА БЕЗ СМАЙЛИКОВ)
+// ---------------------------------------------------------------------------
+
+function init2DCanvas(poly, v, getOpeningsArea) {
+  const canvas = document.getElementById("room-canvas");
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d");
+
+  // Фиксированное высокое разрешение холста для идеальной точности координат мыши
+  const W_CANVAS = 1200;
+  const H_CANVAS = 680;
+  canvas.width = W_CANVAS;
+  canvas.height = H_CANVAS;
+
+  let dragIdx = -1;
+  let hoverIdx = -1;
+  let activeTransform = null; // Замораживаем систему координат на время перетаскивания
+
+  // Обработчики кнопок шаблонов
+  document.querySelectorAll("[data-preset]").forEach(btn => {
+    btn.onclick = () => {
+      const pName = btn.dataset.preset;
+      if (GEOMETRY_PRESETS[pName]) {
+        const newPoly = GEOMETRY_PRESETS[pName]();
+        poly.length = 0;
+        newPoly.forEach(p => poly.push(p));
+        activeTransform = null;
+        redraw();
+      }
+    };
   });
+
+  const getTransform = () => {
+    const xs = poly.map(p => p.x);
+    const ys = poly.map(p => p.y);
+    const minX = Math.min(...xs), maxX = Math.max(...xs);
+    const minY = Math.min(...ys), maxY = Math.max(...ys);
+    const w = Math.max(1.0, maxX - minX);
+    const h = Math.max(1.0, maxY - minY);
+    const padX = 130;
+    const padY = 95;
+    const scale = Math.min((W_CANVAS - padX * 2) / w, (H_CANVAS - padY * 2) / h);
+    const cx = (W_CANVAS - w * scale) / 2;
+    const cy = (H_CANVAS - h * scale) / 2;
+
+    return {
+      toScreen: p => ({
+        x: cx + (p.x - minX) * scale,
+        y: H_CANVAS - cy - (p.y - minY) * scale
+      }),
+      toWorld: (sx, sy) => ({
+        x: Math.round(((sx - cx) / scale + minX) * 10) / 10,
+        y: Math.round(((H_CANVAS - cy - sy) / scale + minY) * 10) / 10
+      }),
+      minX, maxX, minY, maxY, scale, cx, cy
+    };
+  };
+
+  const updateStats = () => {
+    const fArea = polyArea(poly);
+    const perim = polyPerimeter(poly);
+    const isOrth = polyIsOrthogonal(poly);
+    const hei = v("w-hei") || 2.7;
+    const openArea = typeof getOpeningsArea === "function" ? getOpeningsArea() : 0;
+    const netWalls = Math.max(0, perim * hei - openArea);
+
+    const metricsEl = document.getElementById("canvas-metrics");
+    if (metricsEl) {
+      metricsEl.innerHTML = `
+        <div class="flex flex-wrap items-center gap-4">
+          <div><span class="text-gray-500">Площадь пола:</span> <b class="text-brand-red text-base">${fArea.toFixed(2)} м²</b></div>
+          <div><span class="text-gray-500">Периметр:</span> <b>${perim.toFixed(2)} м</b></div>
+          <div><span class="text-gray-500">Стен:</span> <b>${poly.length} шт.</b></div>
+        </div>
+        <div>
+          ${isOrth 
+            ? `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-green-50 text-green-700 border border-green-200">[Ортогональная] Углы 90°: стандартные нормы</span>`
+            : `<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-300">[Сложная форма] Непрямые углы: СНиП 3.04.01-87 (+15% запас)</span>`
+          }
+        </div>
+      `;
+    }
+
+    const areaEl = document.getElementById("w-area");
+    if (areaEl) {
+      areaEl.innerHTML = `<b>Пол:</b> ${fArea.toFixed(2)} м² (Гаусс)<br><b>Стены:</b> ${netWalls.toFixed(2)} м² <span class="text-xs text-gray-400">(периметр ${perim.toFixed(1)}м × ${hei}м - вычет проемов ${openArea.toFixed(2)}м²)</span>`;
+    }
+
+    const nextBtn = wizard.querySelector("[data-next]");
+    if (nextBtn) nextBtn.disabled = fArea <= 0.1 || poly.length < 3;
+  };
+
+  const redraw = () => {
+    ctx.clearRect(0, 0, W_CANVAS, H_CANVAS);
+    const transform = activeTransform || getTransform();
+    const { toScreen, minX, maxX, minY, maxY } = transform;
+    const isOrth = polyIsOrthogonal(poly);
+
+    // 1. Координатная сетка
+    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = "#e2e8f0";
+    const startX = Math.floor(minX - 3), endX = Math.ceil(maxX + 3);
+    const startY = Math.floor(minY - 3), endY = Math.ceil(maxY + 3);
+    for (let gx = startX; gx <= endX; gx += 0.5) {
+      const p1 = toScreen({x: gx, y: startY}), p2 = toScreen({x: gx, y: endY});
+      ctx.beginPath(); ctx.moveTo(p1.x, 0); ctx.lineTo(p1.x, H_CANVAS); ctx.stroke();
+    }
+    for (let gy = startY; gy <= endY; gy += 0.5) {
+      const p1 = toScreen({x: startX, y: gy});
+      ctx.beginPath(); ctx.moveTo(0, p1.y); ctx.lineTo(W_CANVAS, p1.y); ctx.stroke();
+    }
+
+    // 2. Многоугольник стен комнаты
+    if (poly.length >= 3) {
+      ctx.beginPath();
+      const s0 = toScreen(poly[0]);
+      ctx.moveTo(s0.x, s0.y);
+      for (let i = 1; i < poly.length; i++) {
+        const s = toScreen(poly[i]);
+        ctx.lineTo(s.x, s.y);
+      }
+      ctx.closePath();
+      ctx.fillStyle = isOrth ? "rgba(117, 164, 190, 0.22)" : "rgba(226, 174, 19, 0.18)";
+      ctx.fill();
+      ctx.strokeStyle = isOrth ? "#740607" : "#b45309";
+      ctx.lineWidth = 4;
+      ctx.lineJoin = "round";
+      ctx.stroke();
+
+      // 3. Подписи размеров каждой стены
+      for (let i = 0; i < poly.length; i++) {
+        const j = (i + 1) % poly.length;
+        const p1 = toScreen(poly[i]);
+        const p2 = toScreen(poly[j]);
+        const midX = (p1.x + p2.x) / 2;
+        const midY = (p1.y + p2.y) / 2;
+        const len = Math.hypot(poly[j].x - poly[i].x, poly[j].y - poly[i].y);
+        const text = `${len.toFixed(2)} м`;
+
+        ctx.font = "bold 14px Inter, sans-serif";
+        const tw = ctx.measureText(text).width;
+        const padX = 8, padY = 4;
+
+        ctx.fillStyle = "#ffffff";
+        ctx.shadowColor = "rgba(0,0,0,0.18)";
+        ctx.shadowBlur = 6;
+        ctx.beginPath();
+        ctx.roundRect(midX - tw / 2 - padX, midY - 11 - padY, tw + padX * 2, 22 + padY * 2, 5);
+        ctx.fill();
+        ctx.shadowColor = "transparent";
+
+        ctx.strokeStyle = "#cbd5e1";
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        ctx.fillStyle = "#1e293b";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(text, midX, midY);
+      }
+
+      // 4. Вершины-маркеры (кружочки для перетаскивания)
+      for (let i = 0; i < poly.length; i++) {
+        const s = toScreen(poly[i]);
+        const isHover = (i === hoverIdx);
+        const isDrag = (i === dragIdx);
+
+        ctx.beginPath();
+        const radius = (isDrag || isHover) ? 14 : 9.5;
+        ctx.arc(s.x, s.y, radius, 0, Math.PI * 2);
+
+        if (isDrag || isHover) {
+          ctx.fillStyle = "#E2AE13"; // Яркий золотой цвет при наведении/захвате
+          ctx.shadowColor = "rgba(226, 174, 19, 0.6)";
+          ctx.shadowBlur = 12;
+        } else {
+          ctx.fillStyle = "#ffffff";
+          ctx.shadowColor = "rgba(0,0,0,0.3)";
+          ctx.shadowBlur = 6;
+        }
+        ctx.fill();
+        ctx.shadowColor = "transparent";
+
+        ctx.lineWidth = 3.5;
+        ctx.strokeStyle = "#740607";
+        ctx.stroke();
+      }
+    }
+
+    updateStats();
+  };
+
+  // Точный расчет координат курсора внутри canvas (без сдвигов и смещений)
+  const getCanvasCoords = e => {
+    const r = canvas.getBoundingClientRect();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    return {
+      sx: (clientX - r.left) * (W_CANVAS / r.width),
+      sy: (clientY - r.top) * (H_CANVAS / r.height)
+    };
+  };
+
+  // Поиск ближайшей вершины
+  const findClosestVertex = (sx, sy, maxDistance = 38) => {
+    const transform = activeTransform || getTransform();
+    let bestIdx = -1;
+    let minD = Infinity;
+
+    for (let i = 0; i < poly.length; i++) {
+      const s = transform.toScreen(poly[i]);
+      const d = Math.hypot(s.x - sx, s.y - sy);
+      if (d < minD && d <= maxDistance) {
+        minD = d;
+        bestIdx = i;
+      }
+    }
+    return bestIdx;
+  };
+
+  const onPointerDown = e => {
+    const { sx, sy } = getCanvasCoords(e);
+    
+    // 1. Ищем ближайший кружочек (вершину)
+    const hitIdx = findClosestVertex(sx, sy, 38);
+
+    if (hitIdx !== -1) {
+      dragIdx = hitIdx;
+      // Фиксируем систему координат на время перетаскивания, чтобы точка не убегала!
+      activeTransform = getTransform();
+      canvas.style.cursor = "grabbing";
+      redraw();
+      return;
+    }
+
+    // 2. Если кликнули не в вершину, а по ребру стены (и далеко от всех вершин)
+    if (poly.length >= 3) {
+      const transform = getTransform();
+      for (let i = 0; i < poly.length; i++) {
+        const j = (i + 1) % poly.length;
+        const p1 = transform.toScreen(poly[i]);
+        const p2 = transform.toScreen(poly[j]);
+        const dx = p2.x - p1.x, dy = p2.y - p1.y;
+        const lenSq = dx * dx + dy * dy;
+        if (lenSq === 0) continue;
+        const t = ((sx - p1.x) * dx + (sy - p1.y) * dy) / lenSq;
+        if (t > 0.15 && t < 0.85) {
+          const projX = p1.x + t * dx;
+          const projY = p1.y + t * dy;
+          if (Math.hypot(projX - sx, projY - sy) <= 20) {
+            const worldP = transform.toWorld(sx, sy);
+            poly.splice(j, 0, worldP);
+            dragIdx = j;
+            activeTransform = getTransform();
+            canvas.style.cursor = "grabbing";
+            break;
+          }
+        }
+      }
+    }
+
+    redraw();
+  };
+
+  const onPointerMove = e => {
+    const { sx, sy } = getCanvasCoords(e);
+
+    if (dragIdx !== -1 && activeTransform) {
+      // Перетаскивание: используем фиксированную систему координат
+      const wp = activeTransform.toWorld(sx, sy);
+      poly[dragIdx].x = wp.x;
+      poly[dragIdx].y = wp.y;
+      redraw();
+    } else {
+      // Наведение мыши: подсвечиваем кружочек
+      const hit = findClosestVertex(sx, sy, 32);
+      if (hit !== hoverIdx) {
+        hoverIdx = hit;
+        canvas.style.cursor = hit !== -1 ? "grab" : "crosshair";
+        redraw();
+      }
+    }
+  };
+
+  const onPointerUp = () => {
+    dragIdx = -1;
+    activeTransform = null; // Разблокируем координаты для плавной перецентрировки
+    canvas.style.cursor = hoverIdx !== -1 ? "grab" : "crosshair";
+    redraw();
+  };
+
+  // Двойной клик удаляет вершину
+  const onDblClick = e => {
+    const { sx, sy } = getCanvasCoords(e);
+    if (poly.length <= 3) return;
+
+    const hit = findClosestVertex(sx, sy, 38);
+    if (hit !== -1) {
+      poly.splice(hit, 1);
+      activeTransform = null;
+      redraw();
+    }
+  };
+
+  canvas.addEventListener("mousedown", onPointerDown);
+  window.addEventListener("mousemove", onPointerMove);
+  window.addEventListener("mouseup", onPointerUp);
+  canvas.addEventListener("dblclick", onDblClick);
+
+  canvas.addEventListener("touchstart", onPointerDown, { passive: true });
+  window.addEventListener("touchmove", onPointerMove, { passive: true });
+  window.addEventListener("touchend", onPointerUp);
+
+  redraw();
 }
 
 function stepRenovation() {
@@ -343,7 +1140,7 @@ async function stepWorks() {
 
 function stepSummary() {
   wizard.innerHTML = `<p class="text-xl font-bold mb-6">Добавленные помещения</p>
-    <div class="grid gap-3 mb-6">${W.rooms.map((r, i) => `<div class="flex flex-wrap justify-between items-center bg-white border border-gray-200 p-4 rounded-xl shadow-sm"><div><b class="text-lg text-brand-red">${esc(ROOMS[r.room_type])}</b><div class="text-sm text-gray-600 mt-1">${num(r.length_m)} × ${num(r.width_m)} м · ${esc(T.renovation[r.renovation_type])} · <span class="text-brand-blue font-medium">${r.works.length} работ</span></div></div><div class="flex gap-2 mt-2 sm:mt-0"><button class="px-3 py-1.5 text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-lg transition-colors" data-edit="${i}">Изменить</button><button class="px-3 py-1.5 text-sm font-medium bg-red-50 text-red-600 hover:bg-red-100 rounded-lg transition-colors" data-del="${i}">✕ Удалить</button></div></div>`).join("") || `<p class="text-gray-500 italic p-4 bg-gray-50 rounded-xl">Пока нет добавленных помещений.</p>`}</div>
+    <div class="grid gap-3 mb-6">${W.rooms.map((r, i) => `<div class="flex flex-wrap justify-between items-center bg-white border border-gray-200 p-4 rounded-xl shadow-sm"><div><b class="text-lg text-brand-red">${esc(ROOMS[r.room_type])}</b><div class="text-sm text-gray-600 mt-1">${r.polygon ? `<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200 mr-1.5">2D-план (${r.polygon.length} стен${r.is_orthogonal === false ? ", СНиП +15%" : ""})</span>` : ""}${num(r.length_m)} × ${num(r.width_m)} м (${num(r.custom_floor_area || r.length_m * r.width_m)} м²) · <span class="text-gray-700 font-medium">Окон: ${r.windows || 0}, дверей: ${r.doors || 0} (${num(r.openings_area_m2)} м²)</span> · ${esc(T.renovation[r.renovation_type])} · <span class="text-brand-blue font-medium">${r.works.length} работ</span></div></div><div class="flex gap-2 mt-2 sm:mt-0"><button class="px-3 py-1.5 text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-lg transition-colors" data-edit="${i}">Изменить</button><button class="px-3 py-1.5 text-sm font-medium bg-red-50 text-red-600 hover:bg-red-100 rounded-lg transition-colors" data-del="${i}">✕ Удалить</button></div></div>`).join("") || `<p class="text-gray-500 italic p-4 bg-gray-50 rounded-xl">Пока нет добавленных помещений.</p>`}</div>
     <div class="flex justify-between items-center mt-8 pt-6 border-t border-gray-100"><button class="bg-white border-2 border-brand-blue text-brand-blue hover:bg-blue-50 font-semibold py-2.5 px-6 rounded-xl transition-colors" data-add>+ Добавить помещение</button><button class="bg-brand-red hover:bg-red-900 text-white font-bold py-3 px-8 rounded-xl shadow-md transition-transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed" data-calc ${W.rooms.length ? "" : "disabled"}>Рассчитать смету</button></div>`;
   wizard.querySelector("[data-add]").onclick = () => { W.room = {}; W.editing = null; showStep(0); };
   wizard.querySelectorAll("[data-edit]").forEach(b => b.onclick = () => { W.editing = Number(b.dataset.edit); W.room = structuredClone(W.rooms[W.editing]); showStep(0); });

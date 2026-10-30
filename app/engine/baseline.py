@@ -504,6 +504,10 @@ def calc_product_for_room(
                 n = _ceil(need)
     else:
         reserve = RESERVE.get(material, Decimal(5))
+        if room.is_orthogonal is False and material in (
+            Material.tile, Material.laminate, Material.underlay, Material.drywall, Material.profile
+        ):
+            reserve = max(reserve, Decimal(15))
         layers = 2 if material == Material.paint else 1
         try:
             need, unit, n, _ = packages_for_area(p, area, reserve, layers=layers, material=material)

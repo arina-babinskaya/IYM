@@ -114,6 +114,24 @@ ROOM_DEFAULT_OPENINGS: dict[RoomType, tuple[int, int]] = {
 }
 
 
+class OpeningType(StrEnum):
+    window = "window"
+    door = "door"
+
+
+class OpeningInput(BaseModel):
+    kind: OpeningType = OpeningType.window
+    title: str | None = None
+    width_m: Amount = Decimal("1.5")
+    height_m: Amount = Decimal("1.4")
+    count: int = Field(1, ge=1, le=30)
+    preset_id: str | None = None
+
+    @property
+    def total_area_m2(self) -> Decimal:
+        return (self.width_m * self.height_m * Decimal(str(self.count))).quantize(Decimal("0.01"))
+
+
 class RoomInput(BaseModel):
     name: str | None = None
     room_type: RoomType
@@ -127,10 +145,31 @@ class RoomInput(BaseModel):
     humidity: Level | None = None
     works: list[WorkChoice] | None = None
     picks: list[int] = Field(default_factory=list)
+    custom_floor_area: Amount | None = None
+    custom_perimeter: Amount | None = None
+    is_orthogonal: bool | None = None
+    polygon: list[dict[str, float]] | None = None
+    openings: list[OpeningInput] | None = None
 
     @model_validator(mode="after")
     def _openings_from_counts(self) -> "RoomInput":
-        if not self.openings_area_m2 and (self.windows or self.doors):
+        if self.openings:
+            calc_area = Decimal("0")
+            calc_wins = 0
+            calc_doors = 0
+            for op in self.openings:
+                calc_area += op.width_m * op.height_m * Decimal(str(op.count))
+                if op.kind == OpeningType.window:
+                    calc_wins += op.count
+                elif op.kind == OpeningType.door:
+                    calc_doors += op.count
+            if not self.openings_area_m2:
+                self.openings_area_m2 = calc_area.quantize(Decimal("0.01"))
+            if self.windows is None:
+                self.windows = calc_wins
+            if self.doors is None:
+                self.doors = calc_doors
+        elif not self.openings_area_m2 and (self.windows or self.doors):
             self.openings_area_m2 = (self.windows or 0) * WINDOW_AREA_M2 + (self.doors or 0) * DOOR_AREA_M2
         return self
 
@@ -141,10 +180,14 @@ class RoomInput(BaseModel):
 
     @property
     def floor_area(self) -> Decimal:
+        if self.custom_floor_area is not None and self.custom_floor_area > 0:
+            return self.custom_floor_area
         return self.length_m * self.width_m
 
     @property
     def perimeter(self) -> Decimal:
+        if self.custom_perimeter is not None and self.custom_perimeter > 0:
+            return self.custom_perimeter
         return 2 * (self.length_m + self.width_m)
 
     @property
