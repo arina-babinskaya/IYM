@@ -227,6 +227,18 @@ PASTE_OR_MIX_MATERIALS = {
     Material.waterproofing,
 }
 
+SURFACE_COVERING_MATERIALS = {
+    Material.drywall,
+    Material.wallpaper,
+    Material.tile,
+    Material.laminate,
+    Material.linoleum,
+    Material.underlay,
+}
+for _opt_m in ('reinforcing_mesh', 'decorative'):
+    if hasattr(Material, _opt_m):
+        SURFACE_COVERING_MATERIALS.add(getattr(Material, _opt_m))
+
 
 def _is_paste_or_mix(p: Product, material: Material | None) -> bool:
     if material in PASTE_OR_MIX_MATERIALS:
@@ -272,8 +284,16 @@ def packages_for_area(
 
     is_mix = _is_paste_or_mix(p, material)
 
-    # 3. Листовой или рулонный материал с известными размерами (обои, ГКЛ) — строго НЕ строительные смеси
-    if not is_mix:
+    # 3. Листовой или рулонный материал с известными размерами (обои, ГКЛ) — строго НЕ строительные смеси и НЕ штучные изделия
+    is_covering = (
+        material in SURFACE_COVERING_MATERIALS
+        if material is not None
+        else any(
+            w in (p.name or '').lower()
+            for w in ('гипсокартон', 'гкл', 'обои', 'плитка', 'керамогранит', 'ламинат', 'линолеум', 'подложк', 'сетка')
+        )
+    )
+    if not is_mix and is_covering:
         length, width = _spec(p, "length_m"), _spec(p, "width_m")
         if length and width and length > 0 and width > 0:
             rapport = _spec(p, "rapport_m")
@@ -413,6 +433,104 @@ def _piece_need(material: Material, room: RoomInput, area: Decimal) -> tuple[Dec
     return None
 
 
+def calc_product_for_room(
+    p: Product,
+    material: Material,
+    room: RoomInput,
+    surface: Surface | None = None,
+    area: Decimal | None = None,
+) -> tuple[int, Decimal, str, Decimal | None, str | None]:
+    """
+    Рассчитывает количество упаковок/штук, требуемое количество, единицу измерения,
+    общую стоимость товара и причину СНиП (если применимо) для указанной комнаты
+    с учётом характера материала (поштучный/метражный или площадной).
+
+    Returns:
+        (packages, required_amount, required_unit, total_cost, snip_reason)
+    """
+    if area is None or area <= 0:
+        if surface == Surface.wall:
+            area = max(room.perimeter * room.height_m - room.openings_area_m2, Decimal(0))
+        else:
+            area = room.floor_area
+
+    piece = _piece_need(material, room, area)
+    snip_reason: str | None = None
+    if piece:
+        need, unit = piece
+        if unit in ('м', 'пог. м', 'п.м'):
+            pack_len = _spec(p, 'pack_length_m') or _spec(p, 'length_m')
+            if not pack_len and p.name:
+                m_len = re.search(r'(?<![\dх×x*])(\d+(?:[.,]\d+)?)\s*м(?:етр\w*)?(?![а-яa-z2²\d])', p.name, re.IGNORECASE)
+                if m_len:
+                    try:
+                        val = Decimal(m_len.group(1).replace(',', '.'))
+                        if val >= 1:
+                            pack_len = val
+                    except Exception:
+                        pass
+            if not pack_len:
+                if hasattr(Material, 'cable_channel') and material == Material.cable_channel:
+                    pack_len = Decimal('2.0')
+                elif hasattr(Material, 'skirting') and material == Material.skirting:
+                    pack_len = Decimal('2.5')
+                elif hasattr(Material, 'damper_tape') and material == Material.damper_tape:
+                    pack_len = Decimal('25.0')
+                elif hasattr(Material, 'pipes') and material == Material.pipes:
+                    pack_len = Decimal('50.0')
+
+            p_unit = (p.unit or '').lower()
+            if pack_len and pack_len > 0 and p_unit not in ('м', 'м.', 'пог. м', 'пог.м'):
+                n = _ceil(need / pack_len)
+            else:
+                n = _ceil(need)
+        else:
+            # Поштучные позиции (маяки, крепеж, лампы): проверяем фасовку в упаковке
+            pcs = _spec(p, 'pcs_in_pack')
+            if not pcs and p.name:
+                m_pcs = re.search(r'(?<![\dх×x*])(\d+)\s*шт(?![а-яa-z\d])', p.name, re.IGNORECASE)
+                if m_pcs:
+                    try:
+                        val = Decimal(m_pcs.group(1))
+                        if val > 1:
+                            pcs = val
+                    except Exception:
+                        pass
+            if unit in ('упак.', 'пач.', 'рулон'):
+                n = _ceil(need)
+            elif pcs and pcs > 1:
+                n = _ceil(need / pcs)
+            else:
+                n = _ceil(need)
+    else:
+        reserve = RESERVE.get(material, Decimal(5))
+        layers = 2 if material == Material.paint else 1
+        try:
+            need, unit, n, _ = packages_for_area(p, area, reserve, layers=layers, material=material)
+        except CalcError:
+            std = CONSUMPTION_RATES.get(material.value)
+            volume, weight = _spec(p, 'volume_l'), _spec(p, 'weight_kg')
+            if std and std.consumption_rate:
+                if std.consumption_unit == 'l/m2' and volume and volume > 0:
+                    liters = area * layers * std.consumption_rate * (1 + reserve / 100)
+                    n = _ceil(liters / volume)
+                    need, unit = liters, 'л'
+                    snip_reason = f'расход по СНиП ({std.consumption_rate} л/м²)'
+                elif std.consumption_unit == 'kg/m2' and weight and weight > 0:
+                    kg = area * std.consumption_rate * (1 + reserve / 100)
+                    n = _ceil(kg / weight)
+                    need, unit = kg, 'кг'
+                    snip_reason = f'расход по СНиП ({std.consumption_rate} кг/м²)'
+                else:
+                    return 0, area, 'м²', None, None
+            else:
+                return 0, area, 'м²', None, None
+
+    price = p.result_price
+    cost = _money(price * n) if price is not None else None
+    return n, need, unit, cost, snip_reason
+
+
 class BaselineEngine:
     """
     Основной расчётный движок:
@@ -486,95 +604,17 @@ class BaselineEngine:
             )
 
         p = ranked[0]
-        piece = _piece_need(material, room, area)
-        if piece:
-            need, unit = piece
-            if unit in ("м", "пог. м", "п.м"):
-                pack_len = _spec(p, "pack_length_m") or _spec(p, "length_m")
-                if not pack_len and p.name:
-                    m_len = re.search(r"(?<![\dх×x*])(\d+(?:[.,]\d+)?)\s*м(?:етр\w*)?(?![а-яa-z2²\d])", p.name, re.IGNORECASE)
-                    if m_len:
-                        try:
-                            val = Decimal(m_len.group(1).replace(",", "."))
-                            if val >= 1:
-                                pack_len = val
-                        except Exception:
-                            pass
-                if not pack_len:
-                    if hasattr(Material, "cable_channel") and material == Material.cable_channel:
-                        pack_len = Decimal("2.0")
-                    elif hasattr(Material, "skirting") and material == Material.skirting:
-                        pack_len = Decimal("2.5")
-                    elif hasattr(Material, "damper_tape") and material == Material.damper_tape:
-                        pack_len = Decimal("25.0")
-                    elif hasattr(Material, "pipes") and material == Material.pipes:
-                        pack_len = Decimal("50.0")
-
-                p_unit = (p.unit or "").lower()
-                if pack_len and pack_len > 0 and p_unit not in ("м", "м.", "пог. м", "пог.м"):
-                    n = _ceil(need / pack_len)
-                else:
-                    n = _ceil(need)
-            else:
-                # Поштучные позиции (маяки, крепеж, лампы): проверяем фасовку в упаковке
-                pcs = _spec(p, "pcs_in_pack")
-                if not pcs and p.name:
-                    m_pcs = re.search(r"(?<![\dх×x*])(\d+)\s*шт(?![а-яa-z\d])", p.name, re.IGNORECASE)
-                    if m_pcs:
-                        try:
-                            val = Decimal(m_pcs.group(1))
-                            if val > 1:
-                                pcs = val
-                        except Exception:
-                            pass
-                if unit in ("упак.", "пач.", "рулон"):
-                    # Если потребность уже рассчитана в упаковках/рулонах, не делим на pcs_in_pack
-                    n = _ceil(need)
-                elif pcs and pcs > 1:
-                    n = _ceil(need / pcs)
-                else:
-                    n = _ceil(need)
-            reason = "влагостойкий, т.к. высокая влажность" if wet else None
-        else:
-            reserve = RESERVE.get(material, Decimal(5))
-            layers = 2 if material == Material.paint else 1
-            try:
-                need, unit, n, _ = packages_for_area(p, area, reserve, layers=layers, material=material)
-                reason = "влагостойкий, т.к. высокая влажность" if wet else None
-            except CalcError as e:
-                # Попытка применить нормативный расход из СНиП (CONSUMPTION_RATES)
-                std = CONSUMPTION_RATES.get(material.value)
-                volume, weight = _spec(p, "volume_l"), _spec(p, "weight_kg")
-                if std and std.consumption_rate:
-                    if std.consumption_unit == "l/m2" and volume and volume > 0:
-                        liters = area * layers * std.consumption_rate * (1 + reserve / 100)
-                        n = _ceil(liters / volume)
-                        need, unit = liters, "л"
-                        reason = f"расход по СНиП ({std.consumption_rate} л/м²)"
-                    elif std.consumption_unit == "kg/m2" and weight and weight > 0:
-                        kg = area * std.consumption_rate * (1 + reserve / 100)
-                        n = _ceil(kg / weight)
-                        need, unit = kg, "кг"
-                        reason = f"расход по СНиП ({std.consumption_rate} кг/м²)"
-                    else:
-                        return EstimateItem(
-                            **base,
-                            product=to_brief(p),
-                            required_amount=area,
-                            required_unit="м²",
-                            packages=0,
-                            reason=str(e),
-                        )
-                else:
-                    return EstimateItem(
-                        **base,
-                        product=to_brief(p),
-                        required_amount=area,
-                        required_unit="м²",
-                        packages=0,
-                        reason=str(e),
-                    )
-
+        n, need, unit, cost, snip_reason = calc_product_for_room(p, material, room, surface, area)
+        if n == 0 or cost is None:
+            return EstimateItem(
+                **base,
+                product=to_brief(p),
+                required_amount=area,
+                required_unit="м²",
+                packages=0,
+                reason="нет расхода или характеристик для расчета",
+            )
+        reason = "влагостойкий, т.к. высокая влажность" if wet else (snip_reason or None)
         price = p.result_price or Decimal(0)
         return EstimateItem(
             **base,
@@ -583,7 +623,7 @@ class BaselineEngine:
             required_unit=unit,
             packages=n,
             unit_price=price,
-            cost=_money(price * n),
+            cost=_money(cost),
             reason=reason,
             alternatives=[to_brief(a) for a in ranked[1:4]],
         )
