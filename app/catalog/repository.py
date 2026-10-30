@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session, defer
 
 from app.catalog import normalize as nz
 from app.db import upsert
-from app.ml.ranker import has_flags, preload
+from app.ml.ranker import has_flags, is_typical, preload
 from app.models import Product, ProductBinding, ProductCategory, ProductCharacteristic
 from app.schemas import BindingIn, BindingOut, Characteristic, ProductBrief, ProductCreate, ProductOut, Suggestion
 from app.taxonomy import Material, WorkType, works_for_material
@@ -149,23 +149,24 @@ class CatalogRepo:
             compatible_legacy = work_type in works_for_material(material)
             exact = [(p, b) for p, b in rows if work_type.value in (b.work_types or [])
                      or (b.confirmed and not (b.work_types or []) and compatible_legacy)]
-            if exact:
-                rows = exact
-            else:
-                related = COMPATIBLE_WORK_FALLBACKS.get((material, work_type), frozenset())
-                compatible = [
-                    (p, fallback_binding(b, work_type, "compatible")) for p, b in rows
-                    if any(item.value in (b.work_types or []) for item in related)
-                ]
-                if compatible:
-                    rows = compatible
-                elif compatible_legacy:
-                    # Nothing is bound to this work yet (e.g. fasteners, which the model binds by
-                    # material only): use material-only bindings rather than leave the line empty.
-                    rows = [(p, fallback_binding(b, work_type, "material_only")) for p, b in rows
-                            if not (b.work_types or [])]
-                else:
-                    rows = []
+            related = COMPATIBLE_WORK_FALLBACKS.get((material, work_type), frozenset())
+            compatible = [
+                (p, fallback_binding(b, work_type, "compatible")) for p, b in rows
+                if any(item.value in (b.work_types or []) for item in related)
+            ]
+            # Nothing is bound to this work yet (e.g. fasteners, which the model binds by material
+            # only): material-only bindings are better than an empty estimate line.
+            material_only = [(p, fallback_binding(b, work_type, "material_only")) for p, b in rows
+                             if not (b.work_types or [])] if compatible_legacy else []
+            rows = exact or compatible or material_only
+            if exact and not any(is_typical(material, p.name) for p, _ in exact):
+                # The exact pool holds only accessories (a sealing tape bound to drywall profiles):
+                # add the real products of this material from the fallback tiers.
+                seen = {p.id for p, _ in exact}
+                for p, b in compatible + material_only:
+                    if p.id not in seen and is_typical(material, p.name):
+                        seen.add(p.id)
+                        rows.append((p, b))
         if required_flags:
             preload(rows)
             rows = [(p, b) for p, b in rows if has_flags(p, b, required_flags)]

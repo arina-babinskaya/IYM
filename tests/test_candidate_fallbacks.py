@@ -86,3 +86,19 @@ def test_confirmed_legacy_binding_remains_eligible(tmp_path):
                                                min_confidence=.7)
         assert [product.id for product, _ in rows] == [1]
         assert rows[0][1].confirmed is True
+
+
+def test_accessory_only_exact_pool_is_extended_with_typical_fallback_products(tmp_path):
+    engine = create_engine(f"sqlite:///{tmp_path / 'profile.sqlite'}")
+    Base.metadata.create_all(engine)
+    with Session(engine) as session:
+        add(session, 1, Material.profile, [WorkType.drywall_install])
+        add(session, 2, Material.profile, [])
+        add(session, 3, Material.profile, [])
+        session.get(Product, 1).name = "лента уплотнительная НПЭ для профиля ГКЛ"
+        session.get(Product, 2).name = "профиль направляющий ПН 100х40мм 3м"
+        session.get(Product, 3).name = "заглушка для профиля"
+        session.commit()
+        rows = CatalogRepo(session).candidates(Material.profile, WorkType.drywall_install, min_confidence=.7)
+        assert [product.id for product, _ in rows] == [1, 2]
+        assert rows[1][1].flags["candidate_material_only_fallback"] is True
