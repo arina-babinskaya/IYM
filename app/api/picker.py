@@ -102,14 +102,18 @@ def _option(s: Scored, best_quality: float, ideal: float, req: OptionsRequest, a
         features=[FEATURE_TITLES[k] for k, v in sig.items() if v > 0 and k in FEATURE_TITLES],
         why=why(s, needs_moisture(req.room, req.material)),
     )
-    if with_cost and area > 0:
-        calc = ProductCalcRequest(length_m=area, width_m=Decimal(1), layers=2 if req.material == Material.paint else 1)
+    if with_cost:
         try:
-            r = get_estimate_engine().calc_product(p, calc, repo)
-        except (CalcError, ValueError, TypeError):
-            return out
-        out.packages, out.required_amount, out.required_unit, out.cost = (
-            r.packages, r.required_amount, r.required_unit, r.total_cost)
+            n, need, unit, cost, _ = engine_baseline.calc_product_for_room(
+                p, req.material, req.room, req.surface, area
+            )
+            if cost is not None and n > 0:
+                out.packages = n
+                out.required_amount = need.quantize(Decimal("0.01")) if isinstance(need, Decimal) else need
+                out.required_unit = unit
+                out.cost = cost
+        except Exception:
+            pass
     return out
 
 
