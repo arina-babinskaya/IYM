@@ -29,7 +29,8 @@ PEI = _rx(r"\bPEI\s*(I{1,3}V?|V|[1-5])\b")
 DECORATIVE = _rx(r"декоратив|фактурн|короед|\bшуба\b|венецианск|травертин|микроцемент|под бетон|кракелюр|"
                  r"перламутр|металлик|с эффектом|\bэффект(?!ивн)|песчан\w* вихр|рельефн|структурн")
 TILE_DECOR = _rx(r"\bдекор\b|бордюр|панно|вставк|фриз|карандаш|\bугол\w* керам")
-OUTDOOR = _rx(r"уличн|прожектор|садов|ландшафт|солнечн\w* батар|промышленн|наземн|фасадн|грунтов\w* светил")
+OUTDOOR = _rx(r"уличн|прожектор|садов|ландшафт|солнечн\w* батар|промышленн|наземн|фасадн|\bфасад\b|facade|"
+              r"для наружн\w* работ|грунтов\w* светил")
 IP = _rx(r"\bIP\s?(\d{2})\b")
 ROMAN = {"I": 1, "II": 2, "III": 3, "IV": 4, "V": 5}
 
@@ -78,7 +79,7 @@ TYPICAL: dict[Material, re.Pattern[str]] = {m: _rx(p) for m, p in {
     M.linoleum: r"^линолеум",
     M.underlay: r"^подложк(?!\w* под ков)",
     M.wallpaper: r"^обои",
-    M.wallpaper_glue: r"^клей (обойн|для обоев)",
+    M.wallpaper_glue: r"^клей (обойн|для\s+(\w+\s+){0,2}обоев)",
     M.drywall: r"^(гипсокартон|гкл|лист гипс)",
     M.profile: r"^профил\w* (потолочн|направляющ|стоечн|для гкл|для гипсокартон|пп\b|пн\b|пс\b|cd\b|ud\b|cw\b|uw\b)",
     M.beacons: r"^(маяк|профиль маяч)",
@@ -136,6 +137,7 @@ RULES: list[Rule] = [
     rule("ip_protected", 5, ELECTRIC, rooms={R.bathroom}),
     rule("ip_protected", 3, ELECTRIC, humidity=Level.high),
     rule("outdoor", -10, ELECTRIC, rooms=set(RoomType) - {R.balcony}),
+    rule("outdoor", -6, FINISH, rooms=set(RoomType) - {R.balcony}),
     rule("decorative", -8, PLAIN_FINISH),
     rule("low_emission", 2, {M.paint, M.wallpaper, M.laminate, M.linoleum, M.primer, M.wallpaper_glue},
          rooms=LIVING),
@@ -280,6 +282,16 @@ def _outdoor(chars: dict[str, str], text: str) -> float:
     return 1.0 if OUTDOOR.search(text) else 0.0
 
 
+def _room_fit(mentioned: frozenset[RoomType], room: RoomType, material: Material | None = None) -> float:
+    """+1 for "для кухни" in the kitchen, −1 for another room. For finishing materials wet rooms are
+    interchangeable: "краска для ванных и кухонь" fits a laundry too (a kitchen faucet does not)."""
+    if not mentioned:
+        return 0.0
+    if room in mentioned:
+        return 1.0
+    return 0.0 if material in FINISH and room in WET and mentioned <= WET else -1.0
+
+
 def is_typical(material: Material | None, name: str | None) -> bool:
     return _typical(material, name) == 1.0
 
@@ -296,11 +308,8 @@ def _typical(material: Material | None, name: str | None) -> float:
     return 1.0 if pattern and pattern.search((name or "").strip()) else 0.0
 
 
-def room_match(name: str | None, room: RoomType) -> float:
-    mentioned = {r for r, pattern in ROOM_WORDS.items() if pattern.search(name or "")}
-    if not mentioned:
-        return 0.0
-    return 1.0 if room in mentioned else -1.0
+def room_match(name: str | None, room: RoomType, material: Material | None = None) -> float:
+    return _room_fit(frozenset(r for r, pattern in ROOM_WORDS.items() if pattern.search(name or "")), room, material)
 
 
 @dataclass(frozen=True)
@@ -408,6 +417,10 @@ def calculable(p: Product, b: ProductBinding) -> bool:
         return True
     if _spec(p, "length_m") and _spec(p, "width_m"):
         return True
+    # Paints, mixes and glues: the engine falls back to standard consumption rates, so a known pack
+    # volume or weight is enough to count packages.
+    if _material(b) in MIXES | {M.wallpaper_glue, M.waterproofing} and (_spec(p, "volume_l") or _spec(p, "weight_kg")):
+        return True
     cons = (p.specs or {}).get("consumption")
     if isinstance(cons, dict):
         return bool((cons.get("unit") == "l/m2" and _spec(p, "volume_l"))
@@ -481,7 +494,7 @@ class ContextRanker:
                 "confirmed": w["confirmed"] * (1.0 if b.confirmed else 0.0),
                 "recsys": w["recsys"] * rs,
                 "rating": w["rating"] * (min(max(rating / 5, 0.0), 1.0) if rating else 0.0),
-                "room_match": w["room_match"] * (0.0 if not pr.rooms else 1.0 if room.room_type in pr.rooms else -1.0),
+                "room_match": w["room_match"] * _room_fit(pr.rooms, room.room_type, _material(b)),
             }
             material = _material(b)
             sig = pr.signals

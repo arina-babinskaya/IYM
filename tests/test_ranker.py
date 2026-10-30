@@ -284,3 +284,35 @@ def test_typical_painting_tools_and_floor_skirting():
     assert not is_typical(Material.skirting, "Плинтус ПВХ для столешницы под вставку кромки 3.05м")
     assert is_typical(Material.skirting, "плинтус напольный ПВХ 2,5м дуб")
     assert is_typical(Material.skirting, "порог алюминиевый 90 см")
+
+
+def test_wet_rooms_are_interchangeable_in_names():
+    from app.ml.ranker import is_typical, room_match
+    from app.taxonomy import Material
+
+    paint = Material.paint
+    assert room_match("Краска влагостойкая для ванных и кухонь", RoomType.utility_room, paint) == 0
+    assert room_match("Краска влагостойкая для ванных и кухонь", RoomType.balcony, paint) == 0
+    assert room_match("Краска влагостойкая для ванных и кухонь", RoomType.bathroom, paint) == 1
+    assert room_match("Краска влагостойкая для ванных и кухонь", RoomType.bedroom, paint) == -1
+    assert room_match("смеситель для кухни", RoomType.bathroom, Material.plumbing) == -1
+    assert is_typical(Material.wallpaper_glue, "Клей для флизелиновых обоев 250 г")
+    assert is_typical(Material.wallpaper_glue, "клей для виниловых обоев")
+    assert not is_typical(Material.wallpaper_glue, "клей монтажный универсальный")
+
+
+def test_exterior_only_finish_is_pushed_down_indoors():
+    facade = item(1, name="краска фасадная Facade Siloxane 9л", rating=5, **PACK)
+    interior = item(2, name="краска интерьерная 9л", **PACK)
+    both = item(3, name="краска для внутренних и наружных работ 9л", **PACK)
+    assert ids(ContextRanker().rank([facade, interior], room("utility_room")))[0] == 2
+    assert "outdoor" not in ContextRanker().score([both], room())[0].parts
+    assert "outdoor" not in ContextRanker().score([facade], room("balcony"))[0].parts
+
+
+def test_pack_volume_is_enough_for_paints_and_mixes():
+    from app.ml.ranker import calculable
+
+    assert calculable(*item(1, "paint", name="краска для потолков 5 л", specs={"volume_l": "5"}))
+    assert calculable(*item(2, "putty", specs={"weight_kg": "20"}))
+    assert not calculable(*item(3, "paint"))
