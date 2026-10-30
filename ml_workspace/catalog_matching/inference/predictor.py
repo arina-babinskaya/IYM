@@ -63,7 +63,10 @@ class CatalogPredictor:
                 "Catalog artifact checksum manifest must contain exactly: " + ", ".join(sorted(payloads))
             )
         for name, expected in checks.items():
-            if hashlib.sha256((path / name).read_bytes()).hexdigest() != expected:
+            payload = (path / name).read_bytes()
+            if name.endswith(".json"):
+                payload = payload.replace(b"\r\n", b"\n")
+            if hashlib.sha256(payload).hexdigest() != expected:
                 raise CatalogArtifactError(f"Catalog artifact checksum mismatch: {name}")
 
         try:
