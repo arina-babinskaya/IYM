@@ -1528,18 +1528,24 @@ async function decorRooms() {
   decorBox.innerHTML = `<h3 class="font-semibold text-lg mb-4">Какое помещение оформляем?</h3>
     <div class="grid grid-cols-2 md:grid-cols-4 gap-3">${Object.entries(DECOR_ROOMS).map(([k, v]) => `<button data-room="${k}" class="border-2 border-gray-200 hover:border-brand-red rounded-xl p-4 text-left font-semibold transition-colors">${esc(v)}</button>`).join("")}</div>`;
   decorBox.querySelectorAll("[data-room]").forEach(b => b.onclick = () => { Object.assign(D, { room: b.dataset.room, kit: null, picks: {}, skip: [] }); decorStyles(); });
-  api("/api/v1/decor/zones").then(zones => {
-    decorBox.insertAdjacentHTML("beforeend", `<h3 class="font-semibold text-lg mt-8 mb-4">Дача и участок</h3>
-      <div class="grid md:grid-cols-3 gap-3">${zones.map(z => `<button data-zone="${z.id}" class="border-2 border-gray-200 hover:border-brand-red rounded-xl p-4 text-left transition-colors">
-        <div class="font-semibold">${esc(z.title)}</div><div class="text-sm text-gray-500 mt-1">${esc(z.description)}</div>
-        <div class="text-xs font-semibold text-gray-500 mt-2">товаров: ${num(z.total)}</div></button>`).join("")}</div>`);
-    decorBox.querySelectorAll("[data-zone]").forEach(b => b.onclick = () => decorZoneKits(b.dataset.zone));
-  }).catch(() => {});
+  const zones = await api("/api/v1/decor/zones?counts=false").catch(() => []);
+  if (!zones.length) return;
+  decorBox.insertAdjacentHTML("beforeend", `<h3 class="font-semibold text-lg mt-8 mb-4">Дача, участок и праздники</h3>
+    <div class="grid md:grid-cols-3 gap-3">${zones.map(z => `<button data-zone="${z.id}" class="border-2 border-gray-200 hover:border-brand-red rounded-xl p-4 text-left transition-colors">
+      <div class="font-semibold">${esc(z.title)}</div><div class="text-sm text-gray-500 mt-1">${esc(z.description)}</div>
+      <div class="text-xs font-semibold text-gray-500 mt-2" data-zone-total="${z.id}">наборов: ${z.kits.length}</div></button>`).join("")}</div>`);
+  decorBox.querySelectorAll("[data-zone]").forEach(b => b.onclick = () => decorZoneKits(b.dataset.zone));
+  // число товаров считается по каталогу — подставляем, когда придёт
+  api("/api/v1/decor/zones").then(full => full.forEach(z => {
+    const el = decorBox.querySelector(`[data-zone-total="${z.id}"]`);
+    if (el) el.textContent = `наборов: ${z.kits.length} · товаров: ${num(z.total)}`;
+  })).catch(() => {});
 }
 
 const zoneCard = p => `<div class="border border-gray-200 rounded-xl p-3 flex flex-col gap-2 bg-white">
     ${p.picture_url ? `<img src="${esc(p.picture_url)}" alt="" class="w-full h-32 object-contain bg-white rounded-lg">` : `<div class="w-full h-32 bg-gray-100 rounded-lg"></div>`}
     <div class="text-sm font-semibold leading-snug">${esc(p.name)}</div>
+    ${p.in_stock === false ? `<div class="text-xs text-gray-500">нет в наличии</div>` : ""}
     <b class="mt-auto">${rub(p.price)}</b></div>`;
 
 async function decorZoneKits(zone) {
@@ -1613,7 +1619,7 @@ async function decorResult() {
       ${img(x.product)}
       <div class="text-xs font-semibold uppercase tracking-wide text-gray-500">${esc(x.title)}</div>
       <div class="font-semibold text-sm leading-snug">${esc(x.product.name)}</div>
-      <div class="flex flex-wrap">${x.product.why.map(w => `<span class="pill">${esc(w)}</span>`).join("")}</div>
+      <div class="flex flex-wrap">${x.product.in_stock === false ? `<span class="pill">нет в наличии</span>` : ""}${x.product.why.map(w => `<span class="pill">${esc(w)}</span>`).join("")}</div>
       <div class="mt-auto flex justify-between items-end"><span class="text-sm text-gray-500">${x.qty > 1 ? `${x.qty} × ${rub(x.product.price)}` : ""}</span><b>${rub(x.cost)}</b></div>
       <div class="flex gap-2"><button data-replace="${x.slot}" class="flex-1 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg py-1.5 text-sm font-semibold">Заменить</button><button data-skip="${x.slot}" class="bg-white border border-gray-300 hover:bg-gray-50 rounded-lg py-1.5 px-3 text-sm" title="Убрать из подборки">✕</button></div>
     </div>` : `<div class="border border-dashed border-gray-300 rounded-xl p-4 text-sm text-gray-400 flex flex-col justify-between"><div><div class="text-xs font-semibold uppercase tracking-wide">${esc(x.title)}</div><div class="mt-2">в каталоге не нашлось</div></div><button data-skip="${x.slot}" class="text-left underline mt-3">убрать</button></div>`;
@@ -1643,7 +1649,7 @@ async function decorReplace(line) {
     const rows = await api(url + (q ? `&q=${encodeURIComponent(q)}` : ""));
     document.getElementById("decor-options").innerHTML = rows.length ? rows.map(p => `<button data-pick="${p.id}" class="flex gap-3 items-center text-left bg-white border ${p.id === line.product?.id ? "border-brand-red" : "border-gray-200"} hover:border-brand-red rounded-xl p-3">
         ${p.picture_url ? `<img src="${esc(p.picture_url)}" alt="" class="w-16 h-16 object-contain">` : `<div class="w-16 h-16 bg-gray-100 rounded"></div>`}
-        <div class="flex-1"><div class="font-semibold text-sm">${esc(p.name)}</div><div class="text-xs text-gray-500 mt-1">${p.why.map(esc).join(" · ")}</div></div><b class="whitespace-nowrap">${rub(p.price)}</b></button>`).join("") : `<p class="text-gray-500">Ничего не нашлось.</p>`;
+        <div class="flex-1"><div class="font-semibold text-sm">${esc(p.name)}</div><div class="text-xs text-gray-500 mt-1">${(p.in_stock === false ? ["нет в наличии"] : []).concat(p.why).map(esc).join(" · ")}</div></div><b class="whitespace-nowrap">${rub(p.price)}</b></button>`).join("") : `<p class="text-gray-500">Ничего не нашлось.</p>`;
     document.querySelectorAll("#decor-options [data-pick]").forEach(b => b.onclick = () => { D.picks[line.slot] = Number(b.dataset.pick); closePicker(); decorResult(); });
   };
   let t = null;
@@ -1699,8 +1705,9 @@ function renderMessages() {
 }
 
 function setChatControls() {
-  const state = activeChatState(); chatInput.disabled = !state || state.loading || state.deleting;
-  chatSend.disabled = !state || state.loading || state.deleting || !chatInput.value.trim();
+  // Без открытого чата писать тоже можно: чат создастся при отправке первого сообщения.
+  const state = activeChatState(); chatInput.disabled = !!state && (state.loading || state.deleting);
+  chatSend.disabled = (!!state && (state.loading || state.deleting)) || !chatInput.value.trim();
   document.getElementById("chat-actions").hidden = !C.store.active;
 }
 
@@ -1772,10 +1779,11 @@ function consultantErrorMessage(error, fallback = "Не удалось выпо�
   return error?.message || fallback;
 }
 
-document.getElementById("chat-new").onclick = async () => {
-  try { const chat = await api("/api/v1/consultant/chats", {method:"POST", body:JSON.stringify({})}); C.chats.unshift(chat); const state=C.store.ensure(chat.id); state.historyLoaded=true; state.lastMessageId=null; state.historyFetchedAt=Date.now(); await openChat(chat.id); chatInput.focus(); }
-  catch (e) { showChatError(consultantErrorMessage(e)); }
-};
+async function createChat() {
+  try { const chat = await api("/api/v1/consultant/chats", {method:"POST", body:JSON.stringify({})}); C.chats.unshift(chat); const state=C.store.ensure(chat.id); state.historyLoaded=true; state.lastMessageId=null; state.historyFetchedAt=Date.now(); await openChat(chat.id); chatInput.focus(); return true; }
+  catch (e) { showChatError(consultantErrorMessage(e)); return false; }
+}
+document.getElementById("chat-new").onclick = createChat;
 document.getElementById("chat-rename").onclick = async () => {
   const chatId = C.store.active, old = C.chats.find(x => x.id === chatId); const title = prompt("Новое название", old?.title || ""); if (!title?.trim()) return;
   try { const chat = await api(`/api/v1/consultant/chats/${chatId}`, {method:"PATCH", body:JSON.stringify({title:title.trim()})}); Object.assign(old, chat); if (C.store.active === chatId) document.getElementById("chat-title").textContent = chat.title; renderChatList(); }
@@ -1789,6 +1797,11 @@ document.getElementById("chat-delete").onclick = async () => {
 };
 
 async function sendChat() {
+  if (!C.store.active && chatInput.value.trim()) {
+    const text = chatInput.value;
+    if (!(await createChat())) return;
+    chatInput.value = text; activeChatState().draft = text;
+  }
   const chatId = C.store.active, state = activeChatState(), content = chatInput.value.trim(); if (!content || !state) return;
   const requestStarted = performance.now();
   const operation = C.store.beginOperation(chatId); if (operation === null) return;

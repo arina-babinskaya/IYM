@@ -42,6 +42,10 @@ def client(tmp_path):
         add(s, 31, "набор шампуров 6шт", "Шампуры", 600)
         add(s, 32, "семена Томат Бычье сердце", "Семена овощей", 40)
         add(s, 33, "семена Огурец Кураж", "Семена овощей", 60)
+        s.add(Product(id=40, name="мишура новогодняя 2м", categories={"1": "Мишура новогодняя"},
+                      result_price=Decimal(150), price=Decimal(150), status=True, in_stock=False))
+        s.add(Product(id=41, name="люстра потолочная лофт нет в наличии", categories={"1": LAMPS},
+                      result_price=Decimal(100), price=Decimal(100), status=True, in_stock=False))
         s.commit()
 
     def session():
@@ -176,3 +180,28 @@ def test_colour_alone_does_not_make_a_style():
     assert score(anchor, STYLES["marine"]).strong
     lamp = Item(3, "светильник подвесной журнальный напольный", Decimal(1), 0, None, None, None)
     assert not score(lamp, STYLES["marine"]).why  # «льн» inside words is not linen
+
+
+def test_hitech_vintage_and_new_year():
+    def item(name, attrs="", colors=""):
+        return Item(1, name, Decimal(1), 0, None, None, None, attrs=attrs, colors=colors)
+
+    chrome = item("люстра LED хром", attrs="хай-тек", colors="хром")
+    edison = item("светильник подвесной Эдисон бронза", colors="бронза")
+    assert score(chrome, STYLES["hitech"]).strong and score(chrome, STYLES["vintage"]).score < 0
+    assert score(edison, STYLES["vintage"]).strong and score(edison, STYLES["hitech"]).score < 0
+    assert score(chrome, STYLES["modern"]).score > 0  # hi-tech label does not push it out of modern
+
+
+def test_new_year_zone_has_kits(client):
+    zones = {z["id"]: z for z in client.get("/api/v1/decor/zones?counts=false").json()}
+    assert {k["id"] for k in zones["holidays"]["kits"]} == {"tree", "home", "gifts"}
+    r = client.post("/api/v1/decor/zones/holidays/kits/tree", json={}).json()
+    assert [x["slot"] for x in r["items"]][:2] == ["tree", "balls"]
+
+
+def test_seasonal_zone_shows_out_of_stock_items_rooms_do_not(client):
+    tinsel = client.get("/api/v1/decor/zones/holidays/tinsel").json()
+    assert [(x["id"], x["in_stock"]) for x in tinsel] == [(40, False)]
+    lamps = client.get("/api/v1/decor/options?style=loft&slot=chandelier").json()
+    assert 41 not in {x["id"] for x in lamps}

@@ -1,4 +1,5 @@
 import logging
+import threading
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -10,7 +11,8 @@ from fastapi.staticfiles import StaticFiles
 
 from app.api import catalog_admin, consultant, decor, picker, routes
 from app.config import get_settings
-from app.db import init_db
+from app.db import get_sessionmaker, init_db
+from app.decor import INDEX as decor_index
 
 STATIC_DIR = Path(__file__).parent / "static"
 INDEX_HTML = STATIC_DIR / "index.html"
@@ -22,7 +24,17 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     if get_settings().auto_create_tables:
         init_db()
+    # Индекс декора строится по всему каталогу несколько секунд — готовим его заранее, в фоне.
+    threading.Thread(target=_warm_decor_index, daemon=True).start()
     yield
+
+
+def _warm_decor_index() -> None:
+    try:
+        with get_sessionmaker()() as session:
+            decor_index.ensure(session)
+    except Exception:
+        logging.getLogger(__name__).exception("decor index warm-up failed")
 
 
 def create_app() -> FastAPI:

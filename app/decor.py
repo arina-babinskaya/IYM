@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import re
+import threading
 from dataclasses import dataclass, field
 from decimal import Decimal
 
@@ -43,11 +44,12 @@ STYLES: dict[str, Style] = {
     "modern": Style(
         "Современный", "Чистые линии, нейтральные цвета, стекло и металл, минимум декора.",
         ("#F5F5F4", "#A8A29E", "#44403C", "#1C1917"),
-        rx(r"модерн|хай-тек|современ|контемпорари|минимал"),
+        rx(r"модерн|современ|контемпорари|минимал"),
         rx(r"\bбел(?!ь)|\bсер(ый|ая|ое|ые|о-)|черн|чёрн|хром|графит|антрацит|никель|прозрачн"),
         rx(r"стекл|металл|алюмин|акрил|сталь|блэкаут|сатин|микрофибр|вельвет|велюр"),
         rx(r"модерн|modern|минимал|геометр|хай-тек|однотон|без рисунка|абстракц|графич"),
         rx(r"классич|винтаж|прованс|кантри|хрустал|барокко|ампир|детск|рококо|кружев"),
+        rx(r"хай-тек"),
         families=frozenset({"white", "grey", "black", "beige"}),
     ),
     "scandi": Style(
@@ -153,6 +155,28 @@ STYLES: dict[str, Style] = {
         rx(r"классич|классика|хрустал|модерн"),
         families=frozenset({"gold", "black", "green", "blue", "white", "red"}),
     ),
+    "hitech": Style(
+        "Хай-тек", "Технологично и строго: хром, стекло, глянец, чёрный и белый, светодиодная подсветка.",
+        ("#F8FAFC", "#94A3B8", "#111827", "#38BDF8"),
+        rx(r"хай-тек|hi-tech"),
+        rx(r"хром|серебр|металлик|черн|чёрн|графит|\bбел(?!ь)|\bсер(ый|ая|ое|ые|о-)"),
+        rx(r"хром|алюмин|акрил|глянц|нержаве"),
+        rx(r"хай-тек|hi-tech|техно|\bled\b|светодиод|глянц|хром|smart|умн(ый|ая|ое)|сенсор|подсветк"),
+        rx(r"классич|прованс|кантри|винтаж|ретро|ротанг|джут|бархат|детск|позолот|кружев|лофт|loft"),
+        rx(r"модерн|современ"),
+        families=frozenset({"white", "black", "grey"}),
+    ),
+    "vintage": Style(
+        "Винтаж / ретро", "Вещи с историей: состаренная бронза и латунь, лампы Эдисона, кожа, тёплые приглушённые цвета.",
+        ("#FEF3C7", "#92400E", "#B45309", "#7F1D1D"),
+        rx(r"винтаж|ретро|ковка"),
+        rx(r"бронз|\bмед(ь|н)|латун|патин|состарен|антик|крем|бордо|горчич|корич|слонов|оливк|охр"),
+        rx(r"латун|\bмед(ь|н)|чугун|кож(а|ан)|бархат|ковк|кован"),
+        rx(r"винтаж|vintage|ретро|retro|эдисон|edison|филамент|\bантик|состарен|патин|граммофон|ковк|кован|старин"),
+        rx(r"хай-тек|детск|\bled\b|глянц|минимал|сканди"),
+        rx(r"классич|прованс|лофт|флористик"),
+        families=frozenset({"bronze", "brown", "beige", "white", "red", "green", "gold", "terracotta"}),
+    ),
 }
 
 
@@ -233,6 +257,7 @@ class Zone:
     title: str
     description: str
     groups: dict[str, Slot]
+    seasonal: bool = False  # сезонные товары показываем и без наличия, с пометкой «нет в наличии»
 
 
 # Огород, сад и мангальная зона: стиль не выбирается, предлагаем всё, что там может пригодиться.
@@ -268,6 +293,16 @@ ZONES: dict[str, Zone] = {
         "tableware": Slot("Посуда для пикника", rx(r"^(тарелки, миски одноразовые|столовые приборы одноразовые|наборы одноразовой посуды)")),
         "mosquito": Slot("Защита от комаров", rx(r"^(фумигаторы|средства защиты от насекомых)"), only=rx(r"комар|мошк|москит|фумигатор|репеллент|спирал")),
     }),
+    "holidays": Zone("Новый год", "Ёлка и игрушки, гирлянды, новогодний декор для дома и упаковка подарков.", {
+        "trees": Slot("Ёлки", rx(r"^([её]лки|ели) искусственн")),
+        "balls": Slot("Шары и игрушки", rx(r"^(шары елочные|игрушки елочные)")),
+        "top": Slot("Верхушки", rx(r"^верхушки елочные")),
+        "tinsel": Slot("Мишура, дождик, бусы", rx(r"^(мишура новогодняя|дождик новогодний|бусы новогодние)")),
+        "lights": Slot("Гирлянды", rx(r"^(гирлянды электрические|гирлянды еловые)")),
+        "decor": Slot("Новогодний декор", rx(r"^(композиции (искусственные )?новогодние|венки новогодние|фигуры новогодние|ветки новогодние|сувениры новогодние|букеты и праздничные)")),
+        "candles": Slot("Свечи и подсвечники", rx(r"^(свечи новогодние|подсвечники новогодние)")),
+        "wrap": Slot("Упаковка подарков", rx(r"^(бумага, целлофан|лента, банты|коробки$|пакеты$|мешки новогодние)")),
+    }, seasonal=True),
 }
 @dataclass(frozen=True)
 class KitItem:
@@ -375,6 +410,29 @@ KITS: dict[str, dict[str, Kit]] = {
             "mosquito": KitItem("От комаров", "mosquito"),
         }),
     },
+    "holidays": {
+        "tree": Kit("Нарядить ёлку", "Ёлка, шары, игрушки, верхушка, гирлянда и мишура.", {
+            "tree": KitItem("Искусственная ёлка", "trees"),
+            "balls": KitItem("Набор шаров", "balls", rx(r"набор|шар")),
+            "toys": KitItem("Ёлочные игрушки", "balls", rx(r"игрушк|фигур|подвеск"), qty=3),
+            "top": KitItem("Верхушка", "top"),
+            "garland": KitItem("Гирлянда", "lights", rx(r"гирлянд")),
+            "tinsel": KitItem("Мишура или бусы", "tinsel"),
+        }),
+        "home": Kit("Праздничный дом", "Новогодний декор без ёлки: композиция, венок, свечи и огоньки.", {
+            "composition": KitItem("Новогодняя композиция", "decor", rx(r"композиц|букет")),
+            "wreath": KitItem("Венок или ветки", "decor", rx(r"вен(ок|к)|ветк")),
+            "figure": KitItem("Новогодняя фигура", "decor", rx(r"фигур|сувенир")),
+            "candles": KitItem("Свечи", "candles", rx(r"свеч"), qty=2),
+            "garland": KitItem("Гирлянда на окно", "lights", rx(r"бахром|занавес|штор|сетк|нить|гирлянд")),
+        }),
+        "gifts": Kit("Упаковать подарки", "Бумага, ленты, пакеты и коробки.", {
+            "paper": KitItem("Упаковочная бумага", "wrap", rx(r"бумаг|пленк|плёнк")),
+            "ribbon": KitItem("Лента и банты", "wrap", rx(r"лент|бант")),
+            "bags": KitItem("Подарочные пакеты", "wrap", rx(r"пакет"), qty=3),
+            "box": KitItem("Подарочная коробка", "wrap", rx(r"коробк")),
+        }),
+    },
 }
 
 ZONE_GROUPS = {f"{z}:{g}": slot for z, zone in ZONES.items() for g, slot in zone.groups.items()}
@@ -440,6 +498,7 @@ class Item:
     colors: str = ""
     materials: str = ""
     words: str = ""
+    in_stock: bool = True
 
 
 @dataclass
@@ -501,27 +560,33 @@ class DecorIndex:
     def __init__(self) -> None:
         self.version: tuple | None = None
         self.by_slot: dict[str, list[Item]] = {}
+        self._lock = threading.Lock()  # фоновый прогрев при старте и первый запрос не строят индекс дважды
 
     def ensure(self, session: Session) -> None:
         version = tuple(session.execute(select(func.count(Product.id), func.max(Product.last_seen_run),
                                                func.max(Product.ingested_at))).one())
-        if version != self.version:
-            self.by_slot = self._build(session)
-            self.version = version
+        if version == self.version:
+            return
+        with self._lock:
+            if version != self.version:
+                self.by_slot = self._build(session)
+                self.version = version
 
     @staticmethod
     def _build(session: Session) -> dict[str, list[Item]]:
         slots = SLOTS | ZONE_GROUPS
         slot_ids: dict[str, list[int]] = {k: [] for k in slots}
-        rows = session.execute(select(Product.id, Product.categories).where(
-            Product.status.isnot(False), Product.in_stock.isnot(False),
-            Product.result_price.isnot(None), Product.result_price > 0)).all()
+        seasonal = {f"{z}:{g}" for z, zone in ZONES.items() if zone.seasonal for g in zone.groups}
+        rows = session.execute(select(Product.id, Product.categories, Product.in_stock).where(
+            Product.status.isnot(False), Product.result_price.isnot(None), Product.result_price > 0)).all()
         kids: set[int] = set()
-        for pid, categories in rows:
+        for pid, categories, in_stock in rows:
             names = [str(n).strip() for n in (categories or {}).values()]
             if any("детск" in n.lower() for n in names):
                 kids.add(pid)
             for key, slot in slots.items():
+                if in_stock is False and key not in seasonal:
+                    continue
                 if any(slot.categories.search(n) and not (slot.exclude and slot.exclude.search(n)) for n in names):
                     slot_ids[key].append(pid)
         ids = sorted({i for v in slot_ids.values() for i in v})
@@ -530,10 +595,10 @@ class DecorIndex:
             chunk = ids[i:i + 900]
             for p in session.execute(select(Product.id, Product.name, Product.result_price, Product.rating,
                                             Product.recsys_rating, Product.picture_url, Product.url_key,
-                                            Product.brand_name).where(Product.id.in_(chunk))):
+                                            Product.brand_name, Product.in_stock).where(Product.id.in_(chunk))):
                 items[p.id] = Item(p.id, p.name or "", p.result_price, float(p.rating or p.recsys_rating or 0),
                                    p.picture_url, p.url_key, p.brand_name,
-                                   words=" детский" if p.id in kids else "")  # «Люстры для детских» и т. п.
+                                   words=" детский" if p.id in kids else "", in_stock=p.in_stock is not False)  # «Люстры для детских» и т. п.
             for pid, name, value in session.execute(
                     select(ProductCharacteristic.product_id, ProductCharacteristic.name,
                            ProductCharacteristic.value_raw).where(ProductCharacteristic.product_id.in_(chunk))):
@@ -562,8 +627,8 @@ class DecorIndex:
         """Товары раздела зоны: сначала с хорошим рейтингом и картинкой, потом дешевле."""
         items = self.by_slot.get(f"{zone}:{group}", [])
         lead = ZONES[zone].groups[group].lead
-        return sorted(items, key=lambda x: (not (lead and lead.search(x.name)), -x.rating, x.picture_url is None,
-                                            x.price))
+        return sorted(items, key=lambda x: (not x.in_stock, not (lead and lead.search(x.name)), -x.rating,
+                                            x.picture_url is None, x.price))
 
     def kit_items(self, zone: str, kit: str, key: str) -> list[Item]:
         """Подходящие товары для позиции набора, главные первыми."""

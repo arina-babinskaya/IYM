@@ -30,6 +30,7 @@ class DecorProduct(BaseModel):
     url_key: str | None = None
     brand: str | None = None
     why: list[str] = []
+    in_stock: bool = True
 
 
 class DecorLine(BaseModel):
@@ -68,7 +69,7 @@ def _style(style: str):
 def _product(x: Scored) -> DecorProduct:
     i = x.item
     return DecorProduct(id=i.id, name=i.name, price=i.price, picture_url=i.picture_url, url_key=i.url_key,
-                        brand=i.brand, why=x.why)
+                        brand=i.brand, why=x.why, in_stock=i.in_stock)
 
 
 class DecorRoomOut(BaseModel):
@@ -188,15 +189,20 @@ class KitResponse(BaseModel):
 
 def _plain(i: Item) -> DecorProduct:
     return DecorProduct(id=i.id, name=i.name, price=i.price, picture_url=i.picture_url, url_key=i.url_key,
-                        brand=i.brand)
+                        brand=i.brand, in_stock=i.in_stock)
 
 
 @router.get("/zones", response_model=list[ZoneOut])
-def decor_zones(session: Session = Depends(get_session)) -> list[ZoneOut]:
-    """Огород, сад, мангальная зона и сколько для них товаров в каталоге."""
-    INDEX.ensure(session)
-    return [ZoneOut(id=k, title=z.title, description=z.description,
-                    total=sum(len(INDEX.zone_items(k, g)) for g in z.groups), kits=_kits(k)) for k, z in ZONES.items()]
+def decor_zones(counts: bool = True, session: Session = Depends(get_session)) -> list[ZoneOut]:
+    """Огород, сад, мангальная зона и сколько для них товаров в каталоге.
+
+    `counts=false` отвечает сразу, без обращения к каталогу: так карточки зон рисуются вместе с помещениями.
+    """
+    if counts:
+        INDEX.ensure(session)
+    return [ZoneOut(id=k, title=z.title, description=z.description, kits=_kits(k),
+                    total=sum(len(INDEX.zone_items(k, g)) for g in z.groups) if counts else 0)
+            for k, z in ZONES.items()]
 
 
 def _kits(zone: str) -> list[KitOut]:
