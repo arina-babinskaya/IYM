@@ -40,6 +40,105 @@ GigaChat: распознаются русские формы кухни, гос�
 
 Prompt охватывает детей, питомцев, влажные помещения, кухни, бюджет, аренду, premium, стены, пол, всю квартиру, неоднозначные/конфликтующие требования и потенциально опасные работы. Каталожного lookup у консультанта нет: он не должен придумывать SKU, цены и наличие.
 
+## Using the consultant across multiple team computers
+
+### Подтверждённая схема и рекомендуемая архитектура
+
+Штатные команды проекта запускают отдельный FastAPI на `localhost:8000`: локальный запуск использует
+свою SQLite, Docker — локальный PostgreSQL. В репозитории нет URL развёрнутого backend, tunnel,
+reverse proxy или отдельной настройки frontend API URL. JavaScript обращается к относительным
+`/api/v1/...`, то есть всегда к тому же origin, с которого загружена страница. Поэтому `.env` и
+GigaChat credentials владельца проекта действуют только в его процессе; checkout коллеги с
+`RC_GIGACHAT_ENABLED=false`/без `RC_GIGACHAT_CREDENTIALS` закономерно не может вызвать provider.
+Это не CORS и не передача ключа из браузера.
+
+Минимальное безопасное решение — **Option A: один экземпляр полного RepairCalc на общем HTTPS
+хосте**. Коллеги открывают URL этого экземпляра, а не свой `localhost`. Цепочка остаётся простой:
+браузер → тот же RepairCalc/FastAPI → общий `GigaChatClient`/OAuth → GigaChat. Отдельный proxy API,
+изменение frontend и раздача ключей разработчикам не нужны. Репозиторий не содержит сведений о
+доступном deployment, поэтому нижеследующие действия должен выполнить владелец сервера; сам факт
+публикации здесь не заявляется.
+
+### Конфигурация общего сервера
+
+Создайте на сервере `.env` (файл уже игнорируется Git) и задайте как минимум:
+
+```dotenv
+RC_GIGACHAT_ENABLED=true
+RC_GIGACHAT_CREDENTIALS=<GigaChat Authorization Key>
+RC_GIGACHAT_SCOPE=GIGACHAT_API_PERS
+RC_GIGACHAT_MODEL=GigaChat-2
+RC_GIGACHAT_CA_BUNDLE=certs/gigachat_ca_bundle.pem
+RC_GIGACHAT_TOKEN_BUDGET=<командный лимит токенов>
+RC_GIGACHAT_MAX_REQUESTS=<командный лимит запросов>
+RC_CONSULTANT_SESSION_SECRET=<длинная случайная строка, общая для всех worker>
+RC_CONSULTANT_COOKIE_SECURE=true
+```
+
+Например, secret можно получить командой `python -c "import secrets; print(secrets.token_urlsafe(48))"`.
+Не передавайте `.env` в образ, логи, frontend или Git. Указанные budget/request limits обслуживаются
+существующим ledger GigaChat; подберите их под оплаченный лимит и период эксплуатации. В текущей
+реализации счётчики не сбрасываются автоматически и хранятся в `.cache/gigachat.sqlite`.
+
+В Docker Compose переменные GigaChat credentials, scope, model и session settings уже передаются в
+контейнер. Чтобы передать лимиты, добавьте их в server-only `docker-compose.override.yml` (его не
+следует публиковать) или в секцию environment системы deployment:
+
+```yaml
+services:
+  api:
+    environment:
+      RC_GIGACHAT_TOKEN_BUDGET: "100000"
+      RC_GIGACHAT_MAX_REQUESTS: "1000"
+```
+
+Затем на общем хосте:
+
+```bash
+docker compose up -d --build
+docker compose run --rm ingest   # только при первой загрузке каталога
+docker compose exec api python -m scripts.gigachat_readiness
+docker compose logs -f api
+```
+
+Порт `8000` следует держать во внутренней сети. Поставьте перед ним существующий HTTPS reverse
+proxy/load balancer, ограничьте доступ командной VPN, allowlist или командной аутентификацией и
+опубликуйте коллегам только его HTTPS URL (например, `https://repaircalc.team.example`). Не
+публикуйте endpoint как анонимный неограниченный paid proxy. Frontend и API должны оставаться на
+одном origin; CORS для этого не нужен, cookie остаётся HttpOnly/SameSite и получает Secure-флаг.
+Если общего хоста нет, временный защищённый tunnel к полному приложению допустим, но URL, access
+policy и срок жизни tunnel настраиваются владельцем инфраструктуры — код не перенаправляет localhost
+на чей-либо компьютер молча.
+
+PostgreSQL volume на общем сервере хранит все истории, но каждая анонимная сессия получает отдельный
+подписанный cookie; в запросах чат всегда выбирается по `chat_id` и хешу владельца. Коллеги не видят
+истории друг друга. История также не переносится между браузерами/устройствами одного человека:
+для этого потребовались бы аккаунты, которых задача намеренно не добавляет.
+
+### Проверка готовности и ошибки
+
+Безопасная локальная проверка не обращается к GigaChat и не печатает secret:
+
+```bash
+python -m scripts.gigachat_readiness
+```
+
+Она сообщает enabled/configured, состояние SSL verification, наличие/читаемость/валидность CA
+bundle, HTTPS URL и model. Exit code равен 0 только при валидной конфигурации. Отдельная явная
+проверка `python -m scripts.gigachat_readiness --live` выполняет OAuth и бесплатный `GET /models`,
+но не generation. Это CLI, а не публичный endpoint, поэтому operational diagnostics анонимным
+пользователям не раскрываются.
+
+Сообщения UI различают: «не настроен» (disabled/credentials/config), «не удалось авторизовать»
+(OAuth 401/403), ошибку защищённого соединения (CA/SSL), сетевую недоступность, timeout, временный
+лимит/budget и отклонённый provider-запрос. Pydantic validation по-прежнему возвращает короткие
+ошибки полей. Backend пишет структурированные kind/step/status/exception type, chat/request ID и
+timings, но не credentials, OAuth token, prompt, ответ или provider body.
+
+CA bundle `certs/gigachat_ca_bundle.pem` включён в Docker image и используется для OAuth и API.
+SSL verification теперь является обязательной: `RC_GIGACHAT_VERIFY_SSL=false` считается ошибкой
+конфигурации, а не способом обхода проблемы сертификата.
+
 ## Интерфейс
 
 Можно вести несколько чатов, переключать, переименовывать и удалять их. Enter отправляет, Shift+Enter добавляет строку. Во время запроса отправка отключена; при ошибке текст остаётся для повтора. Ответы отображаются через ограниченный безопасный Markdown renderer. После содержательной рекомендации появляется «Перейти к калькулятору»: он переключает существующую вкладку без reload, поэтому состояние wizard сохраняется и автоматически не изменяется.

@@ -122,6 +122,46 @@ def test_missing_credentials_message(ingested):
         settings.gigachat_enabled, settings.gigachat_credentials = old_enabled, old_credentials
 
 
+@pytest.mark.parametrize(("kind", "status_code", "message"), [
+    ("authentication", 503, "авторизовать"),
+    ("ssl", 503, "защищённое соединение"),
+    ("connection", 503, "недоступен по сети"),
+    ("timeout", 504, "не успел"),
+    ("rate_limit", 429, "Слишком много"),
+    ("budget", 429, "Слишком много"),
+    ("backend_configuration", 503, "не настроен"),
+    ("invalid_request", 502, "не принял запрос"),
+])
+def test_safe_distinct_provider_errors(consultant, kind, status_code, message):
+    client, fake = consultant
+    async def fail(_):
+        raise GigaChatError("private provider diagnostic", kind=kind,
+                            diagnostic={"step": "test", "secret": "must-not-leak"})
+    fake.consultant_chat = fail
+    chat_id = client.post("/api/v1/consultant/chats", json={}).json()["id"]
+    result = client.post(f"/api/v1/consultant/chats/{chat_id}/messages", json={
+        "content": "Тест", "request_id": f"error_{kind}_1234",
+    })
+    assert result.status_code == status_code and message in result.json()["detail"]
+    assert "private" not in result.text and "secret" not in result.text
+
+
+def test_two_anonymous_clients_can_send_without_sharing_history(consultant):
+    client_one, fake = consultant
+    with TestClient(app) as client_two:
+        one = client_one.post("/api/v1/consultant/chats", json={}).json()["id"]
+        two = client_two.post("/api/v1/consultant/chats", json={}).json()["id"]
+        assert client_one.post(f"/api/v1/consultant/chats/{one}/messages", json={
+            "content": "Секрет первой сессии", "request_id": "session_one_1234",
+        }).status_code == 200
+        assert client_two.post(f"/api/v1/consultant/chats/{two}/messages", json={
+            "content": "Вторая сессия", "request_id": "session_two_1234",
+        }).status_code == 200
+        assert client_one.get(f"/api/v1/consultant/chats/{two}").status_code == 404
+        assert client_two.get(f"/api/v1/consultant/chats/{one}").status_code == 404
+        assert "Секрет первой сессии" not in str(fake.calls[-1])
+
+
 def test_frontend_has_consultant_and_calculator_navigation():
     html = Path("app/static/index.html").read_text()
     assert 'data-tab="consultant"' in html and "Консультант" in html
@@ -133,6 +173,8 @@ def test_frontend_has_consultant_and_calculator_navigation():
     assert 'current.preview = answer.content' in html
     assert 'const chatId = C.store.active' in html
     assert 'Консультант печатает…' in html
+    assert 'consultantErrorMessage(e, "Не удалось отправить сообщение.")' in html
+    assert '${reason} Текст сохранён — попробуйте ещё раз.' in html
 
 
 def test_frontend_state_keeps_out_of_order_chats_isolated():

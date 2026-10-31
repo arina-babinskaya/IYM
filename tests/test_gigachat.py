@@ -95,9 +95,11 @@ def test_taxonomy_conflicts_are_explicit_abstentions(tmp_path,body):
 def test_ssl_bundle_is_configurable(tmp_path):
     pem=tmp_path/"ca.pem"; pem.write_text("invalid certificate",encoding="utf-8")
     c,_=client(tmp_path,[],gigachat_ca_bundle=pem)
-    with pytest.raises(ssl.SSLError): c._verify()
+    with pytest.raises(GigaChatError) as exc: c._verify()
+    assert exc.value.kind == "backend_configuration"
     c.s.gigachat_ca_bundle=tmp_path/"missing.pem"
-    with pytest.raises(GigaChatError): c._verify()
+    with pytest.raises(GigaChatError) as exc: c._verify()
+    assert exc.value.kind == "backend_configuration"
 
 def test_unknown_usage_and_budget_reservation(tmp_path):
     body={"decision":"accept","product_category":"lighting","reason":"ok"}

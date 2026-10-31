@@ -23,6 +23,7 @@ from app.taxonomy import MATERIAL_TITLES, PRODUCT_CATEGORY_TITLES, WORKS, Materi
 ErrorKind = Literal[
     "api_error", "authentication", "timeout", "connection", "ssl", "rate_limit",
     "invalid_request", "invalid_json", "schema_validation", "taxonomy_conflict", "budget",
+    "backend_configuration",
 ]
 logger = logging.getLogger(__name__)
 TAXONOMY_VERSION = "taxonomy_v2-38"
@@ -147,11 +148,25 @@ class GigaChatClient:
     def configured(self) -> bool: return self.s.gigachat_enabled and bool(self.s.gigachat_credentials)
 
     def _verify(self) -> bool | ssl.SSLContext:
-        if not self.s.gigachat_verify_ssl: return False
+        if not self.s.gigachat_verify_ssl:
+            raise GigaChatError(
+                "GigaChat SSL verification must be enabled", kind="backend_configuration",
+                diagnostic={"step": "configuration"},
+            )
         if self.s.gigachat_ca_bundle:
             path = Path(self.s.gigachat_ca_bundle).expanduser()
-            if not path.is_file(): raise GigaChatError(f"GigaChat CA bundle does not exist: {path}")
-            return ssl.create_default_context(cafile=str(path))
+            if not path.is_file():
+                raise GigaChatError(
+                    "GigaChat CA bundle is unavailable", kind="backend_configuration",
+                    diagnostic={"step": "configuration"},
+                )
+            try:
+                return ssl.create_default_context(cafile=str(path))
+            except (OSError, ssl.SSLError) as exc:
+                raise GigaChatError(
+                    "GigaChat CA bundle is invalid", kind="backend_configuration",
+                    diagnostic={"step": "configuration", "exception_type": type(exc).__name__},
+                ) from exc
         return True
 
     def _http(self) -> httpx.AsyncClient:

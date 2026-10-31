@@ -1831,7 +1831,11 @@ async function sendChat() {
     } catch (_) { C.loaded = false; }
   } catch (e) {
     console.error("Consultant send failed", {chatId, requestId, error:e});
-    if (C.store.isCurrent(chatId, operation)) { state.messages = state.messages.filter(x => x && x !== answerMessage && x.optimisticId !== requestId); showChatError("Не удалось отправить сообщение. Текст сохранён — попробуйте ещё раз.", chatId); }
+    if (C.store.isCurrent(chatId, operation)) {
+      state.messages = state.messages.filter(x => x && x !== answerMessage && x.optimisticId !== requestId);
+      const reason = consultantErrorMessage(e, "Не удалось отправить сообщение.");
+      showChatError(`${reason} Текст сохранён — попробуйте ещё раз.`, chatId);
+    }
   } finally {
     const active = C.store.finishOperation(chatId, operation) && C.store.active === chatId;
     // Loading is cleared before any DOM work. A rendering problem can no longer strand the chat in

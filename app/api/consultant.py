@@ -127,12 +127,20 @@ def _provider_error(exc: BaseException) -> None:
         raise HTTPException(504, "Консультант не успел ответить. Попробуйте ещё раз.") from exc
     assert isinstance(exc, GigaChatError)
     text = str(exc).lower()
-    if "credentials" in text or "disabled" in text or exc.kind == "authentication":
+    if "credentials" in text or "disabled" in text or exc.kind == "backend_configuration":
         raise HTTPException(503, "Консультант пока не настроен. Обратитесь к администратору.") from exc
+    if exc.kind == "authentication":
+        raise HTTPException(503, "Не удалось авторизовать консультанта. Администратор уже может проверить настройки.") from exc
+    if exc.kind == "ssl":
+        raise HTTPException(503, "Не удалось установить защищённое соединение с консультантом.") from exc
+    if exc.kind == "connection":
+        raise HTTPException(503, "Сервис консультанта сейчас недоступен по сети. Попробуйте позже.") from exc
     if exc.kind in ("rate_limit", "budget"):
         raise HTTPException(429, "Слишком много запросов. Немного подождите и повторите.") from exc
     if exc.kind == "timeout":
         raise HTTPException(504, "Консультант не успел ответить. Попробуйте ещё раз.") from exc
+    if exc.kind == "invalid_request":
+        raise HTTPException(502, "Сервис консультанта не принял запрос. Обратитесь к администратору.") from exc
     raise HTTPException(503, "GigaChat временно недоступен. Ваше сообщение не потеряно — повторите позже.") from exc
 
 
