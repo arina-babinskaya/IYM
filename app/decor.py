@@ -89,7 +89,7 @@ STYLES: dict[str, Style] = {
         ("#E9D5FF", "#A78BFA", "#D1FAE5", "#FFF7ED"),
         rx(r"прованс|кантри|винтаж|флористик|шебби"),
         rx(r"лаванд|сирен|мятн|пудров|молоч|крем|олив|голуб|розов|состарен"),
-        rx(r"хлоп|\bл[её]н(?!т)|льнян|керамик|кружев|ротанг|жаккард|тюл|вуал"),
+        rx(r"хлоп|\bл[её]н(?!т)|льнян|керамик|кружев|ротанг|жаккард|тюль(?!п)|тюлев|вуал"),
         rx(r"прованс|кантри|лаванд|цвет(оч|ы|ок)|клетк|кружев|шебби|винтаж|полев|ретро"),
         rx(r"хай-тек|лофт|loft|детск|индустр|хром"),
         rx(r"флористик|винтаж|классич"),
@@ -188,6 +188,7 @@ class Slot:
     qty: int = 1
     only: re.Pattern | None = None  # оставить только товары с такими словами в названии
     lead: re.Pattern | None = None  # главные товары раздела, показываем первыми
+    any_style: bool = False  # у товара нет стиля (матрас): берём лучший по рейтингу и цене
 
 
 SLOTS: dict[str, Slot] = {
@@ -215,7 +216,7 @@ SLOTS: dict[str, Slot] = {
     "pot": Slot("Кашпо", rx(r"^кашпо, горшки для комнатн")),
     "balcony_box": Slot("Балконный ящик для цветов", rx(r"^ящики балконн")),
     "coffee_table": Slot("Журнальный столик", rx(r"^столы журнальн")),
-    "pouf": Slot("Пуф или кресло", rx(r"^(пуфы|кресла)")),
+    "pouf": Slot("Пуф", rx(r"^пуфы")),
     "wall_shelf": Slot("Полка", rx(r"^полки настенн")),
     "hanger": Slot("Вешалка", rx(r"^вешалки настенн")),
     "basket": Slot("Корзина для хранения", rx(r"^(корзины плетен|контейнеры, корзинки|корзины для белья)")),
@@ -229,6 +230,26 @@ SLOTS: dict[str, Slot] = {
     "mugs": Slot("Кружки", rx(r"^кружки$"), rx(r"детск"), qty=4),
     "kitchen_towels": Slot("Кухонные полотенца", rx(r"^полотенца, салфетки кухонн")),
     "garland": Slot("Гирлянда", rx(r"^гирлянды электр")),
+    # мебель: подбирается, если выбрано «Декор и мебель»
+    "sofa": Slot("Диван", rx(r"^диваны")),
+    "armchair": Slot("Кресло", rx(r"^кресла( плетеные)?$")),
+    "bookcase": Slot("Стеллаж", rx(r"^стеллажи$"), rx(r"металл|гараж|склад")),
+    "bed": Slot("Кровать", rx(r"^кровати")),
+    "mattress": Slot("Матрас", rx(r"^матрасы"), any_style=True),
+    "nightstand": Slot("Прикроватная тумба", rx(r"^тумбы прикроватн"), qty=2),
+    "wardrobe": Slot("Шкаф", rx(r"^(шкафы распашные|шкафы-купе готовые)"),
+                     rx(r"^(комплект|фурнитур|петл|направляющ|профил|корпус|двер|фасад|полк|штанг|наполнен)"),
+                     only=rx(r"^шкаф")),  # модульные серии: антресоли, секции и стеллажи сюда не берём
+    "dresser": Slot("Комод", rx(r"^комоды")),
+    "dining_table": Slot("Обеденный стол", rx(r"^столы для столовой")),
+    "dining_chairs": Slot("Стулья", rx(r"^стулья для столовой"), qty=4),
+    "dish_cabinet": Slot("Шкаф для посуды", rx(r"^шкафы для посуды")),
+    "desk": Slot("Письменный стол", rx(r"^столы письменн")),
+    "office_chair": Slot("Рабочее кресло", rx(r"^кресла офисн")),
+    "shoe_cabinet": Slot("Обувница", rx(r"^(тумбы обувные|полки обувные)"), rx(r"каркас|фасад|дверц")),
+    "bath_vanity": Slot("Тумба в ванную", rx(r"^тумбы в ванную")),
+    "bath_cabinet": Slot("Шкаф или пенал для ванной", rx(r"^(шкафы для ванной|пеналы)"),
+                         rx(r"кухон|духов|холодильн|посудомо|бутылочн|каркас|фасад")),
 }
 
 ROOM_SLOTS: dict[str, list[str]] = {
@@ -249,6 +270,18 @@ ROOM_SLOTS: dict[str, list[str]] = {
                        "pot"],
     "kids_room": ["chandelier", "table_lamp", "curtains", "curtain_rod", "rug", "cushions", "throw", "wall_art",
                   "frames", "clock", "wall_shelf", "basket"],
+}
+# Крупная мебель по комнатам: добавляется в подборку первой, декор подстраивается под её цвет.
+ROOM_FURNITURE: dict[str, list[str]] = {
+    R.living_room: ["sofa", "armchair", "bookcase"],
+    R.bedroom: ["bed", "mattress", "nightstand", "wardrobe", "dresser"],
+    R.kitchen: ["dining_table", "dining_chairs"],
+    R.dining_room: ["dining_table", "dining_chairs", "dish_cabinet"],
+    R.bathroom: ["bath_vanity", "bath_cabinet"],
+    R.hallway: ["shoe_cabinet", "wardrobe"],
+    R.home_office: ["desk", "office_chair", "bookcase"],
+    R.general_indoor: ["sofa", "armchair", "bookcase"],
+    "kids_room": ["bed", "mattress", "wardrobe", "desk", "bookcase"],
 }
 DECOR_ROOMS = {**{r.value: t for r, t in ROOM_TITLES.items()}, "kids_room": "Детская"}
 
@@ -650,8 +683,10 @@ class DecorIndex:
         if not fitting:
             fitting = [x for x in scored if x.score >= 0 and not _NOVELTY.search(f"{x.item.name} {x.item.attrs} {x.item.words}")
                        and family(x.item) in style.families | NEUTRAL_FAMILIES | {None}]
+            note = "подходит к любому стилю" if SLOTS.get(slot) and SLOTS[slot].any_style \
+                else "нейтральный вариант: в этом стиле ничего нет"
             for x in fitting:
-                x.why = ["нейтральный вариант: в этом стиле ничего нет"]
+                x.why = [note]
         return sorted(fitting, key=lambda x: (-x.score, -x.item.rating, x.item.price))
 
     def pick(self, slot: str, style: Style, budget: str,

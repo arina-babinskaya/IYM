@@ -7,7 +7,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.db import get_session
-from app.decor import DECOR_ROOMS, FIT, INDEX, KITS, NEUTRAL_FAMILIES, ROOM_SLOTS, SLOTS, STYLES, ZONES, Item, Scored, family
+from app.decor import DECOR_ROOMS, FIT, INDEX, KITS, ROOM_FURNITURE, NEUTRAL_FAMILIES, ROOM_SLOTS, SLOTS, STYLES, ZONES, Item, Scored, family
 
 router = APIRouter(prefix="/api/v1/decor", tags=["decor"])
 Budget = Literal["economy", "standard", "premium"]
@@ -40,6 +40,7 @@ class DecorLine(BaseModel):
     product: DecorProduct | None = None
     cost: Decimal = Decimal(0)
     choices: int = 0
+    furniture: bool = False
 
 
 class DecorRequest(BaseModel):
@@ -48,6 +49,7 @@ class DecorRequest(BaseModel):
     budget: Budget = "standard"
     picks: dict[str, int] = {}
     skip: list[str] = []
+    furniture: bool = False  # «Декор и мебель»: сначала мебель, потом декор в её цветах
 
 
 class DecorResponse(BaseModel):
@@ -77,10 +79,10 @@ class DecorRoomOut(BaseModel):
     title: str
 
 
-def _room(room_type: str) -> list[str]:
+def _room(room_type: str, furniture: bool = False) -> list[str]:
     if room_type not in ROOM_SLOTS:
         raise HTTPException(404, f"Неизвестное помещение: {room_type}")
-    return ROOM_SLOTS[room_type]
+    return (ROOM_FURNITURE.get(room_type, []) if furniture else []) + ROOM_SLOTS[room_type]
 
 
 @router.get("/rooms", response_model=list[DecorRoomOut])
@@ -90,12 +92,13 @@ def decor_rooms() -> list[DecorRoomOut]:
 
 
 @router.get("/styles", response_model=list[DecorStyleOut])
-def decor_styles(room_type: str, session: Session = Depends(get_session)) -> list[DecorStyleOut]:
+def decor_styles(room_type: str, furniture: bool = False,
+                 session: Session = Depends(get_session)) -> list[DecorStyleOut]:
     """Стили для помещения и сколько позиций в каждом удаётся собрать из каталога.
 
     Детский стиль предлагается только для детской, и там он первый.
     """
-    slots = _room(room_type)
+    slots = _room(room_type, furniture)
     INDEX.ensure(session)
     out = []
     for key, style in STYLES.items():
@@ -113,7 +116,8 @@ def decor_pick(req: DecorRequest, session: Session = Depends(get_session)) -> De
     style = _style(req.style)
     INDEX.ensure(session)
     lines, colors = [], Counter()
-    for key in _room(req.room_type):
+    furniture = set(ROOM_FURNITURE.get(req.room_type, [])) if req.furniture else set()
+    for key in _room(req.room_type, req.furniture):
         if key in req.skip:
             continue
         slot = SLOTS[key]
@@ -127,7 +131,7 @@ def decor_pick(req: DecorRequest, session: Session = Depends(get_session)) -> De
             chosen, _ = INDEX.pick(key, style, req.budget, {c for c, _ in colors.most_common(2)})
         if chosen and (f := family(chosen.item)) and f not in NEUTRAL_FAMILIES:
             colors[f] += 1
-        lines.append(DecorLine(slot=key, title=slot.title, qty=slot.qty, choices=len(ranked),
+        lines.append(DecorLine(slot=key, title=slot.title, qty=slot.qty, choices=len(ranked), furniture=key in furniture,
                                product=_product(chosen) if chosen else None,
                                cost=chosen.item.price * slot.qty if chosen else Decimal(0)))
     return DecorResponse(room_type=req.room_type, room_title=DECOR_ROOMS[req.room_type], style=req.style,

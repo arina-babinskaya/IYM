@@ -42,6 +42,8 @@ def client(tmp_path):
         add(s, 31, "набор шампуров 6шт", "Шампуры", 600)
         add(s, 32, "семена Томат Бычье сердце", "Семена овощей", 40)
         add(s, 33, "семена Огурец Кураж", "Семена овощей", 60)
+        add(s, 50, "диван прямой Нильс 200см рогожка черный", "Диваны", 30000, стиль_интерьера="лофт", цвет="черный")
+        add(s, 51, "диван Версаль бархат золото", "Диваны", 60000, стиль_интерьера="классика", цвет="золотой")
         s.add(Product(id=40, name="мишура новогодняя 2м", categories={"1": "Мишура новогодняя"},
                       result_price=Decimal(150), price=Decimal(150), status=True, in_stock=False))
         s.add(Product(id=41, name="люстра потолочная лофт нет в наличии", categories={"1": LAMPS},
@@ -205,3 +207,16 @@ def test_seasonal_zone_shows_out_of_stock_items_rooms_do_not(client):
     assert [(x["id"], x["in_stock"]) for x in tinsel] == [(40, False)]
     lamps = client.get("/api/v1/decor/options?style=loft&slot=chandelier").json()
     assert 41 not in {x["id"] for x in lamps}
+
+
+def test_furniture_option_puts_furniture_first(client):
+    plain = client.post("/api/v1/decor", json={"room_type": "living_room", "style": "loft"}).json()
+    assert "sofa" not in {x["slot"] for x in plain["items"]}
+    r = client.post("/api/v1/decor", json={"room_type": "living_room", "style": "loft", "furniture": True}).json()
+    assert r["items"][0]["slot"] == "sofa" and r["items"][0]["furniture"] is True
+    assert r["items"][0]["product"]["id"] == 50
+    assert not any(x["furniture"] for x in r["items"] if x["slot"] == "chandelier")
+    classic = client.post("/api/v1/decor", json={"room_type": "living_room", "style": "classic", "furniture": True}).json()
+    assert classic["items"][0]["product"]["id"] == 51
+    styles = {x["id"]: x for x in client.get("/api/v1/decor/styles?room_type=living_room&furniture=true").json()}
+    assert styles["loft"]["slots_total"] == 18
