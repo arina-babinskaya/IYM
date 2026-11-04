@@ -53,6 +53,25 @@ def test_chat_crud_order_and_prompt(consultant):
     assert client.get(f"/api/v1/consultant/chats/{chat_id}").status_code == 404
 
 
+def test_system_prompt_supports_renovation_and_basic_interior_advice():
+    prompt = CONSULTANT_SYSTEM_PROMPT
+    assert "ремонту, отделочным материалам и базовому оформлению интерьера" in prompt
+    assert all(topic in prompt for topic in ("скандинавского", "минимализма", "лофта", "бохо", "неоклассики", "джапанди"))
+    assert all(topic in prompt for topic in ("палитры", "маленькой комнаты", "шторы", "ковры", "освещение"))
+    assert "не своди разговор принудительно к материалам" in prompt
+    assert "не более одного полезного следующего вопроса" in prompt
+    assert "не объявляя одно объективно лучшим" in prompt
+
+    # Existing practical and safety boundaries remain part of the same prompt.
+    assert all(rule in prompt for rule in (
+        "детей", "животных", "влагостойкость и гидроизоляцию", "уважай бюджет",
+        "квалифицированным специалистам", "калькуляторе RepairCalc",
+    ))
+    assert "выбирает помещение, стиль и бюджет" in prompt
+    assert "Не утверждай, что предпочтения переносятся туда автоматически" in prompt
+    assert all(forbidden in prompt for forbidden in ("Не выдумывай товары Maxidom", "SKU", "наличие", "цены", "несуществующие визуализации"))
+
+
 def test_independent_histories_idempotence_and_session_isolation(consultant):
     client, fake = consultant
     one = client.post("/api/v1/consultant/chats", json={"title": "Ванная"}).json()["id"]
