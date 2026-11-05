@@ -133,6 +133,9 @@
       <h2 class="text-2xl font-bold">Декор и мебель</h2>
       <p class="text-sm text-gray-500 mt-1">Выберите помещение и стиль — подберём мебель, свет, текстиль и аксессуары из каталога в одном стиле. Мебель можно включить или выключить.</p>
     </div>
+    <div class="px-6 md:px-8 pt-5" id="decor-home-bar" hidden>
+      <button id="decor-home" class="inline-flex items-center gap-1 text-sm font-semibold text-gray-600 hover:text-brand-red">← В начало: помещения, дача и фото</button>
+    </div>
     <div class="p-6 md:p-8" id="decor-box"></div>
   </section>
 
@@ -1529,7 +1532,12 @@ const backBtn = (label, fn) => `<button class="bg-white border border-gray-300 t
 
 const DECOR_ROOMS = {};
 
+// Кнопка «В начало» над любым экраном декора, кроме самого первого.
+const showDecorHome = on => { document.getElementById("decor-home-bar").hidden = !on; };
+document.getElementById("decor-home").onclick = () => { closePicker(); decorRooms(); };
+
 async function decorRooms() {
+  showDecorHome(false);
   D.shown = true;
   if (!Object.keys(DECOR_ROOMS).length) {
     (await api("/api/v1/decor/rooms").catch(() => Object.entries(ROOMS).map(([id, title]) => ({ id, title })))).forEach(r => DECOR_ROOMS[r.id] = r.title);
@@ -1562,6 +1570,23 @@ const zoneCard = p => `<div class="border border-gray-200 rounded-xl p-3 flex fl
     ${p.in_stock === false ? `<div class="text-xs text-gray-500">нет в наличии</div>` : ""}
     <b class="mt-auto">${rub(p.price)}</b></div>`;
 
+// Нижняя панель подборки, как у сметы: итог, «Скопировать» и «В корзину».
+const decorFooter = (total, label) => `<div class="mt-8 p-6 bg-gray-900 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4 shadow-xl">
+    <div><p class="text-gray-400 text-sm font-medium mb-1">${esc(label)}</p><p class="text-4xl font-extrabold text-white">${rub(total)}</p></div>
+    <div class="flex flex-wrap gap-3 w-full md:w-auto">
+      <button class="flex-1 md:flex-none bg-gray-800 hover:bg-gray-700 text-white font-semibold py-3 px-6 rounded-xl transition-colors border border-gray-700" id="decor-copy">Скопировать</button>
+      <button class="flex-1 md:flex-none bg-brand-yellow hover:bg-yellow-500 text-gray-900 font-bold py-3 px-8 rounded-xl transition-colors shadow-md shadow-brand-yellow/20" onclick="alert('Демо: корзину подключит магазин')">В корзину</button>
+    </div></div>`;
+
+function bindDecorCopy(title, lines, total) {
+  const btn = document.getElementById("decor-copy"); if (!btn) return;
+  btn.onclick = () => {
+    const text = [title, ...lines.filter(x => x.product).map(x => `  ${x.title}: ${x.product.name} — ${x.qty > 1 ? `${x.qty} шт. × ${rub(x.product.price)} = ` : ""}${rub(x.cost ?? x.product.price)}`), `Итого: ${rub(total)}`].join("\n");
+    navigator.clipboard.writeText(text).then(() => { const old = btn.textContent; btn.textContent = "Скопировано ✓"; setTimeout(() => btn.textContent = old, 1500); })
+      .catch(() => alert("Не удалось скопировать: браузер не дал доступ к буферу обмена"));
+  };
+}
+
 // Фото уменьшаем в браузере до 1600 px по длинной стороне: быстрее загрузка, меньше токенов GigaChat.
 const shrinkPhoto = file => new Promise((resolve, reject) => {
   const img = new Image();
@@ -1576,6 +1601,7 @@ const shrinkPhoto = file => new Promise((resolve, reject) => {
 });
 
 async function decorPhoto(file) {
+  showDecorHome(true);
   let image;
   try { image = await shrinkPhoto(file); } catch (e) { decorBox.innerHTML = `<div class="warn">${esc(e.message)}</div>`; return; }
   decorBox.innerHTML = `<div class="flex flex-col md:flex-row gap-6 items-start"><img src="${image}" alt="" class="w-full md:w-80 rounded-xl border border-gray-200">
@@ -1588,6 +1614,7 @@ async function decorPhoto(file) {
 }
 
 function decorPhotoResult(image) {
+  showDecorHome(true);
   const r = D.photo;
   const card = (x, i) => {
     const p = x.product, d = x.detected;
@@ -1610,7 +1637,8 @@ function decorPhotoResult(image) {
       <img src="${image}" alt="" class="w-full lg:w-80 rounded-xl border border-gray-200 lg:sticky lg:top-24">
       <div class="flex-1 grid sm:grid-cols-2 xl:grid-cols-3 gap-4">${r.objects.length ? r.objects.map(card).join("") : `<p class="text-gray-500">На фото не удалось распознать мебель или декор. Попробуйте фото комнаты целиком.</p>`}</div>
     </div>
-    ${total ? `<div class="mt-6 flex justify-end items-center gap-3 text-lg">Итого: <b class="text-2xl text-brand-red">${rub(total)}</b></div>` : ""}`;
+    ${total ? decorFooter(total, "Стоимость похожих товаров") : ""}`;
+  bindDecorCopy(`Похожее на фото${r.style_title ? ` (${r.style_title})` : ""}:`, r.objects, total);
   decorBox.querySelectorAll("[data-photo-replace]").forEach(b => b.onclick = () => decorPhotoReplace(Number(b.dataset.photoReplace), image));
 }
 
@@ -1633,6 +1661,7 @@ function decorPhotoReplace(i, image) {
 }
 
 async function decorZoneKits(zone) {
+  showDecorHome(true);
   decorBox.innerHTML = `<p class="text-gray-500 animate-pulse">Загружаю…</p>`;
   const z = (await api("/api/v1/decor/zones").catch(() => [])).find(x => x.id === zone);
   if (!z) { decorBox.innerHTML = `<div class="warn">Зона не найдена</div>`; return; }
@@ -1651,6 +1680,7 @@ async function decorZoneKits(zone) {
 }
 
 async function decorZone(zone) {
+  showDecorHome(true);
   decorBox.innerHTML = `<p class="text-gray-500 animate-pulse">Собираю товары…</p>`;
   let z;
   try { z = await api(`/api/v1/decor/zones/${zone}`); }
@@ -1674,6 +1704,7 @@ async function decorZone(zone) {
 }
 
 async function decorStyles() {
+  showDecorHome(true);
   decorBox.innerHTML = `<p class="text-gray-500 animate-pulse">Смотрю, что есть в каталоге…</p>`;
   const styles = await api(`/api/v1/decor/styles?room_type=${D.room}&furniture=${D.furniture}`).catch(e => { decorBox.innerHTML = `<div class="warn">${esc(e.message)}</div>`; return null; });
   if (!styles) return;
@@ -1693,6 +1724,7 @@ async function decorStyles() {
 }
 
 async function decorResult() {
+  showDecorHome(true);
   decorBox.innerHTML = `<p class="text-gray-500 animate-pulse">Подбираю товары…</p>`;
   let r;
   try {
@@ -1716,7 +1748,8 @@ async function decorResult() {
     <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">${r.items.filter(x => x.furniture).map(card).join("")}</div>
     <h4 class="font-semibold text-lg mb-3">Декор</h4>` : ""}
     <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">${r.items.filter(x => !x.furniture).map(card).join("")}</div>
-    <div class="mt-6 flex justify-end items-center gap-3 text-lg">Итого: <b class="text-2xl text-brand-red">${rub(r.total)}</b></div>`;
+    ${decorFooter(r.total, D.kit ? "Стоимость набора" : "Стоимость подборки")}`;
+  bindDecorCopy(`${D.kit ? r.zone_title : r.room_title} · ${D.kit ? r.kit_title : r.style_title}:`, r.items, r.total);
   decorBox.querySelectorAll("[data-budget]").forEach(b => b.onclick = () => { D.budget = b.dataset.budget; D.picks = {}; decorResult(); });
   decorBox.querySelectorAll("[data-furniture]").forEach(b => b.onclick = () => { D.furniture = b.dataset.furniture === "true"; decorResult(); });
   decorBox.querySelectorAll("[data-skip]").forEach(b => b.onclick = () => { D.skip.push(b.dataset.skip); decorResult(); });
