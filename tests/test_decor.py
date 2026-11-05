@@ -220,3 +220,76 @@ def test_furniture_option_puts_furniture_first(client):
     assert classic["items"][0]["product"]["id"] == 51
     styles = {x["id"]: x for x in client.get("/api/v1/decor/styles?room_type=living_room&furniture=true").json()}
     assert styles["loft"]["slots_total"] == 18
+
+
+def test_photo_answer_is_parsed_and_cleaned():
+    from app.decor_photo import parse
+
+    r = parse('```json\n{"style": "loft", "objects": [{"slot": "sofa", "name": "диван", "color": "черный", '
+              '"material": "рогожка"}, {"slot": "sofa", "name": "диван", "color": "черный", "material": "рогожка"}, '
+              '{"slot": "spaceship", "name": "?"}]}\n```')
+    assert r.style == "loft" and [o.slot for o in r.objects] == ["sofa"]
+    assert parse('{"style": "cyberpunk", "objects": []}').style is None
+
+
+def test_photo_search_ranks_similar_products_first(client, monkeypatch):
+    import base64 as b64
+
+    from app import decor_photo
+    from app.decor_photo import PhotoAnalysis, PhotoObject
+
+    async def fake(image, filename, content_type):
+        assert image == b"fake-image" and content_type == "image/png"
+        return PhotoAnalysis(style="loft", objects=[
+            PhotoObject(slot="sofa", name="прямой диван", color="черный", material="рогожка"),
+            PhotoObject(slot="chandelier", name="люстра", color="бронза", material="металл"),
+        ])
+
+    monkeypatch.setattr(decor_photo, "analyze", fake)
+    image = "data:image/png;base64," + b64.b64encode(b"fake-image").decode()
+    r = client.post("/api/v1/decor/photo", json={"image": image}).json()
+    assert r["style_title"] == "Лофт"
+    sofa, lamp = r["objects"]
+    assert sofa["product"]["id"] == 50 and [x["id"] for x in sofa["alternatives"]][-1] == 51
+    assert "цвет как на фото: черный" in sofa["product"]["why"]
+    assert lamp["product"]["id"] == 4  # bronze loft chandelier
+
+
+def test_photo_search_without_gigachat_key_explains_why(client):
+    import base64 as b64
+
+    r = client.post("/api/v1/decor/photo", json={"image": b64.b64encode(b"x").decode()})
+    assert r.status_code == 503 and "GigaChat" in r.json()["detail"]
+    assert client.post("/api/v1/decor/photo", json={"image": "not base64!"}).status_code == 422
+
+
+def test_photo_is_uploaded_and_sent_as_attachment(tmp_path, monkeypatch):
+    import asyncio
+    import json as js
+
+    import httpx
+
+    from app import decor_photo
+    from app.config import Settings
+
+    settings = Settings(gigachat_enabled=True, gigachat_credentials="key", gigachat_cache_path=tmp_path / "c.sqlite")
+    monkeypatch.setattr(decor_photo, "get_settings", lambda: settings)
+    calls = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls.append(request.url.path)
+        if request.url.path.endswith("/oauth"):
+            return httpx.Response(200, json={"access_token": "t", "expires_at": 9999999999999})
+        if request.url.path.endswith("/files"):
+            assert b"image-bytes" in request.content and b'name="purpose"' in request.content
+            return httpx.Response(200, json={"id": "file-1"})
+        if request.url.path.endswith("/chat/completions"):
+            body = js.loads(request.content)
+            assert body["model"] == "GigaChat-2-Max" and body["messages"][0]["attachments"] == ["file-1"]
+            answer = '{"style": "scandi", "objects": [{"slot": "rug", "name": "ковёр", "color": "серый"}]}'
+            return httpx.Response(200, json={"choices": [{"message": {"content": answer}}]})
+        return httpx.Response(200, json={})
+
+    r = asyncio.run(decor_photo.analyze(b"image-bytes", "room.jpg", "image/jpeg", httpx.MockTransport(handler)))
+    assert r.style == "scandi" and r.objects[0].slot == "rug"
+    assert calls[-1].endswith("/files/file-1/delete")

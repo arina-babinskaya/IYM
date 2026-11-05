@@ -1534,9 +1534,14 @@ async function decorRooms() {
   if (!Object.keys(DECOR_ROOMS).length) {
     (await api("/api/v1/decor/rooms").catch(() => Object.entries(ROOMS).map(([id, title]) => ({ id, title })))).forEach(r => DECOR_ROOMS[r.id] = r.title);
   }
-  decorBox.innerHTML = `<h3 class="font-semibold text-lg mb-4">Какое помещение оформляем?</h3>
+  decorBox.innerHTML = `<label class="flex flex-wrap items-center justify-between gap-3 border-2 border-dashed border-gray-300 hover:border-brand-red rounded-xl p-5 mb-8 cursor-pointer transition-colors">
+      <span><span class="font-semibold text-lg">Найти по фото</span><span class="block text-sm text-gray-500 mt-1">Загрузите фото комнаты из интернета или журнала — найдём в каталоге похожую мебель и декор.</span></span>
+      <span class="bg-brand-red text-white font-semibold py-2.5 px-5 rounded-xl">Выбрать фото</span>
+      <input type="file" id="decor-photo" accept="image/jpeg,image/png,image/webp" class="hidden"></label>
+    <h3 class="font-semibold text-lg mb-4">Какое помещение оформляем?</h3>
     <div class="grid grid-cols-2 md:grid-cols-4 gap-3">${Object.entries(DECOR_ROOMS).map(([k, v]) => `<button data-room="${k}" class="border-2 border-gray-200 hover:border-brand-red rounded-xl p-4 text-left font-semibold transition-colors">${esc(v)}</button>`).join("")}</div>`;
   decorBox.querySelectorAll("[data-room]").forEach(b => b.onclick = () => { Object.assign(D, { room: b.dataset.room, kit: null, picks: {}, skip: [] }); decorStyles(); });
+  document.getElementById("decor-photo").onchange = e => e.target.files[0] && decorPhoto(e.target.files[0]);
   const zones = await api("/api/v1/decor/zones?counts=false").catch(() => []);
   if (!zones.length) return;
   decorBox.insertAdjacentHTML("beforeend", `<h3 class="font-semibold text-lg mt-8 mb-4">Дача, участок и праздники</h3>
@@ -1556,6 +1561,76 @@ const zoneCard = p => `<div class="border border-gray-200 rounded-xl p-3 flex fl
     <div class="text-sm font-semibold leading-snug">${esc(p.name)}</div>
     ${p.in_stock === false ? `<div class="text-xs text-gray-500">нет в наличии</div>` : ""}
     <b class="mt-auto">${rub(p.price)}</b></div>`;
+
+// Фото уменьшаем в браузере до 1600 px по длинной стороне: быстрее загрузка, меньше токенов GigaChat.
+const shrinkPhoto = file => new Promise((resolve, reject) => {
+  const img = new Image();
+  img.onload = () => {
+    const k = Math.min(1, 1600 / Math.max(img.width, img.height));
+    const c = document.createElement("canvas"); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+    c.getContext("2d").drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(img.src);
+    resolve(c.toDataURL("image/jpeg", 0.85));
+  };
+  img.onerror = () => reject(new Error("Не удалось открыть фото"));
+  img.src = URL.createObjectURL(file);
+});
+
+async function decorPhoto(file) {
+  let image;
+  try { image = await shrinkPhoto(file); } catch (e) { decorBox.innerHTML = `<div class="warn">${esc(e.message)}</div>`; return; }
+  decorBox.innerHTML = `<div class="flex flex-col md:flex-row gap-6 items-start"><img src="${image}" alt="" class="w-full md:w-80 rounded-xl border border-gray-200">
+    <div><p class="font-semibold">Смотрю, что на фото…</p><p class="text-sm text-gray-500 mt-1 animate-pulse">GigaChat разбирает мебель и декор, это занимает 10–30 секунд.</p></div></div>`;
+  let r;
+  try { r = await api("/api/v1/decor/photo", { method: "POST", body: JSON.stringify({ image, filename: file.name }) }); }
+  catch (e) { decorBox.innerHTML = `<div class="warn">${esc(e.message)}</div><div class="mt-4">${backBtn("← Назад", "decorRooms()")}</div>`; return; }
+  D.photo = r;
+  decorPhotoResult(image);
+}
+
+function decorPhotoResult(image) {
+  const r = D.photo;
+  const card = (x, i) => {
+    const p = x.product, d = x.detected;
+    const seen = [d.name, d.color, d.material].filter(Boolean).join(", ");
+    return `<div class="border border-gray-200 rounded-xl p-4 flex flex-col gap-2 bg-white">
+      <div class="text-xs font-semibold uppercase tracking-wide text-gray-500">${esc(x.title)}</div>
+      <div class="text-sm text-gray-600">на фото: ${esc(seen || "—")}</div>
+      ${p ? `${p.picture_url ? `<img src="${esc(p.picture_url)}" alt="" class="w-full h-40 object-contain bg-white rounded-lg">` : `<div class="w-full h-40 bg-gray-100 rounded-lg"></div>`}
+      <div class="font-semibold text-sm leading-snug">${esc(p.name)}</div>
+      <div class="flex flex-wrap">${p.in_stock === false ? `<span class="pill">нет в наличии</span>` : ""}${p.why.map(w => `<span class="pill">${esc(w)}</span>`).join("")}</div>
+      <div class="mt-auto flex justify-between items-end"><span class="text-sm text-gray-500">вариантов: ${x.alternatives.length}</span><b>${rub(p.price)}</b></div>
+      <button data-photo-replace="${i}" class="bg-white border border-gray-300 hover:bg-gray-50 rounded-lg py-1.5 text-sm font-semibold">Заменить</button>`
+      : `<div class="text-sm text-gray-400">в каталоге не нашлось</div>`}</div>`;
+  };
+  const total = r.objects.reduce((sum, x) => sum + (x.product ? Number(x.product.price) : 0), 0);
+  decorBox.innerHTML = `<div class="flex flex-wrap justify-between items-center gap-3 mb-5">
+      <div><h3 class="font-bold text-xl">Похожее на фото</h3><div class="text-sm text-gray-500">${r.style_title ? `стиль: ${esc(r.style_title)} · ` : ""}предметов: ${r.objects.length}</div></div>
+      ${backBtn("← Другое фото", "decorRooms()")}</div>
+    <div class="flex flex-col lg:flex-row gap-6 items-start">
+      <img src="${image}" alt="" class="w-full lg:w-80 rounded-xl border border-gray-200 lg:sticky lg:top-24">
+      <div class="flex-1 grid sm:grid-cols-2 xl:grid-cols-3 gap-4">${r.objects.length ? r.objects.map(card).join("") : `<p class="text-gray-500">На фото не удалось распознать мебель или декор. Попробуйте фото комнаты целиком.</p>`}</div>
+    </div>
+    ${total ? `<div class="mt-6 flex justify-end items-center gap-3 text-lg">Итого: <b class="text-2xl text-brand-red">${rub(total)}</b></div>` : ""}`;
+  decorBox.querySelectorAll("[data-photo-replace]").forEach(b => b.onclick = () => decorPhotoReplace(Number(b.dataset.photoReplace), image));
+}
+
+function decorPhotoReplace(i, image) {
+  const line = D.photo.objects[i];
+  closePicker();
+  document.body.insertAdjacentHTML("beforeend", `<div class="fixed inset-0 bg-black/40 z-[60] backdrop-blur-sm" id="picker-bg"></div>
+    <aside class="fixed inset-y-0 right-0 w-full max-w-3xl bg-brand-bg z-[61] overflow-y-auto p-6 md:p-8 grid gap-4 content-start shadow-2xl" id="picker">
+      <div class="flex justify-between items-center gap-4"><h2 class="text-xl font-bold">${esc(line.title)}: похожие товары</h2><button class="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold rounded-lg py-2 px-4 text-sm shadow-sm" id="picker-close">✕ Закрыть</button></div>
+      <p class="text-sm text-gray-500">Сначала самые похожие на предмет с фото.</p>
+      <div class="grid gap-2">${line.alternatives.map(p => `<button data-pick="${p.id}" class="flex gap-3 items-center text-left bg-white border ${p.id === line.product?.id ? "border-brand-red" : "border-gray-200"} hover:border-brand-red rounded-xl p-3">
+        ${p.picture_url ? `<img src="${esc(p.picture_url)}" alt="" class="w-16 h-16 object-contain">` : `<div class="w-16 h-16 bg-gray-100 rounded"></div>`}
+        <div class="flex-1"><div class="font-semibold text-sm">${esc(p.name)}</div><div class="text-xs text-gray-500 mt-1">${(p.in_stock === false ? ["нет в наличии"] : []).concat(p.why).map(esc).join(" · ")}</div></div><b class="whitespace-nowrap">${rub(p.price)}</b></button>`).join("")}</div>
+    </aside>`);
+  document.getElementById("picker-close").onclick = closePicker;
+  document.getElementById("picker-bg").onclick = closePicker;
+  document.querySelectorAll("#picker [data-pick]").forEach(b => b.onclick = () => {
+    line.product = line.alternatives.find(p => p.id === Number(b.dataset.pick)); closePicker(); decorPhotoResult(image);
+  });
+}
 
 async function decorZoneKits(zone) {
   decorBox.innerHTML = `<p class="text-gray-500 animate-pulse">Загружаю…</p>`;

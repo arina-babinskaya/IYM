@@ -69,6 +69,10 @@ class Settings(BaseSettings):
     consultant_max_message_chars: int = 6000
     consultant_max_output_tokens: int = 1200
 
+    # Поиск декора и мебели по фото: модель GigaChat, которая понимает изображения
+    decor_photo_model: str = "GigaChat-2-Max"
+    decor_photo_max_mb: int = 10
+
     cors_origins: list[str] = ["*"]
 
 

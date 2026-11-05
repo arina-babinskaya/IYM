@@ -1,3 +1,5 @@
+import base64
+import binascii
 from collections import Counter
 from decimal import Decimal
 from typing import Literal
@@ -6,8 +8,11 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
+from app import decor_photo as decor_photo_service
+from app.config import get_settings
 from app.db import get_session
 from app.decor import DECOR_ROOMS, FIT, INDEX, KITS, ROOM_FURNITURE, NEUTRAL_FAMILIES, ROOM_SLOTS, SLOTS, STYLES, ZONES, Item, Scored, family
+from app.llm.gigachat import GigaChatError
 
 router = APIRouter(prefix="/api/v1/decor", tags=["decor"])
 Budget = Literal["economy", "standard", "premium"]
@@ -281,3 +286,56 @@ def decor_zone_group(zone: str, group: str, q: str | None = None, offset: int = 
     if q:
         items = [i for i in items if q.lower() in i.name.lower()]
     return [_plain(i) for i in items[max(0, offset):max(0, offset) + max(1, min(limit, 200))]]
+
+
+class PhotoRequest(BaseModel):
+    image: str  # картинка в base64, можно с префиксом data:image/...;base64,
+    filename: str = "photo.jpg"
+
+
+class PhotoLine(BaseModel):
+    slot: str
+    title: str
+    detected: dict[str, str]
+    product: DecorProduct | None = None
+    alternatives: list[DecorProduct] = []
+
+
+class PhotoResponse(BaseModel):
+    style: str | None = None
+    style_title: str | None = None
+    objects: list[PhotoLine]
+
+
+@router.post("/photo", response_model=PhotoResponse)
+async def decor_photo(req: PhotoRequest, session: Session = Depends(get_session)) -> PhotoResponse:
+    """Найти по фото: GigaChat описывает мебель и декор на снимке, для каждого предмета — похожие товары каталога."""
+    header, _, payload = req.image.partition(",") if req.image.startswith("data:") else ("", "", req.image)
+    try:
+        image = base64.b64decode(payload, validate=True)
+    except (binascii.Error, ValueError):
+        raise HTTPException(422, "Не удалось прочитать картинку")
+    if len(image) > get_settings().decor_photo_max_mb * 1024 * 1024:
+        raise HTTPException(413, f"Фото больше {get_settings().decor_photo_max_mb} МБ")
+    content_type = header[5:].split(";")[0] if header else "image/jpeg"
+    if content_type not in ("image/jpeg", "image/png", "image/webp", "image/bmp", "image/tiff"):
+        raise HTTPException(422, "Нужна картинка в формате JPG или PNG")
+    INDEX.ensure(session)
+    try:
+        analysis = await decor_photo_service.analyze(image, req.filename, content_type)
+    except GigaChatError as exc:
+        if exc.kind == "backend_configuration" or "credentials" in str(exc) or "disabled" in str(exc):
+            raise HTTPException(503, "Поиск по фото работает через GigaChat: добавьте ключ в .env")
+        raise HTTPException(502, "GigaChat не смог разобрать фото, попробуйте ещё раз или другое фото")
+    lines = []
+    for obj in analysis.objects:
+        matches = decor_photo_service.match(obj, analysis.style)
+        products = [DecorProduct(id=m.item.id, name=m.item.name, price=m.item.price, picture_url=m.item.picture_url,
+                                 url_key=m.item.url_key, brand=m.item.brand, why=m.why, in_stock=m.item.in_stock)
+                    for m in matches[:30]]
+        lines.append(PhotoLine(slot=obj.slot, title=SLOTS[obj.slot].title,
+                               detected={"name": obj.name, "color": obj.color, "material": obj.material,
+                                         "details": obj.details},
+                               product=products[0] if products else None, alternatives=products))
+    return PhotoResponse(style=analysis.style, style_title=STYLES[analysis.style].title if analysis.style else None,
+                         objects=lines)
