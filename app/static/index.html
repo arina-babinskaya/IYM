@@ -1665,12 +1665,23 @@ const decorFooter = (total, label) => `<div class="mt-8 p-6 bg-gray-900 rounded-
       <button class="flex-1 md:flex-none bg-brand-yellow hover:bg-yellow-500 text-gray-900 font-bold py-3 px-8 rounded-xl transition-colors shadow-md shadow-brand-yellow/20" id="decor-cart">В корзину</button>
     </div></div>`;
 
-function bindDecorCopy(title, lines, total) {
+function bindDecorCopy(title, lines, total, redrawFn) {
   const cart = document.getElementById("decor-cart");
-  if (cart) cart.onclick = () => addToCart(lines.filter(x => x.product && !x.excluded).map(x => ({ ...x.product, qty: x.qty })), cart);
+  if (cart) cart.onclick = () => {
+    // Берем только те товары, где стоит галочка (selected)
+    const toAdd = lines.filter(x => x.product && x.selected).map(x => ({ ...x.product, qty: x.qty }));
+    if (toAdd.length === 0) {
+      cart.textContent = "Ничего не выбрано";
+      setTimeout(() => cart.textContent = "В корзину", 1500);
+      return;
+    }
+    addToCart(toAdd, cart);
+    if (redrawFn) redrawFn();
+  };
   const btn = document.getElementById("decor-copy"); if (!btn) return;
   btn.onclick = () => {
-    const text = [title, ...lines.filter(x => x.product && !x.excluded).map(x => `  ${x.title}: ${x.product.name} — ${x.qty > 1 ? `${x.qty} шт. × ${rub(x.product.price)} = ` : ""}${rub(x.cost ?? x.product.price)}`), `Итого: ${rub(total)}`].join("\n");
+    // В копирование тоже идут только выделенные товары
+    const text = [title, ...lines.filter(x => x.product && x.selected).map(x => `  ${x.title}: ${x.product.name} — ${x.qty > 1 ? `${x.qty} шт. × ${rub(x.product.price)} = ` : ""}${rub(x.cost ?? x.product.price)}`), `Итого: ${rub(total)}`].join("\n");
     navigator.clipboard.writeText(text).then(() => { const old = btn.textContent; btn.textContent = "Скопировано ✓"; setTimeout(() => btn.textContent = old, 1500); })
       .catch(() => alert("Не удалось скопировать: браузер не дал доступ к буферу обмена"));
   };
@@ -1705,14 +1716,13 @@ async function decorPhoto(file) {
 function decorPhotoResult(image) {
   showDecorHome(true);
   const r = D.photo;
-  r.objects.forEach(x => { x.qty ??= 1; x.cost = x.product ? Number(x.product.price) * x.qty : 0; });
+  r.objects.forEach(x => { x.qty ??= 1; x.selected ??= true; x.cost = x.product ? Number(x.product.price) * x.qty : 0; });
   
   const card = (x, i) => {
     const p = x.product, d = x.detected;
     const seen = [d.name, d.color, d.material].filter(Boolean).join(", ");
-    const isExcluded = x.excluded; 
     
-    return `<div class="border border-gray-200 rounded-xl p-4 flex flex-col gap-2 bg-white transition-all ${isExcluded ? 'opacity-40 grayscale bg-gray-50' : ''}">
+    return `<div class="border rounded-xl p-4 flex flex-col gap-2 transition-all ${x.selected ? 'border-brand-blue bg-blue-50/10 shadow-sm' : 'border-gray-200 bg-white opacity-60 grayscale'}">
       <div class="text-xs font-semibold uppercase tracking-wide text-gray-500">${esc(x.title)}</div>
       <div class="text-sm text-gray-600">на фото: ${esc(seen || "—")}</div>
       ${p ? `${p.picture_url ? `<img src="${esc(p.picture_url)}" alt="" loading="lazy" decoding="async" class="w-full h-40 object-contain bg-white rounded-lg">` : `<div class="w-full h-40 bg-gray-100 rounded-lg"></div>`}
@@ -1721,33 +1731,52 @@ function decorPhotoResult(image) {
       <div class="text-xs text-gray-500">вариантов: ${x.alternatives.length}</div>
       <div class="mt-auto flex justify-between items-center gap-2">${qtyControl(i, x.qty)}<span class="text-right"><span class="block text-xs text-gray-500">${x.qty > 1 ? `${x.qty} × ${rub(p.price)}` : "&nbsp;"}</span><b>${rub(x.cost)}</b></span></div>
       <div class="flex gap-2">
-        <button data-photo-replace="${i}" class="flex-1 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg py-1.5 text-sm font-semibold ${isExcluded ? 'pointer-events-none' : ''}">Заменить</button>
-        <button data-photo-remove="${i}" class="bg-white border border-gray-300 hover:bg-gray-50 rounded-lg py-1.5 px-3 text-sm ${isExcluded ? 'text-brand-red font-bold' : ''}" title="${isExcluded ? 'Вернуть в подборку' : 'Убрать из подборки'}">${isExcluded ? '↺' : '✕'}</button>
+        <button data-photo-replace="${i}" class="flex-1 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg py-1.5 text-sm font-semibold ${x.selected ? '' : 'pointer-events-none'}">Заменить</button>
+        <button data-photo-toggle="${i}" class="flex-1 border rounded-lg py-1.5 text-sm font-bold transition-colors ${x.selected ? 'bg-green-50 border-green-200 text-green-700 hover:bg-green-100' : 'bg-brand-blue border-brand-blue text-white hover:bg-blue-600'}">
+          ${x.selected ? '✓ Выбрано' : '+ Выбрать'}
+        </button>
       </div>`
       : `<div class="text-sm text-gray-400">в каталоге не нашлось</div><button data-photo-remove="${i}" class="text-left text-sm text-gray-400 underline mt-auto">убрать</button>`}</div>`;
   };
   
-  const total = r.objects.reduce((sum, x) => sum + (x.excluded ? 0 : x.cost), 0);
+  const total = r.objects.reduce((sum, x) => sum + (x.selected ? x.cost : 0), 0);
   
   decorBox.innerHTML = `<div class="flex flex-wrap justify-between items-center gap-3 mb-5">
       <div><h3 class="font-bold text-xl">Похожее на фото</h3><div class="text-sm text-gray-500">${r.style_title ? `стиль: ${esc(r.style_title)} · ` : ""}предметов: ${r.objects.length}</div></div>
-      ${backBtn("← Другое фото", "decorRooms()")}</div>
+      <div class="flex gap-2">
+        <button id="photo-toggle-all" class="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold rounded-lg transition-colors py-2 px-4 text-sm shadow-sm">
+          ${r.objects.every(x => x.selected) ? "Убрать все выделения" : "Выделить всё"}
+        </button>
+        ${backBtn("← Другое фото", "decorRooms()")}
+      </div>
+    </div>
     <div class="flex flex-col lg:flex-row gap-6 items-start">
       <img src="${image}" alt="" class="w-full lg:w-80 rounded-xl border border-gray-200 lg:sticky lg:top-24">
       <div class="flex-1 grid sm:grid-cols-2 xl:grid-cols-3 gap-4">${r.objects.length ? r.objects.map(card).join("") : `<p class="text-gray-500">На фото не удалось распознать мебель или декор. Попробуйте фото комнаты целиком.</p>`}</div>
     </div>
-    ${total ? decorFooter(total, "Стоимость похожих товаров") : ""}`;
+    ${total ? decorFooter(total, "Стоимость выбранных товаров") : ""}`;
     
-  bindDecorCopy(`Похожее на фото${r.style_title ? ` (${r.style_title})` : ""}:`, r.objects, total);
+  bindDecorCopy(`Похожее на фото${r.style_title ? ` (${r.style_title})` : ""}:`, r.objects, total, () => decorPhotoResult(image));
+  
+  document.getElementById("photo-toggle-all").onclick = () => {
+    const allSelected = r.objects.every(x => x.selected);
+    r.objects.forEach(x => x.selected = !allSelected);
+    decorPhotoResult(image);
+  };
   
   decorBox.querySelectorAll("[data-photo-replace]").forEach(b => b.onclick = () => decorPhotoReplace(Number(b.dataset.photoReplace), image));
   
+  decorBox.querySelectorAll("[data-photo-toggle]").forEach(b => b.onclick = () => {
+    const idx = Number(b.dataset.photoToggle);
+    if (r.objects[idx]) {
+      r.objects[idx].selected = !r.objects[idx].selected;
+      decorPhotoResult(image);
+    }
+  });
+
   decorBox.querySelectorAll("[data-photo-remove]").forEach(b => b.onclick = () => {
     const idx = Number(b.dataset.photoRemove);
-    if (r.objects[idx]) {
-      r.objects[idx].excluded = !r.objects[idx].excluded; // Переключаем состояние
-      decorPhotoResult(image); // Перерисовываем
-    }
+    if (r.objects[idx]) { r.objects.splice(idx, 1); decorPhotoResult(image); }
   });
   
   bindQty(k => r.objects[Number(k)].qty, (k, v) => { r.objects[Number(k)].qty = v; }, () => decorPhotoResult(image));
@@ -1849,8 +1878,8 @@ async function decorResult() {
 
 function renderDecorResult() {
   const r = D.result;
-  r.items.forEach(x => { x.baseQty ??= x.qty; x.qty = D.qty[x.slot] ?? x.baseQty; x.cost = x.product ? Number(x.product.price) * x.qty : 0; });
-  r.total = r.items.reduce((sum, x) => sum + x.cost, 0);
+  r.items.forEach(x => { x.baseQty ??= x.qty; x.qty = D.qty[x.slot] ?? x.baseQty; x.selected ??= true; x.cost = x.product ? Number(x.product.price) * x.qty : 0; });
+  r.total = r.items.reduce((sum, x) => sum + (x.selected !== false ? x.cost : 0), 0);
   const img = p => p.picture_url ? `<img src="${esc(p.picture_url)}" alt="" loading="lazy" decoding="async" class="w-full h-40 object-contain bg-white rounded-lg">` : `<div class="w-full h-40 bg-gray-100 rounded-lg"></div>`;
   const card = x => x.product ? `<div class="border border-gray-200 rounded-xl p-4 flex flex-col gap-2 bg-white">
       ${img(x.product)}
@@ -1858,21 +1887,39 @@ function renderDecorResult() {
       <div class="font-semibold text-sm leading-snug">${esc(x.product.name)}</div>
       <div class="flex flex-wrap">${x.product.in_stock === false ? `<span class="pill">нет в наличии</span>` : ""}${x.product.why.map(w => `<span class="pill">${esc(w)}</span>`).join("")}</div>
       <div class="mt-auto flex justify-between items-center gap-2">${qtyControl(x.slot, x.qty)}<span class="text-right"><span class="block text-xs text-gray-500">${x.qty > 1 ? `${x.qty} × ${rub(x.product.price)}` : "&nbsp;"}</span><b>${rub(x.cost)}</b></span></div>
-      <div class="flex gap-2"><button data-replace="${x.slot}" class="flex-1 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg py-1.5 text-sm font-semibold">Заменить</button><button data-skip="${x.slot}" class="bg-white border border-gray-300 hover:bg-gray-50 rounded-lg py-1.5 px-3 text-sm" title="Убрать из подборки">✕</button></div>
+      <div class="flex gap-2">
+        <button data-replace="${x.slot}" class="flex-1 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg py-1.5 text-sm font-semibold">Заменить</button>
+        <button data-toggle-decor="${x.slot}" class="flex-1 border rounded-lg py-1.5 text-sm font-bold transition-colors ${x.selected ? 'bg-green-50 border-green-200 text-green-700 hover:bg-green-100' : 'bg-brand-blue border-brand-blue text-white hover:bg-blue-600'}">${x.selected ? '✓ Выбрано' : '+ Выбрать'}</button>
+      </div>
     </div>` : `<div class="border border-dashed border-gray-300 rounded-xl p-4 text-sm text-gray-400 flex flex-col justify-between"><div><div class="text-xs font-semibold uppercase tracking-wide">${esc(x.title)}</div><div class="mt-2">в каталоге не нашлось</div></div><button data-skip="${x.slot}" class="text-left underline mt-3">убрать</button></div>`;
   decorBox.innerHTML = `<div class="flex flex-wrap justify-between items-center gap-3 mb-5">
       <div><h3 class="font-bold text-xl">${esc(D.kit ? r.zone_title : r.room_title)} · ${esc(D.kit ? r.kit_title : r.style_title)}</h3><div class="text-sm text-gray-500">бюджет: ${BUDGET_TITLES[r.budget]} · позиций: ${r.items.filter(x => x.product).length}</div></div>
-      <div class="flex flex-wrap gap-2 items-center">${D.kit ? "" : furnitureToggle("px-3 py-1.5")}<div class="flex bg-gray-100 p-1 rounded-lg text-sm">${Object.entries(BUDGET_TITLES).map(([k, v]) => `<button data-budget="${k}" class="px-3 py-1.5 rounded-md ${k === D.budget ? "bg-white shadow-sm text-brand-red font-semibold" : "text-gray-600"}">${v}</button>`).join("")}</div>${D.skip.length ? backBtn("Вернуть убранные", "D.skip=[];decorResult()") : ""}${D.kit ? backBtn("← Другой набор", `decorZoneKits('${D.zone}')`) : backBtn("← Другой стиль", "decorStyles()")}</div></div>
+      <div class="flex flex-wrap gap-2 items-center">${D.kit ? "" : furnitureToggle("px-3 py-1.5")}<div class="flex bg-gray-100 p-1 rounded-lg text-sm">${Object.entries(BUDGET_TITLES).map(([k, v]) => `<button data-budget="${k}" class="px-3 py-1.5 rounded-md ${k === D.budget ? "bg-white shadow-sm text-brand-red font-semibold" : "text-gray-600"}">${v}</button>`).join("")}</div>${D.skip.length ? backBtn("Вернуть убранные", "D.skip=[];decorResult()") : ""}${D.kit ? backBtn("← Другой набор", `decorZoneKits('${D.zone}')`) : backBtn("← Другой стиль", "decorStyles()")}<button id="decor-toggle-all" class="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold rounded-lg transition-colors py-2 px-4 text-sm shadow-sm">${r.items.filter(x => x.product).every(x => x.selected !== false) ? "Убрать все выделения" : "Выделить всё"}</button></div></div>
     ${r.items.some(x => x.furniture) ? `<h4 class="font-semibold text-lg mb-3">Мебель</h4>
     <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">${r.items.filter(x => x.furniture).map(card).join("")}</div>
     <h4 class="font-semibold text-lg mb-3">Декор</h4>` : ""}
     <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">${r.items.filter(x => !x.furniture).map(card).join("")}</div>
     ${decorFooter(r.total, D.kit ? "Стоимость набора" : "Стоимость подборки")}`;
-  bindDecorCopy(`${D.kit ? r.zone_title : r.room_title} · ${D.kit ? r.kit_title : r.style_title}:`, r.items, r.total);
+  bindDecorCopy(`${D.kit ? r.zone_title : r.room_title} · ${D.kit ? r.kit_title : r.style_title}:`, r.items, r.total, renderDecorResult);
   decorBox.querySelectorAll("[data-budget]").forEach(b => b.onclick = () => { D.budget = b.dataset.budget; D.picks = {}; decorResult(); });
   decorBox.querySelectorAll("[data-furniture]").forEach(b => b.onclick = () => { D.furniture = b.dataset.furniture === "true"; decorResult(); });
-  decorBox.querySelectorAll("[data-skip]").forEach(b => b.onclick = () => { D.skip.push(b.dataset.skip); decorResult(); });
+    decorBox.querySelectorAll("[data-skip]").forEach(b => b.onclick = () => { D.skip.push(b.dataset.skip); decorResult(); });
   decorBox.querySelectorAll("[data-replace]").forEach(b => b.onclick = () => decorReplace(r.items.find(x => x.slot === b.dataset.replace)));
+  
+  // ДОБАВИТЬ ВОТ ЭТО:
+  decorBox.querySelectorAll("[data-toggle-decor]").forEach(b => b.onclick = () => {
+    const item = r.items.find(x => x.slot === b.dataset.toggleDecor);
+    if (item) { item.selected = !item.selected; renderDecorResult(); }
+  });
+
+  document.getElementById("decor-toggle-all")?.addEventListener("click", () => {
+    const itemsWithProducts = r.items.filter(x => x.product);
+    const allSelected = itemsWithProducts.every(x => x.selected !== false);
+    itemsWithProducts.forEach(x => { x.selected = !allSelected; });
+    renderDecorResult();
+  });
+
+  bindQty(k => r.items.find(x => x.slot === k).qty, (k, v) => { D.qty[k] = v; }, renderDecorResult);
   bindQty(k => r.items.find(x => x.slot === k).qty, (k, v) => { D.qty[k] = v; }, renderDecorResult);
 }
 
