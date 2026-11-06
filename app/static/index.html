@@ -2101,9 +2101,10 @@ function drawBriefCard() {
   bar.hidden = false;
   if (b.loading) { text.innerHTML = `<span class="animate-pulse">Проверяю, хватает ли данных для сметы…</span>`; return; }
   if (b.error) { text.textContent = `Смету по разговору пока не посчитать: ${b.error}`; return; }
-  if (!b.data.ready) { text.innerHTML = `<b>Для сметы не хватает:</b> ${b.data.missing.map(esc).join("; ")}`; return; }
-  const rooms = b.data.rooms.map(r => `${esc(r.name || ROOMS[r.room_type])} ${num(r.length_m)} × ${num(r.width_m)} м, ${esc((T.renovation[r.renovation_type] || "").toLowerCase())}`);
-  text.innerHTML = `<b class="text-green-700">Всё для сметы собрано:</b> ${rooms.join("; ")}`;
+  const stale = b.data.stale ? ' <span class="text-gray-400">(по одному из прошлых сообщений: GigaChat сейчас не ответил, проверю после следующего)</span>' : "";
+  if (!b.data.ready) { text.innerHTML = `<b>Для сметы не хватает:</b> ${b.data.missing.map(esc).join("; ")}${stale}`; return; }
+  const rooms = b.data.rooms.map(r => `${esc(r.name || ROOMS[r.room_type])} ${r.custom_floor_area ? `${num(r.custom_floor_area)} м²` : `${num(r.length_m)} × ${num(r.width_m)} м`}, ${esc((T.renovation[r.renovation_type] || "").toLowerCase())}`);
+  text.innerHTML = `<b class="text-green-700">Всё для сметы собрано:</b> ${rooms.join("; ")}${stale}`;
   go.hidden = false;
 }
 

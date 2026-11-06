@@ -20,6 +20,7 @@ class BriefOut(BaseModel):
     notes: list[str]
     renovation_type: str | None = None
     rooms: list[dict[str, Any]]
+    stale: bool = False  # GigaChat недоступен — показан результат по одному из прошлых сообщений
 
 
 @router.post("/chats/{chat_id}/brief", response_model=BriefOut)
@@ -47,9 +48,11 @@ async def chat_brief(chat_id: str, request: Request, response: Response, db: Ses
         if exc.kind == "backend_configuration" or "credentials" in str(exc) or "disabled" in str(exc):
             raise HTTPException(503, "Консультант пока не настроен: нужен ключ GigaChat в .env")
         if exc.kind in ("rate_limit", "budget"):
-            # проверка данных — второстепенный запрос: при лимите отдаём прошлый результат, а не ошибку
+            # проверка данных — второстепенный запрос: при лимите отдаём прошлый результат с пометкой, а не ошибку
             if hit:
-                return hit[1]
+                return hit[1].model_copy(update={"stale": True})
+            if exc.kind == "budget":
+                raise HTTPException(429, "исчерпан лимит токенов проекта (RC_GIGACHAT_TOKEN_BUDGET в .env)") from exc
             raise HTTPException(429, "GigaChat занят, проверю данные после следующего ответа") from exc
         raise HTTPException(502, "Не удалось разобрать разговор, попробуйте ещё раз")
     result = BriefOut(**brief.build(draft))

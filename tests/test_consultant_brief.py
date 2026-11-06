@@ -258,5 +258,32 @@ def test_brief_rate_limit_returns_previous_result(monkeypatch):
         assert exc.status_code == 429
     prev = api_brief.BriefOut(ready=False, missing=["вид ремонта"], notes=[], rooms=[])
     api_brief.brief.CACHE["c-busy"] = (1, prev)
-    assert run() is prev
+    got = run()
+    assert got.stale and got.missing == prev.missing
     api_brief.brief.CACHE.pop("c-busy", None)
+
+
+def test_sizes_from_client_words():
+    from app.consultant_brief import sizes_from_text
+    assert sizes_from_text("площадь 8 высота стандартная\nдлина 4 ширина 2") == {"length_m": 4, "width_m": 2, "area_m2": 8}
+    assert sizes_from_text("кухня 3 x 2,5, высота 2,6") == {"length_m": 3, "width_m": 2.5, "height_m": 2.6}
+    assert sizes_from_text("350 на 400") == {"length_m": 3.5, "width_m": 4}
+    assert sizes_from_text("бюджет 100 на 200 тысяч") == {}
+
+
+def test_model_missed_sizes_taken_from_words():
+    from app.consultant_brief import BriefDraft, build, verify
+    draft = verify(BriefDraft.model_validate({"renovation_type": "capital", "rooms": [{"room_type": "bathroom"}]}),
+                   "хочу ремонт ванной\nкапитальный\nдлина 4 ширина 2")
+    out = build(draft)
+    assert out["ready"] and out["rooms"][0]["length_m"] == 4 and out["rooms"][0]["width_m"] == 2
+
+
+def test_area_only_room_is_estimated():
+    from app.consultant_brief import BriefDraft, build, verify
+    draft = verify(BriefDraft.model_validate({"renovation_type": "cosmetic", "rooms": [{"room_type": "living_room", "area_m2": 16}]}),
+                   "гостиная буквой г, площадь 16, косметический ремонт")
+    out = build(draft)
+    room = out["rooms"][0]
+    assert out["ready"] and float(room["custom_floor_area"]) == 16 and float(room["custom_perimeter"]) == 16
+    assert any("только площадь" in n for n in out["notes"] + room["auto"]["notes"])

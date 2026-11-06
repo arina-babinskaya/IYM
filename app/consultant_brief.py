@@ -94,6 +94,7 @@ class BriefRoom(BaseModel):
     length_m: float | None = None
     width_m: float | None = None
     height_m: float | None = None
+    area_m2: float | None = None  # площадь пола, если человек назвал её вместо длины и ширины (комната буквой Г и т.п.)
     windows: int | None = None
     doors: int | None = None
     openings: list[BriefOpening] = []
@@ -102,7 +103,7 @@ class BriefRoom(BaseModel):
     remove_works: list[str] = []
     only_works: bool = False  # «просто покрасить стены»: нужны только названные работы, не ремонт целиком
 
-    _num = field_validator("length_m", "width_m", "height_m", mode="before")(lambda v: _positive(v))
+    _num = field_validator("length_m", "width_m", "height_m", "area_m2", mode="before")(lambda v: _positive(v))
 
 
 class BriefDraft(BaseModel):
@@ -118,7 +119,8 @@ def prompt(transcript: str) -> list[dict[str, str]]:
         "человек сказал сам; ничего не придумывай. Неизвестное — null или пустой список.\n"
         f"room_type — один из: {rooms}; детскую считай bedroom.\n"
         f"renovation_type — один из: {renovations}.\n"
-        "Размеры в метрах: length_m и width_m — длина и ширина пола, height_m — высота потолка.\n"
+        "Размеры в метрах: length_m и width_m — длина и ширина пола, height_m — высота потолка; "
+        "area_m2 — площадь пола в м², если человек назвал площадь.\n"
         "windows и doors — количество окон и дверей; если названы размеры, добавь их в openings "
         "(kind: window или door, width_m, height_m, count).\n"
         "wishes — пожелания к отделке: что хочет человек и что посоветовал консультант, если человек согласился или "
@@ -131,7 +133,7 @@ def prompt(transcript: str) -> list[dict[str, str]]:
         "(«ремонт не нужен, только покрасить стены», «больше ничего не надо, только поменять ламинат»). "
         "Если человек просто назвал работу, а про вид ремонта ничего не сказал, — false.\n"
         'Ответь только JSON: {"renovation_type": "...", "rooms": [{"room_type": "...", "name": "...", '
-        '"length_m": 0, "width_m": 0, "height_m": 0, "windows": 0, "doors": 0, "openings": [], '
+        '"length_m": 0, "width_m": 0, "height_m": 0, "area_m2": 0, "windows": 0, "doors": 0, "openings": [], '
         '"wishes": [{"text": "..."}], "add_works": [], "remove_works": [], "only_works": false}]}'
     )
     return [{"role": "system", "content": system}, {"role": "user", "content": "Разговор:\n" + transcript}]
@@ -238,6 +240,37 @@ def _said(value: float | None, text: str) -> bool:
     return any(re.search(rf"(?<![\d.,]){re.escape(f)}(?![\d]|[.,]\d)", text) for f in forms)
 
 
+_N = r"(\d+(?:[.,]\d+)?)"
+SIZE_PATTERNS = {
+    "length_m": re.compile(rf"длин\w*\s*(?:[-—:=]\s*)?{_N}", re.I),
+    "width_m": re.compile(rf"ширин\w*\s*(?:[-—:=]\s*)?{_N}", re.I),
+    "height_m": re.compile(rf"высот\w*\s*(?:потолк\w*\s*)?(?:[-—:=]\s*)?{_N}", re.I),
+    "area_m2": re.compile(rf"площад\w*\s*(?:[-—:=]\s*)?{_N}|{_N}\s*(?:кв\.?\s*м|м2|м²|квадрат)", re.I),
+}
+BY_PATTERN = re.compile(rf"(?<![\d.,]){_N}\s*(?:на|x|х|×|\*)\s*{_N}(?![\d]|[.,]\d)(?!\s*(?:на|x|х|×|\*|тыс|руб|₽|недел|дн|час|мес|%))", re.I)
+
+
+def _num(text: str) -> float | None:
+    value = float(text.replace(",", "."))
+    if value >= 100:  # «350 на 400» — в сантиметрах
+        value /= 100
+    return value if 0 < value < 100 else None
+
+
+def sizes_from_text(text: str) -> dict[str, float]:
+    """Размеры из слов клиента: «длина 4 ширина 2», «4 на 2,5», «площадь 8», «высота 2,7». Последнее сказанное важнее."""
+    found: dict[str, float] = {}
+    for field, rx in SIZE_PATTERNS.items():
+        hits = [next(g for g in m.groups() if g) for m in rx.finditer(text)]
+        if hits and (value := _num(hits[-1])):
+            found[field] = value if field != "area_m2" else float(hits[-1].replace(",", "."))
+    if "length_m" not in found and "width_m" not in found and (pairs := BY_PATTERN.findall(text)):
+        a, b = (_num(x) for x in pairs[-1])
+        if a and b:
+            found["length_m"], found["width_m"] = a, b
+    return found
+
+
 def verify(draft: BriefDraft, client_text: str) -> BriefDraft:
     """Убираем то, чего клиент не говорил: вид ремонта без его слов, размеры, которых нет в переписке."""
     try:
@@ -247,9 +280,14 @@ def verify(draft: BriefDraft, client_text: str) -> BriefDraft:
     if reno and not RENOVATION_WORDS[reno].search(client_text):
         draft.renovation_type = None
     for room in draft.rooms:
-        for field in ("length_m", "width_m", "height_m"):
+        for field in ("length_m", "width_m", "height_m", "area_m2"):
             if not _said(getattr(room, field), client_text):
                 setattr(room, field, None)
+    if len(draft.rooms) == 1:  # одно помещение: размеры, которые модель пропустила, берём прямо из слов клиента
+        room, found = draft.rooms[0], sizes_from_text(client_text)
+        for field, value in found.items():
+            if getattr(room, field) is None:
+                setattr(room, field, value)
         if not re.search(r"окн|окон", client_text, re.I):
             room.windows = None
         if not re.search(r"двер", client_text, re.I):
@@ -287,8 +325,15 @@ def build(draft: BriefDraft) -> dict:
         if room_type is None:
             missing.append(f"тип помещения «{title}»")
             continue
-        if not raw.length_m or not raw.width_m:
-            missing.append(f"{title}: длина и ширина комнаты")
+        length, width, area, perimeter = raw.length_m, raw.width_m, None, None
+        if not (length and width) and raw.area_m2:
+            # только площадь (комната буквой Г и т.п.): считаем стены как у квадратной комнаты такой площади
+            side = round(raw.area_m2 ** 0.5, 2)
+            length, width, area, perimeter = side, side, raw.area_m2, round(4 * side, 2)
+            notes.append(f"{title}: известна только площадь {raw.area_m2:g} м² — стены посчитали как у квадратной "
+                         f"комнаты такой площади. Если форма сложная, нарисуйте её в калькуляторе на шаге «Помещения»")
+        if not (length and width):
+            missing.append(f"{title}: длина и ширина комнаты (или площадь, если форма сложная)")
             continue
         first_note = len(notes)
         openings = [o for o in raw.openings if o.kind in ("window", "door") and o.width_m and o.height_m]
@@ -316,7 +361,8 @@ def build(draft: BriefDraft) -> dict:
                 missing.append(f"{title}: какие именно работы нужны")
             continue
         data = {"name": raw.name, "room_type": room_type.value, "renovation_type": room_reno.value,
-                "length_m": raw.length_m, "width_m": raw.width_m, "height_m": height,
+                "length_m": length, "width_m": width, "height_m": height,
+                "custom_floor_area": area, "custom_perimeter": perimeter,
                 "windows": windows, "doors": doors, "wishes": wishes,
                 "openings": [o.model_dump() for o in openings] or None}
         options = {o.key: o for o, _ in works_for_room(room_type, room_reno)}
