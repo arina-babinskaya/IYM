@@ -53,31 +53,49 @@
 <body class="bg-brand-bg text-gray-900 font-sans antialiased min-h-screen flex flex-col">
 
 <header class="bg-white border-b border-gray-200 sticky top-0 z-50">
-  <div class="max-w-6xl mx-auto px-4 min-h-16 py-2 flex flex-wrap items-center justify-between gap-2">
-    <a href="/" class="flex items-center gap-3 group cursor-pointer">
-      <img src="/static/logo.png" alt="" onerror="this.style.display='none'; document.getElementById('logo-fallback').style.display='flex';" class="h-10 w-auto object-contain transition-transform group-hover:scale-105">
-      <div id="logo-fallback" class="logo-fallback w-10 h-10 bg-brand-red rounded-xl items-center justify-center text-white font-extrabold text-lg shadow-sm">IYM</div>
-      <div class="flex flex-col">
-        <p class="text-xs sm:text-sm text-gray-600 font-medium leading-tight max-w-[280px] sm:max-w-[320px]">
+  <!-- h-16 фиксирует высоту, flex-nowrap запрещает перенос строк -->
+  <div class="max-w-[1400px] mx-auto px-4 h-16 flex flex-row items-center justify-between gap-4 flex-nowrap">
+    
+    <!-- ЛЕВАЯ ЧАСТЬ: Логотип и текст -->
+    <a href="/" class="flex items-center gap-3 group cursor-pointer shrink-0">
+      <img src="/static/logo.png" alt="" onerror="this.style.display='none'; document.getElementById('logo-fallback').style.display='flex';" class="h-8 w-auto object-contain transition-transform group-hover:scale-105">
+      <div id="logo-fallback" class="logo-fallback w-8 h-8 bg-brand-red rounded-xl items-center justify-center text-white font-extrabold text-sm shadow-sm">IYM</div>
+      
+      <!-- Текст показываем только на широких экранах (lg), чтобы он не ломал меню -->
+      <div class="hidden lg:flex flex-col max-w-[200px] xl:max-w-[280px]">
+        <p class="text-[10px] xl:text-xs text-gray-500 font-medium leading-tight">
           микросервис умных калькуляторов ремонта и стоимости работ
         </p>
       </div>
     </a>
-    <nav class="flex overflow-x-auto bg-gray-100 p-1 rounded-xl max-w-full">
-      <button data-tab="consultant" class="px-3 lg:px-5 py-2 rounded-lg text-xs lg:text-sm whitespace-nowrap font-semibold transition-all bg-white text-brand-red shadow-sm">Консультант</button>
-      <button data-tab="calc" class="px-3 lg:px-5 py-2 rounded-lg text-xs lg:text-sm whitespace-nowrap font-semibold transition-all text-gray-600 hover:text-gray-900">Калькулятор</button>
-      <button data-tab="crew" class="px-3 lg:px-5 py-2 rounded-lg text-xs lg:text-sm whitespace-nowrap font-semibold transition-all text-gray-600 hover:text-gray-900">Бригада</button>
-      <button data-tab="card" class="px-3 lg:px-5 py-2 rounded-lg text-xs lg:text-sm whitespace-nowrap font-semibold transition-all text-gray-600 hover:text-gray-900">Карточка товара</button>
-      <button data-tab="decor" class="px-3 lg:px-5 py-2 rounded-lg text-xs lg:text-sm whitespace-nowrap font-semibold transition-all text-gray-600 hover:text-gray-900">Декор и мебель</button>
-      <button data-tab="admin" class="px-3 lg:px-5 py-2 rounded-lg text-xs lg:text-sm whitespace-nowrap font-semibold transition-all text-gray-600 hover:text-gray-900">Админка</button>
-      <button data-tab="cart" class="px-3 lg:px-5 py-2 rounded-lg text-xs lg:text-sm whitespace-nowrap font-semibold transition-all text-gray-600 hover:text-gray-900">Корзина <span id="cart-count" class="ml-1 hidden inline-grid place-items-center min-w-[1.25rem] h-5 px-1 rounded-full bg-brand-red text-white text-[11px]"></span></button>
-    </nav>
+
+    <!-- ПРАВАЯ ЧАСТЬ: Меню и Корзина (всегда вместе) -->
+    <div class="flex items-center gap-3 xl:gap-4 shrink-0">
+      
+      <!-- Навигация (сделал компактнее) -->
+      <nav class="flex bg-gray-100 p-1 rounded-xl overflow-x-auto">
+        <button data-tab="consultant" class="px-2 xl:px-4 py-1.5 rounded-lg text-xs xl:text-sm whitespace-nowrap font-semibold transition-all bg-white text-brand-red shadow-sm">Консультант</button>
+        <button data-tab="calc" class="px-2 xl:px-4 py-1.5 rounded-lg text-xs xl:text-sm whitespace-nowrap font-semibold transition-all text-gray-600 hover:text-gray-900">Калькулятор</button>
+        <button data-tab="crew" class="px-2 xl:px-4 py-1.5 rounded-lg text-xs xl:text-sm whitespace-nowrap font-semibold transition-all text-gray-600 hover:text-gray-900">Бригада</button>
+        <button data-tab="card" class="px-2 xl:px-4 py-1.5 rounded-lg text-xs xl:text-sm whitespace-nowrap font-semibold transition-all text-gray-600 hover:text-gray-900">Каталог</button>
+        <button data-tab="decor" class="px-2 xl:px-4 py-1.5 rounded-lg text-xs xl:text-sm whitespace-nowrap font-semibold transition-all text-gray-600 hover:text-gray-900">Декор</button>
+        <button data-tab="admin" class="px-2 xl:px-4 py-1.5 rounded-lg text-xs xl:text-sm whitespace-nowrap font-semibold transition-all text-gray-600 hover:text-gray-900">Админка</button>
+      </nav>
+
+      <!-- Кнопка Корзины (тоже стала чуть компактнее) -->
+      <button data-tab="cart" class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-brand-blue hover:bg-blue-600 text-white transition-all shadow-md whitespace-nowrap">
+        <svg class="w-4 h-4 xl:w-5 xl:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+        <span class="hidden sm:inline">Корзина</span>
+        <span id="cart-count" class="ml-1 hidden inline-grid place-items-center min-w-[1.25rem] h-5 px-1 rounded-full bg-white text-brand-blue text-[11px] font-bold"></span>
+      </button>
+
+    </div>
   </div>
 </header>
 
 <main class="flex-1 max-w-6xl w-full mx-auto p-4 md:p-8 grid gap-6">
   
-  <section data-panel="calc" class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden" hidden>
+  <section data-panel="calc" class="hidden bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
     <div class="p-6 md:p-8 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
       <h2 class="text-2xl font-bold">Калькулятор ремонта</h2>
       <label class="flex items-center gap-2 text-sm font-medium text-gray-700">
@@ -96,14 +114,14 @@
     </div>
   </section>
 
-  <section data-panel="calc" id="estimate-result" class="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden" hidden></section>
+  <section data-panel="calc" id="estimate-result" class="hidden bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden"></section>
 
-  <section data-panel="crew" class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden" hidden>
+  <section data-panel="crew" class="hidden bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
     <div id="crew-builder"></div>
   </section>
 
-  <section data-panel="card" class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8" hidden>
-    <h2 class="text-2xl font-bold mb-6">Расчёт в карточке товара</h2>
+  <section data-panel="card" class="hidden bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8">
+    <h2 class="text-2xl font-bold mb-6">Каталог товаров</h2>
     <div class="relative mb-6">
       <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
         <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
@@ -111,8 +129,10 @@
       <input id="product-q" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-xl focus:ring-brand-blue focus:border-brand-blue block w-full pl-10 p-3 outline-none transition-colors" placeholder="Найти товар (например: обои, плитка, ГКЛВ)">
     </div>
     <div class="grid md:grid-cols-2 gap-6">
-      <div class="results flex flex-col gap-2 max-h-[400px] overflow-y-auto pr-2" id="product-results"></div>
-      <div id="product-info" class="bg-gray-50 rounded-xl p-5 border border-gray-100"></div>
+      <!-- Сделали высоту более адаптивной (600px максимум) -->
+      <div class="results flex flex-col gap-2 max-h-[600px] overflow-y-auto pr-2" id="product-results"></div>
+      <!-- Добавили класс hidden по умолчанию -->
+      <div id="product-info" class="hidden bg-gray-50 rounded-xl p-5 border border-gray-100"></div>
     </div>
     <div class="mt-6 p-5 bg-gray-50 rounded-xl border border-gray-100 row" id="calc-form" hidden>
       <h3 class="font-semibold text-lg mb-4 w-full">Параметры поверхности</h3>
@@ -129,7 +149,7 @@
     <div id="calc-result" class="mt-6"></div>
   </section>
 
-  <section data-panel="decor" class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden" hidden>
+  <section data-panel="decor" class="hidden bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
     <div class="p-6 md:p-8 border-b border-gray-100 bg-gray-50/50">
       <h2 class="text-2xl font-bold">Декор и мебель</h2>
       <p class="text-sm text-gray-500 mt-1">Выберите помещение и стиль — подберём мебель, свет, текстиль и аксессуары из каталога в одном стиле. Мебель можно включить или выключить.</p>
@@ -140,13 +160,13 @@
     <div class="p-6 md:p-8" id="decor-box"></div>
   </section>
 
-  <section data-panel="consultant" class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-    <div class="grid md:grid-cols-[260px_1fr] min-h-[70vh]">
+  <section data-panel="consultant" class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col" style="height: calc(100vh - 130px); min-height: 600px;">
+    <div class="grid md:grid-cols-[260px_1fr] flex-1 overflow-hidden">
       <aside class="border-b md:border-b-0 md:border-r border-gray-200 bg-gray-50 p-4">
         <button id="chat-new" class="w-full bg-brand-red hover:bg-red-900 text-white font-semibold py-2.5 px-4 rounded-xl">+ Новый чат</button>
         <div id="chat-list" class="mt-3 flex md:block gap-2 overflow-x-auto md:overflow-y-auto md:max-h-[62vh]"></div>
       </aside>
-      <div class="flex flex-col min-w-0 h-[70vh]">
+      <div class="flex flex-col min-w-0 h-full">
         <div class="px-4 md:px-6 py-3 border-b flex justify-between items-center gap-3">
           <div class="min-w-0"><h2 id="chat-title" class="font-bold truncate">Консультант по ремонту</h2><p class="text-xs text-gray-500">GigaChat · рекомендации по материалам и отделке</p></div>
           <div id="chat-actions" class="flex gap-1" hidden>
@@ -171,12 +191,12 @@
     </div>
   </section>
 
-  <section data-panel="cart" class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8" hidden>
+  <section data-panel="cart" class="hidden bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8">
     <h2 class="text-2xl font-bold mb-6">Корзина</h2>
     <div id="cart-box"></div>
   </section>
 
-  <section data-panel="admin" class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8" hidden>
+  <section data-panel="admin" class="hidden bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8">
     <div class="flex flex-wrap justify-between items-center gap-4 mb-6">
       <h2 class="text-2xl font-bold">Привязка товаров</h2>
       <div class="flex gap-2">
@@ -267,15 +287,25 @@ async function api(path, options = {}) {
 }
 
 function switchTab(tab, crewMode = null) {
-  const b = document.querySelector(`nav button[data-tab="${tab}"]`);
+  const b = document.querySelector(`button[data-tab="${tab}"]`);
   if (!b) return;
-  document.querySelectorAll("nav button").forEach(x => {
+  document.querySelectorAll("button[data-tab]").forEach(x => {
+    if (x.dataset.tab === "cart") {
+      // Корзина не меняет цвет, но получает обводку, когда открыта
+      x.classList.toggle("ring-2", x === b);
+      x.classList.toggle("ring-brand-blue", x === b);
+      x.classList.toggle("ring-offset-2", x === b);
+      return;
+    }
     x.classList.toggle("bg-white", x === b);
     x.classList.toggle("text-brand-red", x === b);
     x.classList.toggle("shadow-sm", x === b);
     x.classList.toggle("text-gray-600", x !== b);
   });
-  document.querySelectorAll("[data-panel]").forEach(p => p.hidden = p.dataset.panel !== b.dataset.tab || (p.id === "estimate-result" && !p.dataset.filled));
+  document.querySelectorAll("[data-panel]").forEach(p => {
+    const shouldHide = p.dataset.panel !== b.dataset.tab || (p.id === "estimate-result" && !p.dataset.filled);
+    p.classList.toggle("hidden", shouldHide);
+  });
   if (b.dataset.tab === "admin") loadAdmin();
   if (b.dataset.tab === "cart") renderCart();
   if (b.dataset.tab === "decor" && !D.shown) decorRooms();
@@ -285,7 +315,7 @@ function switchTab(tab, crewMode = null) {
     else CrewBuilder.enterDirect();
   }
 }
-document.querySelectorAll("nav button").forEach(b => b.onclick = () => switchTab(b.dataset.tab));
+document.querySelectorAll("button[data-tab]").forEach(b => b.onclick = () => switchTab(b.dataset.tab));
 
 const STEPS = ["Помещение", "Размеры", "Вид ремонта", "Работы", "Смета"];
 const RENO_HINTS = { cosmetic: "обновить отделку: стены, пол", capital: "с демонтажом, черновыми и чистовыми работами", euro: "капитальный под ключ, дорогие материалы", rental: "быстро и недорого для арендаторов" };
@@ -500,7 +530,7 @@ function stepSize() {
               <button data-preset="niche" class="px-2.5 py-1 text-xs font-semibold bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg transition-colors border border-gray-200">С нишей / коробом</button>
               <button data-preset="bay_window" class="px-2.5 py-1 text-xs font-semibold bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg transition-colors border border-gray-200">Эркер (скос)</button>
               <button data-preset="trapezoid" class="px-2.5 py-1 text-xs font-semibold bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg transition-colors border border-gray-200">Трапеция</button>
-              <button data-preset="circle" class="px-2.5 py-1 text-xs font-semibold bg-blue-50 hover:bg-blue-100 text-brand-blue rounded-lg transition-colors border border-blue-200">Круглая (ротонда)</button>
+              <button data-preset="circle" class="px-2.5 py-1 text-xs font-semibold bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg transition-colors border border-gray-200">Круглая (ротонда)</button>
             </div>
           </div>
 
@@ -1203,8 +1233,34 @@ async function stepWorks() {
 function stepSummary() {
   W.queue = [];  // очередь помещений из разговора закончилась или пользователь ушёл к списку
   wizard.innerHTML = `<p class="text-xl font-bold mb-6">Добавленные помещения</p>
-    <div class="grid gap-3 mb-6">${W.rooms.map((r, i) => `<div class="flex flex-wrap justify-between items-center bg-white border border-gray-200 p-4 rounded-xl shadow-sm"><div><b class="text-lg text-brand-red">${esc(ROOMS[r.room_type])}</b><div class="text-sm text-gray-600 mt-1">${r.polygon ? `<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200 mr-1.5">2D-план (${r.polygon.length} стен${r.is_orthogonal === false ? ", СНиП +15%" : ""})</span>` : ""}${num(r.length_m)} × ${num(r.width_m)} м (${num(r.custom_floor_area || r.length_m * r.width_m)} м²) · <span class="text-gray-700 font-medium">Окон: ${r.windows || 0}, дверей: ${r.doors || 0} (${num(r.openings_area_m2)} м²)</span> · ${esc(T.renovation[r.renovation_type])} · <span class="text-brand-blue font-medium">${r.works.length} работ</span></div></div><div class="flex gap-2 mt-2 sm:mt-0"><button class="px-3 py-1.5 text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-lg transition-colors" data-edit="${i}">Изменить</button><button class="px-3 py-1.5 text-sm font-medium bg-red-50 text-red-600 hover:bg-red-100 rounded-lg transition-colors" data-del="${i}">✕ Удалить</button></div></div>`).join("") || `<p class="text-gray-500 italic p-4 bg-gray-50 rounded-xl">Пока нет добавленных помещений.</p>`}</div>
-    <div class="flex justify-between items-center mt-8 pt-6 border-t border-gray-100"><button class="bg-white border-2 border-brand-blue text-brand-blue hover:bg-blue-50 font-semibold py-2.5 px-6 rounded-xl transition-colors" data-add>+ Добавить помещение</button><button class="bg-brand-red hover:bg-red-900 text-white font-bold py-3 px-8 rounded-xl shadow-md transition-transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed" data-calc ${W.rooms.length ? "" : "disabled"}>Рассчитать смету</button></div>`;
+    <div class="grid gap-4 mb-8">
+      ${W.rooms.map((r, i) => `
+        <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-4 bg-white border border-gray-200 p-5 rounded-xl shadow-sm transition-colors hover:border-brand-blue/30">
+          <div class="flex-1 min-w-0">
+            <b class="text-lg text-brand-red">${esc(ROOMS[r.room_type])}</b>
+            <div class="text-sm text-gray-600 mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1.5">
+              ${r.polygon ? `<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200">2D-план (${r.polygon.length} стен${r.is_orthogonal === false ? ", СНиП +15%" : ""})</span>` : ""}
+              <span>${num(r.length_m)} × ${num(r.width_m)} м (${num(r.custom_floor_area || r.length_m * r.width_m)} м²)</span>
+              <span>·</span>
+              <span class="text-gray-700 font-medium">Окон: ${r.windows || 0}, дверей: ${r.doors || 0} (${num(r.openings_area_m2)} м²)</span>
+              <span>·</span>
+              <span>${esc(T.renovation[r.renovation_type])}</span>
+              <span>·</span>
+              <span class="text-brand-blue font-medium">${r.works.length} работ</span>
+            </div>
+          </div>
+          <div class="flex gap-2 shrink-0 self-end sm:self-center">
+            <button class="px-4 py-2 text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-lg transition-colors" data-edit="${i}">Изменить</button>
+            <button class="px-4 py-2 text-sm font-medium bg-red-50 text-red-600 hover:bg-red-100 rounded-lg transition-colors" data-del="${i}">✕ Удалить</button>
+          </div>
+        </div>
+      `).join("") || `<p class="text-gray-500 italic p-6 text-center bg-gray-50 rounded-xl border border-dashed border-gray-200">Пока нет добавленных помещений.</p>`}
+    </div>
+    <div class="flex flex-col-reverse sm:flex-row justify-between items-center gap-4 mt-6 pt-6 border-t border-gray-100">
+      <button class="w-full sm:w-auto bg-white border-2 border-brand-blue text-brand-blue hover:bg-blue-50 font-semibold py-2.5 px-6 rounded-xl transition-colors" data-add>+ Добавить помещение</button>
+      <button class="w-full sm:w-auto bg-brand-red hover:bg-red-900 text-white font-bold py-3 px-8 rounded-xl shadow-md transition-transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed" data-calc ${W.rooms.length ? "" : "disabled"}>Рассчитать смету</button>
+    </div>`;
+  
   wizard.querySelector("[data-add]").onclick = () => { W.room = {}; W.editing = null; showStep(0); };
   wizard.querySelectorAll("[data-edit]").forEach(b => b.onclick = () => { W.editing = Number(b.dataset.edit); W.room = structuredClone(W.rooms[W.editing]); showStep(0); });
   wizard.querySelectorAll("[data-del]").forEach(b => b.onclick = () => { W.rooms.splice(Number(b.dataset.del), 1); showStep(4); });
@@ -1363,7 +1419,7 @@ let estimateRequestVersion = 0; let estimateStatus = "ok";
 async function runEstimate(keepScroll = false) {
   const requestVersion = ++estimateRequestVersion;
   const out = document.getElementById("estimate-result");
-  out.hidden = false; out.dataset.filled = "1";
+  out.classList.remove("hidden"); out.dataset.filled = "1";
   if (!keepScroll) out.innerHTML = `<div class="p-10 text-center"><div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-brand-red"></div><p class="mt-4 text-gray-500 font-medium">Считаем смету...</p></div>`;
   try {
     const r = await api("/api/v1/estimate", { method: "POST", body: JSON.stringify({ object_type: document.getElementById("object").value, renovation_type: W.rooms[0].renovation_type, rooms: roomsPayload(), explain: false }) });
@@ -1422,6 +1478,7 @@ document.getElementById("product-q").oninput = () => { clearTimeout(searchTimer)
 async function showProduct(id) {
   productId = id;
   document.querySelectorAll("#product-results button").forEach(b => b.classList.toggle("border-brand-blue", Number(b.dataset.id) === id));
+  document.getElementById("product-info").classList.remove("hidden"); // Показываем правую панель
   const p = await api(`/api/v1/products/${id}`);
   const cleanName = capitalize(p.name.replace(/,\s*арт\.\s*\d+/gi, '').replace(/\s*арт\.\s*\d+/gi, '').trim());
   const article = p.name.match(/арт\.\s*(\d+)/i)?.[1] || p.sku || String(p.id).padStart(6, '0');
@@ -1610,10 +1667,10 @@ const decorFooter = (total, label) => `<div class="mt-8 p-6 bg-gray-900 rounded-
 
 function bindDecorCopy(title, lines, total) {
   const cart = document.getElementById("decor-cart");
-  if (cart) cart.onclick = () => addToCart(lines.filter(x => x.product).map(x => ({ ...x.product, qty: x.qty })), cart);
+  if (cart) cart.onclick = () => addToCart(lines.filter(x => x.product && !x.excluded).map(x => ({ ...x.product, qty: x.qty })), cart);
   const btn = document.getElementById("decor-copy"); if (!btn) return;
   btn.onclick = () => {
-    const text = [title, ...lines.filter(x => x.product).map(x => `  ${x.title}: ${x.product.name} — ${x.qty > 1 ? `${x.qty} шт. × ${rub(x.product.price)} = ` : ""}${rub(x.cost ?? x.product.price)}`), `Итого: ${rub(total)}`].join("\n");
+    const text = [title, ...lines.filter(x => x.product && !x.excluded).map(x => `  ${x.title}: ${x.product.name} — ${x.qty > 1 ? `${x.qty} шт. × ${rub(x.product.price)} = ` : ""}${rub(x.cost ?? x.product.price)}`), `Итого: ${rub(total)}`].join("\n");
     navigator.clipboard.writeText(text).then(() => { const old = btn.textContent; btn.textContent = "Скопировано ✓"; setTimeout(() => btn.textContent = old, 1500); })
       .catch(() => alert("Не удалось скопировать: браузер не дал доступ к буферу обмена"));
   };
@@ -1649,10 +1706,13 @@ function decorPhotoResult(image) {
   showDecorHome(true);
   const r = D.photo;
   r.objects.forEach(x => { x.qty ??= 1; x.cost = x.product ? Number(x.product.price) * x.qty : 0; });
+  
   const card = (x, i) => {
     const p = x.product, d = x.detected;
     const seen = [d.name, d.color, d.material].filter(Boolean).join(", ");
-    return `<div class="border border-gray-200 rounded-xl p-4 flex flex-col gap-2 bg-white">
+    const isExcluded = x.excluded; 
+    
+    return `<div class="border border-gray-200 rounded-xl p-4 flex flex-col gap-2 bg-white transition-all ${isExcluded ? 'opacity-40 grayscale bg-gray-50' : ''}">
       <div class="text-xs font-semibold uppercase tracking-wide text-gray-500">${esc(x.title)}</div>
       <div class="text-sm text-gray-600">на фото: ${esc(seen || "—")}</div>
       ${p ? `${p.picture_url ? `<img src="${esc(p.picture_url)}" alt="" loading="lazy" decoding="async" class="w-full h-40 object-contain bg-white rounded-lg">` : `<div class="w-full h-40 bg-gray-100 rounded-lg"></div>`}
@@ -1660,10 +1720,15 @@ function decorPhotoResult(image) {
       <div class="flex flex-wrap">${p.in_stock === false ? `<span class="pill">нет в наличии</span>` : ""}${p.why.map(w => `<span class="pill">${esc(w)}</span>`).join("")}</div>
       <div class="text-xs text-gray-500">вариантов: ${x.alternatives.length}</div>
       <div class="mt-auto flex justify-between items-center gap-2">${qtyControl(i, x.qty)}<span class="text-right"><span class="block text-xs text-gray-500">${x.qty > 1 ? `${x.qty} × ${rub(p.price)}` : "&nbsp;"}</span><b>${rub(x.cost)}</b></span></div>
-      <div class="flex gap-2"><button data-photo-replace="${i}" class="flex-1 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg py-1.5 text-sm font-semibold">Заменить</button><button data-photo-remove="${i}" class="bg-white border border-gray-300 hover:bg-gray-50 rounded-lg py-1.5 px-3 text-sm" title="Убрать из подборки">✕</button></div>`
+      <div class="flex gap-2">
+        <button data-photo-replace="${i}" class="flex-1 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg py-1.5 text-sm font-semibold ${isExcluded ? 'pointer-events-none' : ''}">Заменить</button>
+        <button data-photo-remove="${i}" class="bg-white border border-gray-300 hover:bg-gray-50 rounded-lg py-1.5 px-3 text-sm ${isExcluded ? 'text-brand-red font-bold' : ''}" title="${isExcluded ? 'Вернуть в подборку' : 'Убрать из подборки'}">${isExcluded ? '↺' : '✕'}</button>
+      </div>`
       : `<div class="text-sm text-gray-400">в каталоге не нашлось</div><button data-photo-remove="${i}" class="text-left text-sm text-gray-400 underline mt-auto">убрать</button>`}</div>`;
   };
-  const total = r.objects.reduce((sum, x) => sum + x.cost, 0);
+  
+  const total = r.objects.reduce((sum, x) => sum + (x.excluded ? 0 : x.cost), 0);
+  
   decorBox.innerHTML = `<div class="flex flex-wrap justify-between items-center gap-3 mb-5">
       <div><h3 class="font-bold text-xl">Похожее на фото</h3><div class="text-sm text-gray-500">${r.style_title ? `стиль: ${esc(r.style_title)} · ` : ""}предметов: ${r.objects.length}</div></div>
       ${backBtn("← Другое фото", "decorRooms()")}</div>
@@ -1672,9 +1737,19 @@ function decorPhotoResult(image) {
       <div class="flex-1 grid sm:grid-cols-2 xl:grid-cols-3 gap-4">${r.objects.length ? r.objects.map(card).join("") : `<p class="text-gray-500">На фото не удалось распознать мебель или декор. Попробуйте фото комнаты целиком.</p>`}</div>
     </div>
     ${total ? decorFooter(total, "Стоимость похожих товаров") : ""}`;
+    
   bindDecorCopy(`Похожее на фото${r.style_title ? ` (${r.style_title})` : ""}:`, r.objects, total);
+  
   decorBox.querySelectorAll("[data-photo-replace]").forEach(b => b.onclick = () => decorPhotoReplace(Number(b.dataset.photoReplace), image));
-  decorBox.querySelectorAll("[data-photo-remove]").forEach(b => b.onclick = () => { r.objects.splice(Number(b.dataset.photoRemove), 1); decorPhotoResult(image); });
+  
+  decorBox.querySelectorAll("[data-photo-remove]").forEach(b => b.onclick = () => {
+    const idx = Number(b.dataset.photoRemove);
+    if (r.objects[idx]) {
+      r.objects[idx].excluded = !r.objects[idx].excluded; // Переключаем состояние
+      decorPhotoResult(image); // Перерисовываем
+    }
+  });
+  
   bindQty(k => r.objects[Number(k)].qty, (k, v) => { r.objects[Number(k)].qty = v; }, () => decorPhotoResult(image));
 }
 
@@ -2139,8 +2214,8 @@ const saveCart = cart => { try { localStorage.setItem(CART_KEY, JSON.stringify(c
 let CART = loadCart();
 
 function updateCartCount() {
-  const el = document.getElementById("cart-count"), n = CART.reduce((sum, x) => sum + x.qty, 0);
-  el.classList.toggle("hidden", !n); el.textContent = n;  // атрибут hidden перебивается классом inline-grid
+  const el = document.getElementById("cart-count"), n = CART.length; // Считаем только уникальные позиции
+  el.classList.toggle("hidden", !n); el.textContent = n; 
 }
 
 function addToCart(products, button) {
