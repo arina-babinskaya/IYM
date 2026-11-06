@@ -1,0 +1,220 @@
+import json
+
+from fastapi.testclient import TestClient
+
+from app.api.deps import get_gigachat
+from app.consultant_brief import build, parse, transcript
+from app.db import get_sessionmaker
+from app.main import app
+from app.models import ConsultantMessage
+
+READY = {
+    "renovation_type": "cosmetic",
+    "rooms": [{"room_type": "kids_room", "name": "Детская", "length_m": 4, "width_m": "3.5", "windows": 1,
+               "doors": 1, "wishes": [{"text": "светлые обои", "materials": ["wallpaper", "spaceship"]}]}],
+}
+
+
+def test_brief_builds_calculator_rooms_with_defaults():
+    r = build(parse("Вот параметры:\n```json\n" + json.dumps(READY, ensure_ascii=False) + "\n```"))
+    assert r["ready"] and r["missing"] == []
+    room = r["rooms"][0]
+    assert room["room_type"] == "bedroom" and room["renovation_type"] == "cosmetic"
+    assert float(room["height_m"]) == 2.7 and any("высоту потолка" in n for n in r["notes"])
+    assert room["wishes"] == [{"text": "светлые обои", "materials": ["wallpaper"]}]
+    assert room["works"] and all("work_type" in w for w in room["works"])
+    assert float(room["openings_area_m2"]) > 0
+
+
+def test_brief_lists_what_is_missing():
+    r = build(parse('{"rooms": [{"room_type": "kitchen", "length_m": -3}]}'))
+    assert not r["ready"] and r["rooms"] == []
+    assert any("вид ремонта" in m for m in r["missing"]) and any("Кухня: длина" in m for m in r["missing"])
+    r = build(parse('{"renovation_type": "capital", "rooms": [{"room_type": "bathroom", "length_m": 2, "width_m": 2}]}'))
+    assert r["ready"] and r["rooms"][0]["doors"] == 1 and any("типичные" in n for n in r["notes"])
+
+
+def test_transcript_keeps_latest_messages_in_order():
+    t = transcript([("user", "a" * 50), ("assistant", "ответ"), ("user", "спальня 4 на 3")], limit_chars=60)
+    assert t.splitlines() == ["Консультант: ответ", "Клиент: спальня 4 на 3"]
+
+
+class FakeGigaChat:
+    def __init__(self, answer):
+        self.answer, self.seen = answer, None
+
+    async def _chat(self, kind, messages, max_tokens, schema=None):
+        self.seen = messages
+        return {"choices": [{"message": {"content": self.answer}}]}, "key"
+
+    @staticmethod
+    def _content(data):
+        return data["choices"][0]["message"]["content"]
+
+
+def test_brief_endpoint_reads_own_chat_only(db):
+    fake = FakeGigaChat(json.dumps(READY, ensure_ascii=False))
+    app.dependency_overrides[get_gigachat] = lambda: fake
+    try:
+        with TestClient(app) as client:
+            chat = client.post("/api/v1/consultant/chats", json={}).json()
+            empty = client.post(f"/api/v1/consultant/chats/{chat['id']}/brief").json()
+            assert not empty["ready"] and fake.seen is None
+            with get_sessionmaker()() as s:
+                s.add_all([ConsultantMessage(chat_id=chat["id"], exchange_id="e1", role="user",
+                                             content="Детская 4 на 3,5, косметика, хочу светлые обои"),
+                           ConsultantMessage(chat_id=chat["id"], exchange_id="e1", role="assistant",
+                                             content="Хорошо, подберу светлые флизелиновые обои")])
+                s.commit()
+            r = client.post(f"/api/v1/consultant/chats/{chat['id']}/brief").json()
+            assert r["ready"] and r["rooms"][0]["length_m"] == 4
+            assert "Клиент: Детская 4 на 3,5" in fake.seen[1]["content"]
+            with TestClient(app) as stranger:
+                assert stranger.post(f"/api/v1/consultant/chats/{chat['id']}/brief").status_code == 404
+    finally:
+        app.dependency_overrides.clear()
+
+
+def test_brief_rooms_are_accepted_by_estimate(ingested):
+    r = build(parse(json.dumps(READY, ensure_ascii=False)))
+    with TestClient(app) as client:
+        est = client.post("/api/v1/estimate", json={"renovation_type": r["renovation_type"], "rooms": r["rooms"],
+                                                    "explain": False})
+    assert est.status_code == 200, est.text
+    assert est.json()["rooms"][0]["room"]["wishes"][0]["text"] == "светлые обои"
+
+
+def test_brief_adjusts_default_works_by_what_was_asked():
+    draft = dict(READY, rooms=[dict(READY["rooms"][0], room_type="bedroom",
+                                    add_works=["floor_covering_install:floor:линолеум", "wall_painting:wall:",
+                                               "no_such_work"],
+                                    remove_works=["priming:wall:"])])
+    room = build(parse(json.dumps(draft, ensure_ascii=False)))["rooms"][0]
+    works = [w["work_type"] for w in room["works"]]
+    assert "floor_covering_install" in works and "wall_painting" in works and "priming" not in works
+    assert "wallpapering" in works  # default stays
+    assert room["auto"]["added"] == ["Укладка напольных покрытий (линолеум)", "Окраска стен и потолков (стены)"]
+    assert room["auto"]["removed"] == ["Грунтование (стены)"]
+    assert room["auto"]["notes"] == ["Детская: высоту потолка не называли — взяли 2.7 м"]
+    floor = next(w for w in room["works"] if w["work_type"] == "floor_covering_install")
+    assert "linoleum" in floor["materials"]
+
+
+def test_brief_variant_replaces_default_variant():
+    from app.consultant_brief import choose_works
+    from app.schemas import RoomType
+    from app.taxonomy import RenovationType
+
+    works, added, _, replaced = choose_works(RoomType.bedroom, RenovationType.capital, ["floor_covering_install:floor:линолеум"], [])
+    floors = [w for w in works if w["work_type"] == "floor_covering_install"]
+    assert len(floors) == 1 and "linoleum" in floors[0]["materials"] and not added
+    assert replaced == ["Укладка напольных покрытий (ламинат) → Укладка напольных покрытий (линолеум)"]
+    works, added, _, _ = choose_works(RoomType.bedroom, RenovationType.capital, ["floor_covering_install:floor:"], [])
+    assert not added  # already in defaults (laminate)
+
+
+def test_renovation_type_is_required_unless_only_some_works_are_wanted():
+    one_work = {"rooms": [{"room_type": "bedroom", "length_m": 4, "width_m": 3, "add_works": ["wall_painting:wall:"]}]}
+    r = build(parse(json.dumps(one_work)))
+    assert not r["ready"] and "вид ремонта" in r["missing"][0]
+    only = {"rooms": [dict(one_work["rooms"][0], only_works=True)]}
+    r = build(parse(json.dumps(only)))
+    assert r["ready"] and r["renovation_type"] == "cosmetic"
+    room = r["rooms"][0]
+    assert [w["work_type"] for w in room["works"]] == ["wall_painting"] and room["auto"]["only"] is True
+    tiles = {"renovation_type": "capital", "rooms": [{"room_type": "bathroom", "length_m": 2, "width_m": 2,
+                                                     "add_works": ["tiling:floor:"], "only_works": True}]}
+    room = build(parse(json.dumps(tiles)))["rooms"][0]
+    assert room["renovation_type"] == "capital" and [(w["work_type"], w["surface"]) for w in room["works"]] == [("tiling", "floor")]
+
+
+def test_wish_switches_wall_finish_and_invented_facts_are_dropped():
+    from app.consultant_brief import verify
+
+    # kitchen, cosmetic: painting by default; the client wants beige wallpaper
+    draft = parse(json.dumps({"renovation_type": "cosmetic", "rooms": [
+        {"room_type": "kitchen", "length_m": 2, "width_m": 2.5, "wishes": [{"text": "бежевые обои"}]}]}))
+    room = build(verify(draft, "кухня 2 на 2,5, косметический ремонт, хочу бежевые обои"))["rooms"][0]
+    works = [w["work_type"] for w in room["works"]]
+    assert "wallpapering" in works and "wall_painting" not in works
+    assert room["auto"]["replaced"] == ["Окраска стен и потолков (стены) → Оклейка обоями (стены)"]
+    # the model invented renovation type and size: the client never said them
+    draft = parse(json.dumps({"renovation_type": "capital", "rooms": [
+        {"room_type": "bedroom", "length_m": 5, "width_m": 4, "windows": 2}]}))
+    r = build(verify(draft, "хочу обновить спальню, обои бежевые"))
+    assert not r["ready"] and any("вид ремонта" in m for m in r["missing"]) and any("длина" in m for m in r["missing"])
+    assert parse(json.dumps({"rooms": [{"length_m": 3.5}]})).rooms[0].length_m == 3.5
+    from app.consultant_brief import _said
+    assert _said(3.5, "комната 3,5 на 4") and _said(4, "3,5 на 4 метра") and _said(3.5, "350 см")
+    assert not _said(4, "комната 3,5 на 14")
+
+
+def test_wish_for_unavailable_work_is_explained():
+    draft = parse(json.dumps({"renovation_type": "cosmetic", "rooms": [
+        {"room_type": "bathroom", "length_m": 2, "width_m": 2, "wishes": [{"text": "бежевые обои"}]}]}))
+    room = build(draft)["rooms"][0]
+    assert "wall_painting" in [w["work_type"] for w in room["works"]]
+    assert any("такой работы для этого помещения в калькуляторе нет" in n for n in room["auto"]["notes"])
+
+
+def test_wish_warnings_say_honestly_what_was_not_applied():
+    from types import SimpleNamespace
+
+    from app.api.picker import wish_warnings
+    from app.schemas import RoomInput
+
+    room = RoomInput(room_type="bedroom", length_m=4, width_m=3, wishes=[
+        {"text": "светлые обои", "materials": ["wallpaper"]}, {"text": "обои в горошек", "materials": ["wallpaper"]},
+        {"text": "светильник IP44", "materials": ["lighting"]}, {"text": "плитка под мрамор", "materials": ["tile"]}])
+    items = [SimpleNamespace(material="wallpaper", product=object()), SimpleNamespace(material="tile", product=None)]
+    out = wish_warnings(room, items, {"светлые обои"})
+    assert out == ["Спальня: «обои в горошек» — точно такого товара в каталоге не нашлось, выбран ближайший",
+                   "Спальня: «светильник IP44» — в смете нет работ с этим материалом",
+                   "Спальня: «плитка под мрамор» — товара для этой позиции в каталоге нет"]
+
+
+def test_wishes_can_target_any_material():
+    r = build(parse(json.dumps({"renovation_type": "capital", "rooms": [{
+        "room_type": "bathroom", "length_m": 2, "width_m": 2,
+        "wishes": [{"text": "светильники с защитой IP44", "materials": ["lighting"]}]}]})))
+    assert r["rooms"][0]["wishes"] == [{"text": "светильники с защитой IP44", "materials": ["lighting"]}]
+
+
+def test_consultant_gets_missing_data_hint_and_frame_first_prompt(db):
+    from app.consultant_brief import CACHE, missing_hint
+    from app.api.consultant_brief import BriefOut
+    from app.consultant_prompt import CONSULTANT_SYSTEM_PROMPT
+
+    assert CONSULTANT_SYSTEM_PROMPT.index("сначала коротко выясни общую картину") < CONSULTANT_SYSTEM_PROMPT.index("Определи намерение")
+    assert "Не называй конкретные бренды" in CONSULTANT_SYSTEM_PROMPT
+    CACHE["chat-x"] = (5, BriefOut(ready=False, missing=["вид ремонта", "Спальня: длина и ширина комнаты"], notes=[], rooms=[]))
+    hint = missing_hint("chat-x")
+    assert "вид ремонта; Спальня: длина и ширина комнаты" in hint
+    CACHE["chat-x"] = (6, BriefOut(ready=True, missing=[], notes=[], rooms=[]))
+    assert missing_hint("chat-x") == "" and missing_hint("unknown") == ""
+    CACHE.pop("chat-x")
+
+
+def test_hint_is_sent_to_gigachat_with_next_message(db):
+    from app.api.consultant_brief import BriefOut
+    from app.consultant_brief import CACHE
+
+    seen = []
+
+    class Recorder(FakeGigaChat):
+        async def consultant_chat(self, messages):
+            seen.append(messages)
+            return "Какой ремонт планируете и какие размеры спальни?"
+
+    app.dependency_overrides[get_gigachat] = lambda: Recorder("{}")
+    try:
+        with TestClient(app) as client:
+            chat = client.post("/api/v1/consultant/chats", json={}).json()
+            CACHE[chat["id"]] = (1, BriefOut(ready=False, missing=["вид ремонта"], notes=[], rooms=[]))
+            r = client.post(f"/api/v1/consultant/chats/{chat['id']}/messages",
+                            json={"content": "хочу ремонт спальни", "request_id": "req-hint-1"})
+            assert r.status_code == 200, r.text
+            assert seen[0][0]["role"] == "system" and "пока не хватает: вид ремонта" in seen[0][0]["content"]
+    finally:
+        app.dependency_overrides.clear()
+        CACHE.clear()

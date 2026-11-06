@@ -132,6 +132,12 @@ class OpeningInput(BaseModel):
         return (self.width_m * self.height_m * Decimal(str(self.count))).quantize(Decimal("0.01"))
 
 
+class Wish(BaseModel):
+    """Пожелание к отделке: «светлые обои», «тёмный пол под дуб». Ранжировщик поднимает подходящие товары."""
+    text: str = Field(min_length=1, max_length=120)
+    materials: list[Material] | None = None  # к каким материалам относится; пусто — ко всей отделке
+
+
 class RoomInput(BaseModel):
     name: str | None = None
     room_type: RoomType
@@ -150,6 +156,7 @@ class RoomInput(BaseModel):
     is_orthogonal: bool | None = None
     polygon: list[dict[str, float]] | None = None
     openings: list[OpeningInput] | None = None
+    wishes: list[Wish] = Field(default_factory=list, max_length=10)
 
     @model_validator(mode="after")
     def _openings_from_counts(self) -> "RoomInput":

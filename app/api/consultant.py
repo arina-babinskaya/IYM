@@ -19,6 +19,7 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import get_gigachat
 from app.config import get_settings
+from app.consultant_brief import missing_hint
 from app.consultant_prompt import CONSULTANT_SYSTEM_PROMPT, automatic_chat_title, bounded_messages
 from app.db import get_session
 from app.llm.gigachat import GigaChatError
@@ -239,7 +240,7 @@ async def send_message(chat_id: str, body: MessageIn, request: Request, response
             [{"role": x.role, "content": x.content} for x in stored],
             settings.consultant_context_messages, settings.consultant_context_chars,
         )
-        messages = [{"role": "system", "content": CONSULTANT_SYSTEM_PROMPT}, *context,
+        messages = [{"role": "system", "content": CONSULTANT_SYSTEM_PROMPT + missing_hint(chat.id)}, *context,
                     {"role": "user", "content": body.content.strip()}]
         was_empty = not stored; title_source = chat.title_source
         context_ms = int((time.perf_counter() - db_started) * 1000)
@@ -308,7 +309,7 @@ async def edit_message(chat_id: str, message_id: int, body: MessageEdit, request
             [{"role": x.role, "content": x.content} for x in before],
             settings.consultant_context_messages, settings.consultant_context_chars,
         )
-        messages = [{"role": "system", "content": CONSULTANT_SYSTEM_PROMPT}, *context,
+        messages = [{"role": "system", "content": CONSULTANT_SYSTEM_PROMPT + missing_hint(chat.id)}, *context,
                     {"role": "user", "content": content}]
         db.rollback()
         try:

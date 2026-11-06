@@ -8,7 +8,7 @@ from app.catalog.repository import CatalogRepo, to_brief
 from app.config import get_settings
 from app.engine import baseline as engine_baseline
 from app.engine.interface import CalcError
-from app.ml.ranker import BASIS_TITLES, SUITABLE_SHARE, ContextRanker, Scored, characteristics, signals
+from app.ml.ranker import BASIS_TITLES, FINISH, SUITABLE_SHARE, ContextRanker, Scored, characteristics, signals
 from app.schemas import (
     EstimateResponse,
     ExplanationFact,
@@ -17,6 +17,7 @@ from app.schemas import (
     OptionsRequest,
     OptionsResponse,
     ProductCalcRequest,
+    ROOM_TITLES,
     RoomInput,
     RecommendationEvidence,
     Surface,
@@ -58,6 +59,8 @@ def needs_moisture(room: RoomInput, material: Material) -> bool:
 
 def why(s: Scored, check_moisture: bool = False) -> list[str]:
     out = [text for key, text in WHY.items() if s.parts.get(key, 0) > 0]
+    if s.parts.get("wish", 0) > 0 and s.notes:
+        out.insert(0, "как вы просили: " + ", ".join(s.notes))
     if s.parts.get("room_match", 0) > 0:
         out.insert(1, "предназначен для этой комнаты")
     if s.parts.get("price", 0) >= 1.5:
@@ -163,6 +166,7 @@ def add_why(resp: EstimateResponse, repo: CatalogRepo) -> EstimateResponse:
     for room_est in resp.rooms:
         request_room = room_est.room
         room = request_room.model_copy(update={"picks": []})
+        met: set[str] = set()  # пожелания, которые выполнил хотя бы один выбранный товар
         for item in room_est.items:
             if not item.product:
                 continue
@@ -178,12 +182,32 @@ def add_why(resp: EstimateResponse, repo: CatalogRepo) -> EstimateResponse:
                 if selected is None:
                     selected = ranker.score([(p, b)], room)[0]
                 item.why = why(selected, needs_moisture(room, item.material))
+                met.update(selected.notes)
                 if not (b.work_types or []) and not b.confirmed:
                     item.why.append("подобран по материалу: вид работ у товара не указан — проверьте")
                 evidence, explanation = recommendation_evidence(item, request_room, p, b, selected, scored)
                 item.recommendation_evidence = evidence
                 item.recommendation_explanation = explanation
+        resp.warnings.extend(wish_warnings(request_room, room_est.items, met))
     return resp
+
+
+def wish_warnings(room: RoomInput, items, met: set[str]) -> list[str]:
+    """Честно говорим, какие пожелания клиента в смете учесть не удалось и почему."""
+    title = room.name or ROOM_TITLES[room.room_type]
+    out = []
+    for wish in room.wishes:
+        if wish.text in met:
+            continue
+        targets = set(wish.materials) if wish.materials else FINISH
+        lines = [i for i in items if i.material in targets]
+        if any(i.product for i in lines):
+            out.append(f"{title}: «{wish.text}» — точно такого товара в каталоге не нашлось, выбран ближайший")
+        elif lines:
+            out.append(f"{title}: «{wish.text}» — товара для этой позиции в каталоге нет")
+        else:
+            out.append(f"{title}: «{wish.text}» — в смете нет работ с этим материалом")
+    return out
 
 
 SIGNAL_LABELS = {

@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from app.api import catalog_admin, consultant, decor, picker, routes
+from app.api import catalog_admin, consultant, consultant_brief, decor, picker, routes
 from app.config import get_settings
 from app.db import get_sessionmaker, init_db
 from app.decor import INDEX as decor_index
@@ -52,6 +52,7 @@ def create_app() -> FastAPI:
     app.include_router(picker.router)
     app.include_router(decor.router)
     app.include_router(consultant.router)
+    app.include_router(consultant_brief.router)
     app.include_router(routes.health_router)
 
     app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")

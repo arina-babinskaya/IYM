@@ -64,19 +64,20 @@
       </div>
     </a>
     <nav class="flex overflow-x-auto bg-gray-100 p-1 rounded-xl max-w-full">
-      <button data-tab="calc" class="px-3 lg:px-5 py-2 rounded-lg text-xs lg:text-sm whitespace-nowrap font-semibold transition-all bg-white text-brand-red shadow-sm">Калькулятор</button>
+      <button data-tab="consultant" class="px-3 lg:px-5 py-2 rounded-lg text-xs lg:text-sm whitespace-nowrap font-semibold transition-all bg-white text-brand-red shadow-sm">Консультант</button>
+      <button data-tab="calc" class="px-3 lg:px-5 py-2 rounded-lg text-xs lg:text-sm whitespace-nowrap font-semibold transition-all text-gray-600 hover:text-gray-900">Калькулятор</button>
       <button data-tab="crew" class="px-3 lg:px-5 py-2 rounded-lg text-xs lg:text-sm whitespace-nowrap font-semibold transition-all text-gray-600 hover:text-gray-900">Бригада</button>
-      <button data-tab="consultant" class="px-3 lg:px-5 py-2 rounded-lg text-xs lg:text-sm whitespace-nowrap font-semibold transition-all text-gray-600 hover:text-gray-900">Консультант</button>
       <button data-tab="card" class="px-3 lg:px-5 py-2 rounded-lg text-xs lg:text-sm whitespace-nowrap font-semibold transition-all text-gray-600 hover:text-gray-900">Карточка товара</button>
       <button data-tab="decor" class="px-3 lg:px-5 py-2 rounded-lg text-xs lg:text-sm whitespace-nowrap font-semibold transition-all text-gray-600 hover:text-gray-900">Декор и мебель</button>
       <button data-tab="admin" class="px-3 lg:px-5 py-2 rounded-lg text-xs lg:text-sm whitespace-nowrap font-semibold transition-all text-gray-600 hover:text-gray-900">Админка</button>
+      <button data-tab="cart" class="px-3 lg:px-5 py-2 rounded-lg text-xs lg:text-sm whitespace-nowrap font-semibold transition-all text-gray-600 hover:text-gray-900">Корзина <span id="cart-count" class="ml-1 hidden inline-grid place-items-center min-w-[1.25rem] h-5 px-1 rounded-full bg-brand-red text-white text-[11px]"></span></button>
     </nav>
   </div>
 </header>
 
 <main class="flex-1 max-w-6xl w-full mx-auto p-4 md:p-8 grid gap-6">
   
-  <section data-panel="calc" class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+  <section data-panel="calc" class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden" hidden>
     <div class="p-6 md:p-8 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
       <h2 class="text-2xl font-bold">Калькулятор ремонта</h2>
       <label class="flex items-center gap-2 text-sm font-medium text-gray-700">
@@ -139,7 +140,7 @@
     <div class="p-6 md:p-8" id="decor-box"></div>
   </section>
 
-  <section data-panel="consultant" class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden" hidden>
+  <section data-panel="consultant" class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
     <div class="grid md:grid-cols-[260px_1fr] min-h-[70vh]">
       <aside class="border-b md:border-b-0 md:border-r border-gray-200 bg-gray-50 p-4">
         <button id="chat-new" class="w-full bg-brand-red hover:bg-red-900 text-white font-semibold py-2.5 px-4 rounded-xl">+ Новый чат</button>
@@ -160,10 +161,19 @@
             <textarea id="chat-input" rows="2" maxlength="6000" placeholder="Расскажите, что планируете отремонтировать…" class="flex-1 resize-none border border-gray-300 rounded-xl px-4 py-3 outline-none focus:border-brand-blue disabled:bg-gray-100"></textarea>
             <button id="chat-send" class="bg-brand-red hover:bg-red-900 text-white font-semibold px-5 py-3 rounded-xl disabled:opacity-50" disabled>Отправить</button>
           </div>
-          <div class="mt-2 flex justify-between items-center gap-2"><span class="text-[11px] text-gray-400">Enter — отправить, Shift+Enter — новая строка</span><button id="chat-to-calc" class="text-sm font-semibold text-brand-red hover:underline" hidden>Перейти к калькулятору →</button></div>
+          <div class="mt-2 flex justify-between items-center gap-2"><span class="text-[11px] text-gray-400">Enter — отправить, Shift+Enter — новая строка</span></div>
+          <div id="chat-brief-bar" class="mt-2 flex flex-wrap items-center justify-between gap-2 rounded-lg bg-gray-50 border border-gray-200 px-3 py-2 text-xs text-gray-600" hidden>
+            <span id="chat-brief-text"></span>
+            <button id="chat-to-calc" class="text-sm font-semibold bg-brand-red hover:bg-red-900 text-white rounded-lg px-3 py-1.5" hidden>Перейти в калькулятор и рассчитать смету →</button>
+          </div>
         </div>
       </div>
     </div>
+  </section>
+
+  <section data-panel="cart" class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8" hidden>
+    <h2 class="text-2xl font-bold mb-6">Корзина</h2>
+    <div id="cart-box"></div>
   </section>
 
   <section data-panel="admin" class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8" hidden>
@@ -267,6 +277,7 @@ function switchTab(tab) {
   });
   document.querySelectorAll("[data-panel]").forEach(p => p.hidden = p.dataset.panel !== b.dataset.tab || (p.id === "estimate-result" && !p.dataset.filled));
   if (b.dataset.tab === "admin") loadAdmin();
+  if (b.dataset.tab === "cart") renderCart();
   if (b.dataset.tab === "decor" && !D.shown) decorRooms();
   if (b.dataset.tab === "consultant") loadChats();
   if (b.dataset.tab === "crew") CrewBuilder.render();
@@ -1164,7 +1175,7 @@ async function stepWorks() {
   const key = w => [w.work_type, w.surface || "", (w.materials || []).join(",")].join("|");
   const chosen = r.works && new Set(r.works.map(key));
   
-  wizard.innerHTML = `<p class="text-xl font-bold mb-2">Какие работы нужны?</p>
+  wizard.innerHTML = `${briefBanner(r)}<p class="text-xl font-bold mb-2">Какие работы нужны?</p>
     <p class="text-sm text-gray-500 mb-6">${esc(o.room_title)} · ${esc(o.renovation_title)}. Отметили типичные, можно изменить.</p>
     <div class="grid gap-6">${o.stages.map(st => `<div class="bg-gray-50/50 p-4 rounded-xl border border-gray-100"><h4 class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-3">${esc(st.title)}</h4><div class="grid md:grid-cols-2 gap-2">${st.works.map(w => {
         const on = chosen ? chosen.has(key(w)) : w.default;
@@ -1178,13 +1189,16 @@ async function stepWorks() {
   check();
   bindNav(() => {
     r.works = boxes.filter(c => c.checked).map(c => ({ work_type: c.dataset.work, surface: c.dataset.surface || null, materials: c.dataset.materials.split(",").filter(Boolean) }));
+    delete r.auto;
     if (W.editing === null) W.rooms.push(r); else W.rooms[W.editing] = r;
     W.room = {}; W.editing = null;
+    if (W.queue?.length) { const i = W.queue.shift(); W.editing = i; W.room = structuredClone(W.rooms[i]); showStep(3); return; }
     showStep(4);
   });
 }
 
 function stepSummary() {
+  W.queue = [];  // очередь помещений из разговора закончилась или пользователь ушёл к списку
   wizard.innerHTML = `<p class="text-xl font-bold mb-6">Добавленные помещения</p>
     <div class="grid gap-3 mb-6">${W.rooms.map((r, i) => `<div class="flex flex-wrap justify-between items-center bg-white border border-gray-200 p-4 rounded-xl shadow-sm"><div><b class="text-lg text-brand-red">${esc(ROOMS[r.room_type])}</b><div class="text-sm text-gray-600 mt-1">${r.polygon ? `<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200 mr-1.5">2D-план (${r.polygon.length} стен${r.is_orthogonal === false ? ", СНиП +15%" : ""})</span>` : ""}${num(r.length_m)} × ${num(r.width_m)} м (${num(r.custom_floor_area || r.length_m * r.width_m)} м²) · <span class="text-gray-700 font-medium">Окон: ${r.windows || 0}, дверей: ${r.doors || 0} (${num(r.openings_area_m2)} м²)</span> · ${esc(T.renovation[r.renovation_type])} · <span class="text-brand-blue font-medium">${r.works.length} работ</span></div></div><div class="flex gap-2 mt-2 sm:mt-0"><button class="px-3 py-1.5 text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-lg transition-colors" data-edit="${i}">Изменить</button><button class="px-3 py-1.5 text-sm font-medium bg-red-50 text-red-600 hover:bg-red-100 rounded-lg transition-colors" data-del="${i}">✕ Удалить</button></div></div>`).join("") || `<p class="text-gray-500 italic p-4 bg-gray-50 rounded-xl">Пока нет добавленных помещений.</p>`}</div>
     <div class="flex justify-between items-center mt-8 pt-6 border-t border-gray-100"><button class="bg-white border-2 border-brand-blue text-brand-blue hover:bg-blue-50 font-semibold py-2.5 px-6 rounded-xl transition-colors" data-add>+ Добавить помещение</button><button class="bg-brand-red hover:bg-red-900 text-white font-bold py-3 px-8 rounded-xl shadow-md transition-transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed" data-calc ${W.rooms.length ? "" : "disabled"}>Рассчитать смету</button></div>`;
@@ -1355,6 +1369,8 @@ async function runEstimate(keepScroll = false) {
     out.innerHTML = renderEstimate(r);
     CrewBuilder.setEstimate(r);
     document.getElementById("copy-list").onclick = () => copyList(r);
+    document.getElementById("estimate-cart").onclick = e => addToCart(r.rooms.flatMap(room => room.items)
+      .filter(i => i.product && i.packages > 0).map(i => ({ ...i.product, price: i.product.result_price, qty: i.packages })), e.currentTarget);
     bindEstimateButtons(r);
     if (!keepScroll) out.scrollIntoView({ behavior: "smooth" });
   } catch (e) {
@@ -1378,7 +1394,7 @@ function renderEstimate(r) {
   const warns = r.warnings.length ? `<div class="warn mb-6">${r.warnings.map(esc).join("<br>")}</div>` : "";
   const heading = estimateStatus === "unavailable" ? "Смету не удалось рассчитать" : estimateStatus === "partial" ? "Предварительная смета рассчитана частично" : "Ваша смета готова";
   const emptyNotice = estimateStatus === "unavailable" ? `<div class="warn mb-6"><b>Нет рассчитанных товарных позиций.</b><br>Проверьте загрузку и привязки каталога в разделе администратора, затем повторите расчёт.</div>` : "";
-  return `<div class="p-6 md:p-8"><h2 class="text-2xl font-bold mb-6">${heading}</h2>${emptyNotice}${warns}${rooms}<div class="mt-8 p-6 bg-gray-900 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4 shadow-xl"><div><p class="text-gray-400 text-sm font-medium mb-1">${estimateStatus === "unavailable" ? "Стоимость недоступна" : "Общая стоимость материалов"}</p><p class="text-4xl font-extrabold text-white">${rub(r.total)}</p></div><div class="flex flex-wrap gap-3 w-full md:w-auto"><button class="flex-1 md:flex-none bg-gray-800 hover:bg-gray-700 text-white font-semibold py-3 px-6 rounded-xl transition-colors border border-gray-700" id="copy-list">Скопировать</button><button class="flex-1 md:flex-none bg-brand-yellow hover:bg-yellow-500 text-gray-900 font-bold py-3 px-8 rounded-xl transition-colors shadow-md shadow-brand-yellow/20" onclick="alert('Демо: корзину подключит магазин')">В корзину</button><button class="basis-full md:basis-auto bg-brand-red hover:bg-red-900 text-white font-bold py-3 px-6 rounded-xl transition-colors" onclick="switchTab('crew')">Подобрать бригаду</button></div></div><p class="text-center text-xs text-gray-400 mt-4">Рассчитано за ${r.elapsed_ms} мс. Цены ориентировочные.</p></div>`;
+  return `<div class="p-6 md:p-8"><h2 class="text-2xl font-bold mb-6">${heading}</h2>${emptyNotice}${warns}${rooms}<div class="mt-8 p-6 bg-gray-900 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4 shadow-xl"><div><p class="text-gray-400 text-sm font-medium mb-1">${estimateStatus === "unavailable" ? "Стоимость недоступна" : "Общая стоимость материалов"}</p><p class="text-4xl font-extrabold text-white">${rub(r.total)}</p></div><div class="flex flex-wrap gap-3 w-full md:w-auto"><button class="flex-1 md:flex-none bg-gray-800 hover:bg-gray-700 text-white font-semibold py-3 px-6 rounded-xl transition-colors border border-gray-700" id="copy-list">Скопировать</button><button class="flex-1 md:flex-none bg-brand-yellow hover:bg-yellow-500 text-gray-900 font-bold py-3 px-8 rounded-xl transition-colors shadow-md shadow-brand-yellow/20" id="estimate-cart">В корзину</button><button class="basis-full md:basis-auto bg-brand-red hover:bg-red-900 text-white font-bold py-3 px-6 rounded-xl transition-colors" onclick="switchTab('crew')">Подобрать бригаду</button></div></div><p class="text-center text-xs text-gray-400 mt-4">Рассчитано за ${r.elapsed_ms} мс. Цены ориентировочные.</p></div>`;
 }
 
 function copyList(r) {
@@ -1524,7 +1540,7 @@ document.getElementById("autobind").onclick = async () => {
   }
 };
 
-const D = { room: null, style: null, zone: null, kit: null, budget: "standard", furniture: false, picks: {}, skip: [], shown: false };
+const D = { room: null, style: null, zone: null, kit: null, budget: "standard", furniture: false, picks: {}, skip: [], qty: {}, shown: false };
 const furnitureToggle = cls => `<div class="flex bg-gray-100 p-1 rounded-lg text-sm">${[[false, "Только декор"], [true, "Декор и мебель"]].map(([v, t]) => `<button data-furniture="${v}" class="${cls} rounded-md ${v === D.furniture ? "bg-white shadow-sm text-brand-red font-semibold" : "text-gray-600"}">${t}</button>`).join("")}</div>`;
 const BUDGET_TITLES = { economy: "Эконом", standard: "Средний", premium: "Премиум" };
 const decorBox = document.getElementById("decor-box");
@@ -1548,7 +1564,7 @@ async function decorRooms() {
       <input type="file" id="decor-photo" accept="image/jpeg,image/png,image/webp" class="hidden"></label>
     <h3 class="font-semibold text-lg mb-4">Какое помещение оформляем?</h3>
     <div class="grid grid-cols-2 md:grid-cols-4 gap-3">${Object.entries(DECOR_ROOMS).map(([k, v]) => `<button data-room="${k}" class="border-2 border-gray-200 hover:border-brand-red rounded-xl p-4 text-left font-semibold transition-colors">${esc(v)}</button>`).join("")}</div>`;
-  decorBox.querySelectorAll("[data-room]").forEach(b => b.onclick = () => { Object.assign(D, { room: b.dataset.room, kit: null, picks: {}, skip: [] }); decorStyles(); });
+  decorBox.querySelectorAll("[data-room]").forEach(b => b.onclick = () => { Object.assign(D, { room: b.dataset.room, kit: null, picks: {}, skip: [], qty: {} }); decorStyles(); });
   document.getElementById("decor-photo").onchange = e => e.target.files[0] && decorPhoto(e.target.files[0]);
   const zones = await api("/api/v1/decor/zones?counts=false").catch(() => []);
   if (!zones.length) return;
@@ -1570,15 +1586,28 @@ const zoneCard = p => `<div class="border border-gray-200 rounded-xl p-3 flex fl
     ${p.in_stock === false ? `<div class="text-xs text-gray-500">нет в наличии</div>` : ""}
     <b class="mt-auto">${rub(p.price)}</b></div>`;
 
+// Количество у товара в подборке: «−» и «+» на карточке; итог считается здесь же, без запроса к серверу.
+const qtyControl = (key, qty) => `<div class="flex items-center border border-gray-300 rounded-lg overflow-hidden text-sm">
+    <button data-qty-dec="${esc(key)}" class="px-2.5 py-1 hover:bg-gray-100" title="Меньше">−</button>
+    <span class="px-2 min-w-[2rem] text-center font-semibold">${qty}</span>
+    <button data-qty-inc="${esc(key)}" class="px-2.5 py-1 hover:bg-gray-100" title="Больше">+</button></div>`;
+
+function bindQty(get, set, redraw) {
+  decorBox.querySelectorAll("[data-qty-dec]").forEach(b => b.onclick = () => { set(b.dataset.qtyDec, Math.max(1, get(b.dataset.qtyDec) - 1)); redraw(); });
+  decorBox.querySelectorAll("[data-qty-inc]").forEach(b => b.onclick = () => { set(b.dataset.qtyInc, Math.min(99, get(b.dataset.qtyInc) + 1)); redraw(); });
+}
+
 // Нижняя панель подборки, как у сметы: итог, «Скопировать» и «В корзину».
 const decorFooter = (total, label) => `<div class="mt-8 p-6 bg-gray-900 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4 shadow-xl">
     <div><p class="text-gray-400 text-sm font-medium mb-1">${esc(label)}</p><p class="text-4xl font-extrabold text-white">${rub(total)}</p></div>
     <div class="flex flex-wrap gap-3 w-full md:w-auto">
       <button class="flex-1 md:flex-none bg-gray-800 hover:bg-gray-700 text-white font-semibold py-3 px-6 rounded-xl transition-colors border border-gray-700" id="decor-copy">Скопировать</button>
-      <button class="flex-1 md:flex-none bg-brand-yellow hover:bg-yellow-500 text-gray-900 font-bold py-3 px-8 rounded-xl transition-colors shadow-md shadow-brand-yellow/20" onclick="alert('Демо: корзину подключит магазин')">В корзину</button>
+      <button class="flex-1 md:flex-none bg-brand-yellow hover:bg-yellow-500 text-gray-900 font-bold py-3 px-8 rounded-xl transition-colors shadow-md shadow-brand-yellow/20" id="decor-cart">В корзину</button>
     </div></div>`;
 
 function bindDecorCopy(title, lines, total) {
+  const cart = document.getElementById("decor-cart");
+  if (cart) cart.onclick = () => addToCart(lines.filter(x => x.product).map(x => ({ ...x.product, qty: x.qty })), cart);
   const btn = document.getElementById("decor-copy"); if (!btn) return;
   btn.onclick = () => {
     const text = [title, ...lines.filter(x => x.product).map(x => `  ${x.title}: ${x.product.name} — ${x.qty > 1 ? `${x.qty} шт. × ${rub(x.product.price)} = ` : ""}${rub(x.cost ?? x.product.price)}`), `Итого: ${rub(total)}`].join("\n");
@@ -1616,6 +1645,7 @@ async function decorPhoto(file) {
 function decorPhotoResult(image) {
   showDecorHome(true);
   const r = D.photo;
+  r.objects.forEach(x => { x.qty ??= 1; x.cost = x.product ? Number(x.product.price) * x.qty : 0; });
   const card = (x, i) => {
     const p = x.product, d = x.detected;
     const seen = [d.name, d.color, d.material].filter(Boolean).join(", ");
@@ -1625,11 +1655,12 @@ function decorPhotoResult(image) {
       ${p ? `${p.picture_url ? `<img src="${esc(p.picture_url)}" alt="" class="w-full h-40 object-contain bg-white rounded-lg">` : `<div class="w-full h-40 bg-gray-100 rounded-lg"></div>`}
       <div class="font-semibold text-sm leading-snug">${esc(p.name)}</div>
       <div class="flex flex-wrap">${p.in_stock === false ? `<span class="pill">нет в наличии</span>` : ""}${p.why.map(w => `<span class="pill">${esc(w)}</span>`).join("")}</div>
-      <div class="mt-auto flex justify-between items-end"><span class="text-sm text-gray-500">вариантов: ${x.alternatives.length}</span><b>${rub(p.price)}</b></div>
-      <button data-photo-replace="${i}" class="bg-white border border-gray-300 hover:bg-gray-50 rounded-lg py-1.5 text-sm font-semibold">Заменить</button>`
-      : `<div class="text-sm text-gray-400">в каталоге не нашлось</div>`}</div>`;
+      <div class="text-xs text-gray-500">вариантов: ${x.alternatives.length}</div>
+      <div class="mt-auto flex justify-between items-center gap-2">${qtyControl(i, x.qty)}<span class="text-right"><span class="block text-xs text-gray-500">${x.qty > 1 ? `${x.qty} × ${rub(p.price)}` : "&nbsp;"}</span><b>${rub(x.cost)}</b></span></div>
+      <div class="flex gap-2"><button data-photo-replace="${i}" class="flex-1 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg py-1.5 text-sm font-semibold">Заменить</button><button data-photo-remove="${i}" class="bg-white border border-gray-300 hover:bg-gray-50 rounded-lg py-1.5 px-3 text-sm" title="Убрать из подборки">✕</button></div>`
+      : `<div class="text-sm text-gray-400">в каталоге не нашлось</div><button data-photo-remove="${i}" class="text-left text-sm text-gray-400 underline mt-auto">убрать</button>`}</div>`;
   };
-  const total = r.objects.reduce((sum, x) => sum + (x.product ? Number(x.product.price) : 0), 0);
+  const total = r.objects.reduce((sum, x) => sum + x.cost, 0);
   decorBox.innerHTML = `<div class="flex flex-wrap justify-between items-center gap-3 mb-5">
       <div><h3 class="font-bold text-xl">Похожее на фото</h3><div class="text-sm text-gray-500">${r.style_title ? `стиль: ${esc(r.style_title)} · ` : ""}предметов: ${r.objects.length}</div></div>
       ${backBtn("← Другое фото", "decorRooms()")}</div>
@@ -1640,6 +1671,8 @@ function decorPhotoResult(image) {
     ${total ? decorFooter(total, "Стоимость похожих товаров") : ""}`;
   bindDecorCopy(`Похожее на фото${r.style_title ? ` (${r.style_title})` : ""}:`, r.objects, total);
   decorBox.querySelectorAll("[data-photo-replace]").forEach(b => b.onclick = () => decorPhotoReplace(Number(b.dataset.photoReplace), image));
+  decorBox.querySelectorAll("[data-photo-remove]").forEach(b => b.onclick = () => { r.objects.splice(Number(b.dataset.photoRemove), 1); decorPhotoResult(image); });
+  bindQty(k => r.objects[Number(k)].qty, (k, v) => { r.objects[Number(k)].qty = v; }, () => decorPhotoResult(image));
 }
 
 function decorPhotoReplace(i, image) {
@@ -1675,7 +1708,7 @@ async function decorZoneKits(zone) {
       <div class="text-xs font-semibold text-gray-500 mt-3">позиций: ${k.positions}</div></button>`).join("")}</div>
     <button id="zone-all" class="mt-6 text-sm font-semibold text-brand-red underline">Смотреть все товары зоны (${num(z.total)})</button>`;
   decorBox.querySelectorAll("[data-budget]").forEach(b => b.onclick = () => { D.budget = b.dataset.budget; decorZoneKits(zone); });
-  decorBox.querySelectorAll("[data-kit]").forEach(b => b.onclick = () => { Object.assign(D, { zone, kit: b.dataset.kit, picks: {}, skip: [] }); decorResult(); });
+  decorBox.querySelectorAll("[data-kit]").forEach(b => b.onclick = () => { Object.assign(D, { zone, kit: b.dataset.kit, picks: {}, skip: [], qty: {} }); decorResult(); });
   document.getElementById("zone-all").onclick = () => decorZone(zone);
 }
 
@@ -1720,7 +1753,7 @@ async function decorStyles() {
       <div class="text-xs font-semibold mt-3 ${s.slots_found === s.slots_total ? "text-green-700" : "text-gray-500"}">в стиле найдено ${s.slots_found} из ${s.slots_total} позиций</div></button>`).join("")}</div>`;
   decorBox.querySelectorAll("[data-budget]").forEach(b => b.onclick = () => { D.budget = b.dataset.budget; decorStyles(); });
   decorBox.querySelectorAll("[data-furniture]").forEach(b => b.onclick = () => { D.furniture = b.dataset.furniture === "true"; decorStyles(); });
-  decorBox.querySelectorAll("[data-style]").forEach(b => b.onclick = () => { Object.assign(D, { style: b.dataset.style, kit: null, picks: {}, skip: [] }); decorResult(); });
+  decorBox.querySelectorAll("[data-style]").forEach(b => b.onclick = () => { Object.assign(D, { style: b.dataset.style, kit: null, picks: {}, skip: [], qty: {} }); decorResult(); });
 }
 
 async function decorResult() {
@@ -1732,13 +1765,21 @@ async function decorResult() {
       : await api("/api/v1/decor", { method: "POST", body: JSON.stringify({ room_type: D.room, style: D.style, budget: D.budget, furniture: D.furniture, picks: D.picks, skip: D.skip }) });
   }
   catch (e) { decorBox.innerHTML = `<div class="warn">${esc(e.message)}</div>`; return; }
+  D.result = r;
+  renderDecorResult();
+}
+
+function renderDecorResult() {
+  const r = D.result;
+  r.items.forEach(x => { x.baseQty ??= x.qty; x.qty = D.qty[x.slot] ?? x.baseQty; x.cost = x.product ? Number(x.product.price) * x.qty : 0; });
+  r.total = r.items.reduce((sum, x) => sum + x.cost, 0);
   const img = p => p.picture_url ? `<img src="${esc(p.picture_url)}" alt="" class="w-full h-40 object-contain bg-white rounded-lg">` : `<div class="w-full h-40 bg-gray-100 rounded-lg"></div>`;
   const card = x => x.product ? `<div class="border border-gray-200 rounded-xl p-4 flex flex-col gap-2 bg-white">
       ${img(x.product)}
       <div class="text-xs font-semibold uppercase tracking-wide text-gray-500">${esc(x.title)}</div>
       <div class="font-semibold text-sm leading-snug">${esc(x.product.name)}</div>
       <div class="flex flex-wrap">${x.product.in_stock === false ? `<span class="pill">нет в наличии</span>` : ""}${x.product.why.map(w => `<span class="pill">${esc(w)}</span>`).join("")}</div>
-      <div class="mt-auto flex justify-between items-end"><span class="text-sm text-gray-500">${x.qty > 1 ? `${x.qty} × ${rub(x.product.price)}` : ""}</span><b>${rub(x.cost)}</b></div>
+      <div class="mt-auto flex justify-between items-center gap-2">${qtyControl(x.slot, x.qty)}<span class="text-right"><span class="block text-xs text-gray-500">${x.qty > 1 ? `${x.qty} × ${rub(x.product.price)}` : "&nbsp;"}</span><b>${rub(x.cost)}</b></span></div>
       <div class="flex gap-2"><button data-replace="${x.slot}" class="flex-1 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg py-1.5 text-sm font-semibold">Заменить</button><button data-skip="${x.slot}" class="bg-white border border-gray-300 hover:bg-gray-50 rounded-lg py-1.5 px-3 text-sm" title="Убрать из подборки">✕</button></div>
     </div>` : `<div class="border border-dashed border-gray-300 rounded-xl p-4 text-sm text-gray-400 flex flex-col justify-between"><div><div class="text-xs font-semibold uppercase tracking-wide">${esc(x.title)}</div><div class="mt-2">в каталоге не нашлось</div></div><button data-skip="${x.slot}" class="text-left underline mt-3">убрать</button></div>`;
   decorBox.innerHTML = `<div class="flex flex-wrap justify-between items-center gap-3 mb-5">
@@ -1754,6 +1795,7 @@ async function decorResult() {
   decorBox.querySelectorAll("[data-furniture]").forEach(b => b.onclick = () => { D.furniture = b.dataset.furniture === "true"; decorResult(); });
   decorBox.querySelectorAll("[data-skip]").forEach(b => b.onclick = () => { D.skip.push(b.dataset.skip); decorResult(); });
   decorBox.querySelectorAll("[data-replace]").forEach(b => b.onclick = () => decorReplace(r.items.find(x => x.slot === b.dataset.replace)));
+  bindQty(k => r.items.find(x => x.slot === k).qty, (k, v) => { D.qty[k] = v; }, renderDecorResult);
 }
 
 async function decorReplace(line) {
@@ -1823,11 +1865,10 @@ function renderMessages() {
   }
   if (state?.loading) chatMessages.insertAdjacentHTML("beforeend", '<div class="flex justify-start"><div class="bg-gray-100 rounded-2xl px-4 py-3 text-gray-500 animate-pulse">Консультант печатает…</div></div>');
   chatMessages.scrollTop = chatMessages.scrollHeight;
-  const hasAdvice = messages.some(m => m.role === "assistant" && /рекоменд|учесть|материал/i.test(m.content));
-  document.getElementById("chat-to-calc").hidden = !hasAdvice;
 }
 
 function setChatControls() {
+  drawBriefCard(); refreshBrief();
   // Без открытого чата писать тоже можно: чат создастся при отправке первого сообщения.
   const state = activeChatState(); chatInput.disabled = !!state && (state.loading || state.deleting);
   chatSend.disabled = (!!state && (state.loading || state.deleting)) || !chatInput.value.trim();
@@ -2022,7 +2063,119 @@ chatMessages.oninput = e => { if (e.target.matches("[data-edit-input]")) { const
 chatInput.oninput = () => { const state = activeChatState(); if (state) state.draft = chatInput.value; setChatControls(); };
 chatInput.onkeydown = e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendChat(); } };
 chatSend.onclick = sendChat;
-document.getElementById("chat-to-calc").onclick = () => switchTab("calc");
+document.getElementById("chat-to-calc").onclick = () => {
+  const b = BRIEF[C.store.active]?.data;
+  if (b?.ready) openBriefInCalculator(b); else switchTab("calc");
+};
+
+// Разговор → смета. После каждого ответа консультанта сервер проверяет, хватает ли данных для калькулятора
+// (помещение, размеры, вид ремонта), и в конце переписки появляется карточка: что ещё нужно узнать
+// или «всё собрано» с кнопкой. Кнопка открывает шаг «Работы» с уже расставленными галочками.
+const BRIEF = {};  // чат → { lastId, data | error | loading }
+
+async function refreshBrief() {
+  const chatId = C.store.active, state = activeChatState();
+  const last = state?.messages?.[state.messages.length - 1];
+  if (!chatId || state.loading || !last || last.role !== "assistant" || !last.id) return;
+  if (BRIEF[chatId]?.lastId === last.id) return;
+  BRIEF[chatId] = { lastId: last.id, loading: true }; drawBriefCard();
+  try { BRIEF[chatId] = { lastId: last.id, data: await api(`/api/v1/consultant/chats/${chatId}/brief`, { method: "POST" }) }; }
+  catch (e) { BRIEF[chatId] = { lastId: last.id, error: e.message }; }
+  if (C.store.active === chatId) drawBriefCard();
+}
+
+function drawBriefCard() {
+  // Полоска под полем ввода: чего ещё не хватает для сметы или «всё собрано» с кнопкой в калькулятор.
+  const bar = document.getElementById("chat-brief-bar"), text = document.getElementById("chat-brief-text");
+  const go = document.getElementById("chat-to-calc");
+  const chatId = C.store.active, state = activeChatState(), b = chatId && BRIEF[chatId];
+  go.hidden = true;
+  if (!b || !state?.messages?.length) { bar.hidden = true; return; }
+  bar.hidden = false;
+  if (b.loading) { text.innerHTML = `<span class="animate-pulse">Проверяю, хватает ли данных для сметы…</span>`; return; }
+  if (b.error) { text.textContent = `Смету по разговору пока не посчитать: ${b.error}`; return; }
+  if (!b.data.ready) { text.innerHTML = `<b>Для сметы не хватает:</b> ${b.data.missing.map(esc).join("; ")}`; return; }
+  const rooms = b.data.rooms.map(r => `${esc(r.name || ROOMS[r.room_type])} ${num(r.length_m)} × ${num(r.width_m)} м, ${esc((T.renovation[r.renovation_type] || "").toLowerCase())}`);
+  text.innerHTML = `<b class="text-green-700">Всё для сметы собрано:</b> ${rooms.join("; ")}`;
+  go.hidden = false;
+}
+
+function openBriefInCalculator(b) {
+  // Помещения из разговора кладём в мастер и открываем шаг «Работы» по очереди для каждого помещения:
+  // галочки уже расставлены (по умолчанию + что человек попросил), пользователь проверяет и жмёт «Готово».
+  W.rooms = b.rooms.map(r => structuredClone(r));
+  W.queue = W.rooms.map((_, i) => i).slice(1);
+  W.editing = 0; W.room = structuredClone(W.rooms[0]);
+  switchTab("calc"); showStep(3);
+}
+
+// Плашка над шагом «Работы», если помещение пришло из разговора с консультантом.
+function briefBanner(r) {
+  if (!r.auto) return "";
+  const wishes = (r.wishes || []).map(w => w.text);
+  const line = (label, items) => items.length ? `<div class="mt-1">${label}: ${items.map(esc).join(", ")}.</div>` : "";
+  return `<div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6 text-sm text-gray-700">
+    <b>Подобрано автоматически по разговору с консультантом.</b> ${r.auto.only ? "Вы сказали, что нужны только отдельные работы, — отметили только их" : `Отметили типичные работы для этого ремонта${r.auto.added.length || r.auto.removed.length ? " и поправили по вашим словам" : ""}`}. Проверьте и при необходимости измените галочки.
+    ${line(r.auto.only ? "Отметили" : "Добавили, потому что вы просили", r.auto.added)}${line("Убрали, потому что вы сказали, что не нужно", r.auto.removed)}${line("Заменили по вашим пожеланиям", r.auto.replaced || [])}
+    ${line("Пожелания учтём при подборе товаров", wishes)}
+    ${r.auto.notes?.length ? `<div class="mt-1 text-gray-500">${r.auto.notes.map(esc).join("<br>")}</div>` : ""}</div>`;
+}
+
+// Корзина: хранится в браузере (localStorage), товары добавляются из сметы и из «Декора и мебели».
+const CART_KEY = "repaircalc-cart-v1";
+const loadCart = () => { try { return JSON.parse(localStorage.getItem(CART_KEY)) || []; } catch { return []; } };
+const saveCart = cart => { try { localStorage.setItem(CART_KEY, JSON.stringify(cart)); } catch { /* приватный режим: корзина живёт до перезагрузки */ } CART = cart; updateCartCount(); };
+let CART = loadCart();
+
+function updateCartCount() {
+  const el = document.getElementById("cart-count"), n = CART.reduce((sum, x) => sum + x.qty, 0);
+  el.classList.toggle("hidden", !n); el.textContent = n;  // атрибут hidden перебивается классом inline-grid
+}
+
+function addToCart(products, button) {
+  const cart = CART.map(x => ({ ...x }));
+  for (const p of products) {
+    const price = Number(p.price ?? p.result_price ?? 0), qty = Math.max(1, Number(p.qty) || 1);
+    const row = cart.find(x => x.id === p.id);
+    if (row) row.qty = Math.min(999, row.qty + qty);
+    else cart.push({ id: p.id, name: p.name, price, qty, unit: p.unit || "шт.", picture_url: p.picture_url || null });
+  }
+  saveCart(cart);
+  if (button) {
+    const old = button.textContent;
+    button.textContent = products.length ? `Добавлено ✓ (${products.length})` : "Нет товаров для корзины";
+    setTimeout(() => button.textContent = old, 1500);
+  }
+}
+
+function renderCart() {
+  const box = document.getElementById("cart-box");
+  if (!CART.length) { box.innerHTML = `<p class="text-gray-500">Корзина пуста. Добавьте товары из сметы или из раздела «Декор и мебель» кнопкой «В корзину».</p>`; return; }
+  const total = CART.reduce((sum, x) => sum + x.price * x.qty, 0);
+  box.innerHTML = `<div class="grid gap-3">${CART.map((x, i) => `<div class="flex flex-wrap md:flex-nowrap items-center gap-4 border border-gray-200 rounded-xl p-3">
+      ${x.picture_url ? `<img src="${esc(x.picture_url)}" alt="" class="w-16 h-16 object-contain">` : `<div class="w-16 h-16 bg-gray-100 rounded"></div>`}
+      <div class="flex-1 min-w-[12rem]"><div class="font-semibold text-sm">${esc(x.name)}</div><div class="text-xs text-gray-500 mt-1">${rub(x.price)} за ${esc(x.unit)}</div></div>
+      <div class="flex items-center border border-gray-300 rounded-lg overflow-hidden text-sm"><button data-cart-dec="${i}" class="px-2.5 py-1 hover:bg-gray-100">−</button><span class="px-2 min-w-[2rem] text-center font-semibold">${x.qty}</span><button data-cart-inc="${i}" class="px-2.5 py-1 hover:bg-gray-100">+</button></div>
+      <b class="w-28 text-right">${rub(x.price * x.qty)}</b>
+      <button data-cart-del="${i}" class="text-gray-400 hover:text-brand-red px-2" title="Удалить">✕</button></div>`).join("")}</div>
+    <div class="mt-8 p-6 bg-gray-900 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4 shadow-xl">
+      <div><p class="text-gray-400 text-sm font-medium mb-1">Итого в корзине · товаров: ${CART.reduce((s, x) => s + x.qty, 0)}</p><p class="text-4xl font-extrabold text-white">${rub(total)}</p></div>
+      <div class="flex flex-wrap gap-3 w-full md:w-auto">
+        <button id="cart-clear" class="flex-1 md:flex-none bg-gray-800 hover:bg-gray-700 text-white font-semibold py-3 px-6 rounded-xl border border-gray-700">Очистить</button>
+        <button id="cart-copy" class="flex-1 md:flex-none bg-gray-800 hover:bg-gray-700 text-white font-semibold py-3 px-6 rounded-xl border border-gray-700">Скопировать</button>
+        <button class="flex-1 md:flex-none bg-brand-yellow hover:bg-yellow-500 text-gray-900 font-bold py-3 px-8 rounded-xl" onclick="alert('Демо: оформление заказа подключит магазин')">Оформить заказ</button>
+      </div></div>`;
+  const change = (i, f) => { const cart = CART.map(x => ({ ...x })); f(cart, i); saveCart(cart.filter(x => x.qty > 0)); renderCart(); };
+  box.querySelectorAll("[data-cart-dec]").forEach(b => b.onclick = () => change(Number(b.dataset.cartDec), (c, i) => { c[i].qty = Math.max(1, c[i].qty - 1); }));
+  box.querySelectorAll("[data-cart-inc]").forEach(b => b.onclick = () => change(Number(b.dataset.cartInc), (c, i) => { c[i].qty = Math.min(999, c[i].qty + 1); }));
+  box.querySelectorAll("[data-cart-del]").forEach(b => b.onclick = () => change(Number(b.dataset.cartDel), (c, i) => { c[i].qty = 0; }));
+  document.getElementById("cart-clear").onclick = () => { if (confirm("Очистить корзину?")) { saveCart([]); renderCart(); } };
+  document.getElementById("cart-copy").onclick = e => {
+    const text = ["Корзина:", ...CART.map(x => `  ${x.name} — ${x.qty} × ${rub(x.price)} = ${rub(x.price * x.qty)}`), `Итого: ${rub(total)}`].join("\n");
+    navigator.clipboard.writeText(text).then(() => { e.target.textContent = "Скопировано ✓"; setTimeout(() => e.target.textContent = "Скопировать", 1500); });
+  };
+}
+updateCartCount();
 
 api("/api/v1/taxonomy").then(t => {
   t.stages.forEach(s => T.stages[s.id] = s.title);
@@ -2032,6 +2185,7 @@ api("/api/v1/taxonomy").then(t => {
   t.room_types.forEach(r => { ROOMS[r.id] = r.title; ROOM_OPENINGS[r.id] = [r.windows, r.doors]; });
   showStep(0);
   searchProducts();
+  if (document.querySelector('nav button[data-tab="consultant"]').classList.contains("bg-white")) switchTab("consultant");  // консультант — первая вкладка
 }).catch(e => {
   console.error("Ошибка загрузки таксономии:", e);
   document.getElementById("wizard").innerHTML = `<div class="warn">Не удалось загрузить данные справочников. Проверьте, запущен ли сервер и обновлена ли база (флаг --reload-data).</div>`;

@@ -6,7 +6,7 @@ from sqlalchemy import inspect, select
 from sqlalchemy.orm import object_session
 from sqlalchemy.orm.attributes import set_committed_value
 
-from app.models import Product, ProductBinding
+from app.models import Product, ProductBinding, ProductCharacteristic
 from app.schemas import Level, RoomInput, RoomType
 from app.taxonomy import Material
 
@@ -145,7 +145,7 @@ RULES: list[Rule] = [
 ]
 
 BASE_WEIGHTS = {"in_stock": 1.0, "calculable": 2.0, "confirmed": 1.0, "recsys": 1.5, "rating": 1.0, "room_match": 3.0,
-                "price": 2.0}
+                "price": 2.0, "wish": 1.0}
 SUITABLE_SHARE = 0.8
 BASIS_TITLES = {"m2": "₽/м²", "l": "₽/л", "kg": "₽/кг", "m": "₽/м", "pcs": "₽/шт"}
 
@@ -164,6 +164,7 @@ class Scored:
     quality: float = 0.0
     unit_price: float | None = None
     basis: str = "pcs"
+    notes: list[str] = field(default_factory=list)  # какие пожелания клиента товар выполняет
 
 
 def _num(v: object) -> float | None:
@@ -463,6 +464,68 @@ def _percentile(values: list[float | None]) -> list[float]:
     return [0.0 if v is None else pos[v] for v in values]
 
 
+# Пожелания клиента («светлые обои», «тёмный пол»): тон, цвет и слова сверяются с названием и цветом товара.
+LIGHT = re.compile(r"светл|\bбел(?!ь)|молоч|беж|кремов|пастел|айвори|ivory|слонов|ванил|песоч|жемчуж|белен|белён", re.I)
+DARK = re.compile(r"т[её]мн|черн|чёрн|графит|венге|антрацит|шоколад|махагон|мокко", re.I)
+_WISH_WORD = re.compile(r"[а-яёa-z]{4,}", re.I)
+_WISH_STOP = {"обои", "обоев", "краск", "стены", "стен", "пола", "полу", "поло", "потол", "комна", "хочу", "нужн",
+              "цвета", "цвет", "оттен", "тона", "тонов", "очень", "чтобы", "можн", "какие", "какой", "плитк", "ламин",
+              "линол", "отдел", "ремон", "делат", "сделат", "лучше", "стене", "стена"}
+_WISH_CHAR = re.compile(r"цвет|оттенок|тон|рисунок|дизайн|декор|фактур|поверхн", re.I)
+
+
+def _wish_stems(text: str) -> set[str]:
+    stems = {w.lower()[:5] for w in _WISH_WORD.findall(text)}
+    return {x for x in stems if x not in _WISH_STOP and not LIGHT.match(x) and not DARK.match(x)}
+
+
+def _wish_texts(items: list[tuple[Product, ProductBinding]]) -> dict[int, str]:
+    """Название товара плюс его цвет и рисунок из характеристик (один запрос на всех кандидатов)."""
+    texts = {p.id: p.name or "" for p, _ in items}
+    for p, _ in items:  # характеристики, уже загруженные с карточкой товара
+        raw = p.raw if "raw" not in inspect(p).unloaded else None
+        for ch in (raw or {}).get("characteristics") or []:
+            if isinstance(ch, dict) and ch.get("value") and _WISH_CHAR.search(str(ch.get("name") or "")):
+                texts[p.id] += " " + str(ch["value"])
+    session = object_session(items[0][0]) if items else None
+    if session is None:
+        return texts
+    ids = [pid for pid in texts if pid is not None]
+    for start in range(0, len(ids), 900):
+        for pid, name, value in session.execute(
+                select(ProductCharacteristic.product_id, ProductCharacteristic.name, ProductCharacteristic.value_raw)
+                .where(ProductCharacteristic.product_id.in_(ids[start:start + 900]))):
+            if value and _WISH_CHAR.search(name or ""):
+                texts[pid] += " " + value
+    return texts
+
+
+def _wish_bonus(text: str, material: Material | None, wishes) -> tuple[float, list[str]]:
+    from app.decor import COLOR_FAMILIES  # общий словарь цветов с декором
+
+    total, matched = 0.0, []
+    have_families = {k for k, rx in COLOR_FAMILIES.items() if k != "multi" and rx.search(text)}
+    for wish in wishes:
+        if wish.materials and material not in wish.materials:
+            continue
+        if not wish.materials and material not in FINISH:
+            continue
+        v = 0.0
+        light, dark = LIGHT.search(text), DARK.search(text)
+        if LIGHT.search(wish.text):
+            v += 3 if light and not dark else -2 if dark else 0
+        if DARK.search(wish.text):
+            v += 3 if dark and not light else -2 if light else 0
+        want = {k for k, rx in COLOR_FAMILIES.items() if k != "multi" and rx.search(wish.text)}
+        if want:
+            v += 3 if want & have_families else -1 if have_families else 0
+        v += min(len(_wish_stems(wish.text) & _wish_stems(text)), 3)  # «флизелиновые», «моющиеся», «33 класс»
+        if v > 0:
+            matched.append(wish.text)
+        total += v
+    return total, matched
+
+
 class ContextRanker:
     def __init__(self, rules: list[Rule] | None = None, base_weights: dict[str, float] | None = None):
         self.rules = RULES if rules is None else rules
@@ -484,6 +547,7 @@ class ContextRanker:
         if len(items) < 2:
             cheap = [0.0] * len(items)
         picked = {pid: i for i, pid in enumerate(room.picks)}
+        wish_texts = _wish_texts(items) if room.wishes else {}
 
         scored = []
         for (p, b), pr, rs, (up, basis), ch in zip(items, profiles, recsys, prices, cheap):
@@ -502,11 +566,15 @@ class ContextRanker:
             for r in self.rules:
                 if sig.get(r.signal) and r.applies(material, room):
                     parts[r.signal] = parts.get(r.signal, 0.0) + r.weight * sig[r.signal]
+            notes = []
+            if room.wishes:
+                bonus, notes = _wish_bonus(wish_texts.get(p.id, p.name or ""), material, room.wishes)
+                parts["wish"] = w.get("wish", 1.0) * bonus
             quality = sum(parts.values())
             parts["price"] = self.base_weights["price"] * ch
             parts = {k: round(v, 4) for k, v in parts.items() if v}
             scored.append(Scored(p, round(sum(parts.values()), 4), parts, pr.filled, round(quality, 4),
-                                 up, basis))
+                                 up, basis, notes))
 
         scored.sort(key=lambda s: (picked.get(s.product.id, len(picked)), -s.score, -s.filled, s.product.id))
         return scored

@@ -330,3 +330,28 @@ def test_typical_putty_excludes_automotive():
     assert not is_typical(Material.putty, 'Шпатлевка со стекловолокном авто 250г')
     assert is_typical(Material.putty, 'Шпатлевка гипсовая ВОЛМА Шов 20кг')
     assert is_typical(Material.putty, 'Шпатлевка финишная гипсо-полимерная FORMAN 25 20кг')
+
+
+def test_wishes_lift_matching_finish_products():
+    from app.schemas import Wish
+
+    dark = item(1, "wallpaper", "обои виниловые на флизелине Графит", chars={"Цвет обоев": "темно-серый"}, **PACK)
+    light = item(2, "wallpaper", "обои виниловые на флизелине Бриз", chars={"Цвет обоев": "светло-бежевый"},
+                 price=150, **PACK)
+    plain = ContextRanker().rank([dark, light], room())
+    assert ids(plain) == [1, 2]  # without wishes the cheaper one wins
+    wished = room(wishes=[Wish(text="светлые обои", materials=["wallpaper"])])
+    scored = ContextRanker().score([dark, light], wished)
+    assert [s.product.id for s in scored] == [2, 1]
+    assert scored[0].notes == ["светлые обои"] and scored[1].parts.get("wish", 0) < 0
+    paint_only = room(wishes=[Wish(text="светлые", materials=["paint"])])
+    assert ids(ContextRanker().rank([dark, light], paint_only)) == [1, 2]  # wish for paint leaves wallpaper alone
+
+
+def test_wish_colour_and_words():
+    from app.schemas import Wish
+
+    oak = item(1, "laminate", "ламинат 33 класс дуб натуральный", chars={"Цвет": "дуб светлый"}, **PACK)
+    grey = item(2, "laminate", "ламинат 33 класс бетон", chars={"Цвет": "серый"}, **PACK)
+    r = room(wishes=[Wish(text="пол под светлое дерево")])
+    assert ids(ContextRanker().rank([grey, oak], r)) == [1, 2]
