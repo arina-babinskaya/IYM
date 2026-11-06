@@ -218,3 +218,45 @@ def test_hint_is_sent_to_gigachat_with_next_message(db):
     finally:
         app.dependency_overrides.clear()
         CACHE.clear()
+
+
+def test_wish_materials_are_inferred_from_words():
+    r = build(parse(json.dumps({"renovation_type": "capital", "rooms": [{
+        "room_type": "bathroom", "length_m": 2, "width_m": 2,
+        "wishes": [{"text": "светильники с защитой IP44"}, {"text": "белая затирка"}]}]})))
+    assert [w["materials"] for w in r["rooms"][0]["wishes"]] == [["lighting"], ["grout"]]
+    from app.consultant_brief import prompt
+    assert len(prompt("")[0]["content"]) < 3500  # every check costs tokens: keep the instruction short
+
+
+def test_brief_rate_limit_returns_previous_result(monkeypatch):
+    from app.api import consultant_brief as api_brief
+    from app.llm.gigachat import GigaChatError
+    import asyncio
+    from fastapi import HTTPException
+
+    class Busy:
+        async def _chat(self, *a, **k):
+            raise GigaChatError("GigaChat HTTP 429", kind="rate_limit")
+
+    class Msg:
+        def __init__(self, i, role, content): self.id, self.role, self.content = i, role, content
+
+    class Chat: id = "c-busy"
+    monkeypatch.setattr(api_brief, "_chat_or_404", lambda *a: Chat())
+    monkeypatch.setattr(api_brief, "_owner", lambda *a: "o")
+    msgs = [Msg(1, "user", "кухня 3 на 3"), Msg(2, "assistant", "ок")]
+    monkeypatch.setattr(api_brief, "_messages", lambda *a: msgs)
+
+    class Db:
+        def rollback(self): pass
+    run = lambda: asyncio.run(api_brief.chat_brief("c-busy", None, None, Db(), Busy()))
+    api_brief.brief.CACHE.pop("c-busy", None)
+    try:
+        run(); assert False
+    except HTTPException as exc:
+        assert exc.status_code == 429
+    prev = api_brief.BriefOut(ready=False, missing=["вид ремонта"], notes=[], rooms=[])
+    api_brief.brief.CACHE["c-busy"] = (1, prev)
+    assert run() is prev
+    api_brief.brief.CACHE.pop("c-busy", None)

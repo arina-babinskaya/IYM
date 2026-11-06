@@ -15,7 +15,7 @@ from pydantic import BaseModel, ValidationError, field_validator
 from app.llm.gigachat import GigaChatError
 from app.plans import OPTIONS, Option, work_materials, works_for_room
 from app.schemas import ROOM_DEFAULT_OPENINGS, ROOM_TITLES, RoomInput, RoomType
-from app.taxonomy import MATERIAL_TITLES, RENOVATION_TITLES, WORKS, Material, RenovationType
+from app.taxonomy import RENOVATION_TITLES, WORKS, Material, RenovationType
 
 # пожелания можно давать к любому материалу сметы: обоям, ламинату, светильникам, розеткам, плитке…
 WISH_MATERIALS = sorted((m for m in Material if m.value != "other"), key=lambda m: m.value)
@@ -44,6 +44,18 @@ TEXT_MATERIAL = [(re.compile(r"обо[июе]", re.I), Material.wallpaper),
                  (re.compile(r"краск|покрас|окрас", re.I), Material.paint),
                  (re.compile(r"ламинат", re.I), Material.laminate), (re.compile(r"линолеум", re.I), Material.linoleum),
                  (re.compile(r"плитк|кафел|керамогранит", re.I), Material.tile)]
+# к какому материалу относится пожелание — определяем сами по словам, чтобы не слать модели весь справочник
+WISH_TEXT_MATERIAL = TEXT_MATERIAL + [
+    (re.compile(r"светильник|люстр|\bбра\b|подсветк|спот", re.I), Material.lighting),
+    (re.compile(r"\bламп", re.I), Material.lamps), (re.compile(r"розетк", re.I), Material.socket),
+    (re.compile(r"выключат", re.I), Material.switch), (re.compile(r"плинтус|порог", re.I), Material.skirting),
+    (re.compile(r"\bдвер", re.I), Material.doors), (re.compile(r"грунт", re.I), Material.primer),
+    (re.compile(r"шпакл|шпатл", re.I), Material.putty), (re.compile(r"штукатур", re.I), Material.plaster),
+    (re.compile(r"гипсокартон|\bгкл", re.I), Material.drywall), (re.compile(r"затирк", re.I), Material.grout),
+    (re.compile(r"подложк", re.I), Material.underlay), (re.compile(r"гидроизол", re.I), Material.waterproofing),
+    (re.compile(r"смесител|раковин|унитаз|душев|\bванн[уаы]\b|полотенцесуш", re.I), Material.plumbing),
+    (re.compile(r"\bокн[оа]\b|подоконник", re.I), Material.windows),
+]
 
 # вид ремонта засчитываем, только если клиент его действительно назвал (модель любит додумывать)
 RENOVATION_WORDS = {
@@ -101,7 +113,6 @@ class BriefDraft(BaseModel):
 def prompt(transcript: str) -> list[dict[str, str]]:
     rooms = ", ".join(f"{r.value} ({t})" for r, t in ROOM_TITLES.items())
     renovations = ", ".join(f"{r.value} ({t})" for r, t in RENOVATION_TITLES.items())
-    materials = ", ".join(f"{m.value} ({MATERIAL_TITLES[m]})" for m in WISH_MATERIALS)
     system = (
         "Ты помогаешь перенести разговор о ремонте в калькулятор сметы. Извлеки из разговора только то, что "
         "человек сказал сам; ничего не придумывай. Неизвестное — null или пустой список.\n"
@@ -113,7 +124,6 @@ def prompt(transcript: str) -> list[dict[str, str]]:
         "wishes — пожелания к отделке: что хочет человек и что посоветовал консультант, если человек согласился или "
         "не возражал; переноси все характеристики (цвет, тип, свойства), например «бежевые моющиеся флизелиновые обои», "
         "«ламинат 33 класса под светлый дуб»; "
-        f"materials — к каким материалам относится, ключи из: {materials}.\n"
         "add_works — работы, которые человек прямо попросил сделать; remove_works — которые прямо сказал не делать "
         "(например «проводку не трогаем»). Только ключи из списка, ничего не додумывай:\n"
         + "\n".join(f"- {k} — {t}" for k, t in WORK_CHOICES.items()) + "\n"
@@ -122,12 +132,12 @@ def prompt(transcript: str) -> list[dict[str, str]]:
         "Если человек просто назвал работу, а про вид ремонта ничего не сказал, — false.\n"
         'Ответь только JSON: {"renovation_type": "...", "rooms": [{"room_type": "...", "name": "...", '
         '"length_m": 0, "width_m": 0, "height_m": 0, "windows": 0, "doors": 0, "openings": [], '
-        '"wishes": [{"text": "...", "materials": []}], "add_works": [], "remove_works": [], "only_works": false}]}'
+        '"wishes": [{"text": "..."}], "add_works": [], "remove_works": [], "only_works": false}]}'
     )
     return [{"role": "system", "content": system}, {"role": "user", "content": "Разговор:\n" + transcript}]
 
 
-def transcript(messages: list[tuple[str, str]], limit_chars: int = 20000) -> str:
+def transcript(messages: list[tuple[str, str]], limit_chars: int = 8000) -> str:
     """Последние реплики, которые помещаются в лимит, в хронологическом порядке."""
     lines, size = [], 0
     for role, content in reversed(messages):
@@ -291,7 +301,8 @@ def build(draft: BriefDraft) -> dict:
             notes.append(f"{title}: высоту потолка не называли — взяли {DEFAULT_HEIGHT} м")
         wishes = []
         for w in raw.wishes[:5]:
-            mats = [m for m in w.materials if m in {x.value for x in WISH_MATERIALS}]
+            mats = [m for m in w.materials if m in {x.value for x in WISH_MATERIALS}] \
+                or list(dict.fromkeys(m.value for rx, m in WISH_TEXT_MATERIAL if rx.search(w.text)))
             if w.text.strip():
                 wishes.append({"text": w.text.strip()[:120], "materials": mats or None})
         only = raw.only_works and bool(raw.add_works)

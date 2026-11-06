@@ -1976,6 +1976,7 @@ async function sendChat() {
     const optimistic = {role:"user", content, created_at:new Date().toISOString(), optimisticId:requestId};
     if (!C.store.appendMessage(chatId, optimistic)) throw new Error("Не удалось подготовить сообщение к отправке.");
     renderChatList(); renderMessages(); renderChatError(); setChatControls();
+    await globalThis.BRIEF_PENDING;  // ждём проверку данных: на параллельные запросы GigaChat отвечает 429
     const answer = await api(`/api/v1/consultant/chats/${chatId}/messages`, {method:"POST", body:JSON.stringify({content, request_id:requestId})});
     if (!C.store.isCurrent(chatId, operation)) return;
     if (!C.store.appendMessage(chatId, answer)) throw new Error("Сервер вернул некорректный ответ консультанта.");
@@ -2072,16 +2073,22 @@ document.getElementById("chat-to-calc").onclick = () => {
 // (помещение, размеры, вид ремонта), и в конце переписки появляется карточка: что ещё нужно узнать
 // или «всё собрано» с кнопкой. Кнопка открывает шаг «Работы» с уже расставленными галочками.
 const BRIEF = {};  // чат → { lastId, data | error | loading }
+var BRIEF_PENDING = Promise.resolve();  // идущая проверка данных; отправка сообщения ждёт её
 
-async function refreshBrief() {
+function refreshBrief() {
   const chatId = C.store.active, state = activeChatState();
   const last = state?.messages?.[state.messages.length - 1];
   if (!chatId || state.loading || !last || last.role !== "assistant" || !last.id) return;
   if (BRIEF[chatId]?.lastId === last.id) return;
-  BRIEF[chatId] = { lastId: last.id, loading: true }; drawBriefCard();
-  try { BRIEF[chatId] = { lastId: last.id, data: await api(`/api/v1/consultant/chats/${chatId}/brief`, { method: "POST" }) }; }
-  catch (e) { BRIEF[chatId] = { lastId: last.id, error: e.message }; }
-  if (C.store.active === chatId) drawBriefCard();
+  // пока какой-то чат ждёт ответа консультанта, второй запрос в GigaChat не шлём
+  if ([...C.store.states.values()].some(s => s.loading)) return;
+  const prev = BRIEF[chatId]?.data;
+  BRIEF[chatId] = { lastId: last.id, loading: true, data: prev }; drawBriefCard();
+  BRIEF_PENDING = (async () => {
+    try { BRIEF[chatId] = { lastId: last.id, data: await api(`/api/v1/consultant/chats/${chatId}/brief`, { method: "POST" }) }; }
+    catch (e) { BRIEF[chatId] = prev ? { lastId: last.id, data: prev } : { lastId: last.id, error: e.message }; }  // при ошибке оставляем прошлый результат, повторим после следующего ответа
+    if (C.store.active === chatId) drawBriefCard();
+  })();
 }
 
 function drawBriefCard() {
