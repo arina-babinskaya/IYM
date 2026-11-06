@@ -40,9 +40,12 @@ def test_crew_builder_is_integrated_and_logic_is_regression_tested(ingested, tmp
     assert script_response.status_code == 200
     assert 'data-tab="crew"' in html and 'id="crew-builder"' in html
     assert "Подобрать бригаду" in html and "CrewBuilder.setEstimate(r)" in html
-    assert "data-tab=\"consultant\"" in html and "switchTab(tab)" in html
+    assert "data-tab=\"consultant\"" in html and "function switchTab(tab" in html
     assert "Стоимость работ бригады" in script_response.text
     assert "Материалы по смете" in script_response.text and "Итого с материалами" in script_response.text
+    assert "Найдите специалиста для ремонта" in script_response.text
+    assert "Вымышленные демонстрационные данные" in script_response.text
+    assert "switchTab('crew', 'estimate')" in html
 
     node = shutil.which("node")
     if node is None:
@@ -119,6 +122,53 @@ assert.strictEqual(crew.state.selected.plumber.length, 1);
 assert(!crew.state.selected.painter && !crew.state.selected.tiler);
 assert.strictEqual(materialTotal, 125000);
 assert.strictEqual(crew.state.estimate.total, 100);
+
+// Explicit entry modes: a stale estimate does not turn direct navigation into estimate mode.
+crew.enterEstimate();
+assert.strictEqual(crew.state.mode, 'estimate');
+crew.enterDirect();
+assert.strictEqual(crew.state.mode, 'direct');
+assert.strictEqual(crew.state.estimate.total, 100);
+
+// Direct work/profession search shares the canonical taxonomy and de-duplicates roles.
+const direct = {{works:[], professions:[], selected:{{}}, minRate:'', maxRate:'', selectionMessage:''}};
+assert(crew.addDirectChoice('work', 'wall_painting', direct));
+assert(crew.addDirectChoice('work', 'wallpapering', direct));
+assert(crew.addDirectChoice('profession', 'painter', direct));
+assert.deepStrictEqual(crew.directRoleIds(direct), ['painter']);
+assert(!crew.addDirectChoice('work', 'wall_painting', direct));
+assert(crew.addDirectChoice('work', 'electrical_wiring', direct));
+assert.deepStrictEqual(new Set(crew.directRoleIds(direct)), new Set(['painter', 'electrician']));
+
+// Multiple specialists and the combined daily rate are independent of estimate costs.
+const directPainters = crew.candidatesFor('painter');
+assert(crew.toggleDirectSpecialist('painter', directPainters[0].id, direct).changed);
+assert(crew.toggleDirectSpecialist('painter', directPainters[1].id, direct).changed);
+const electrician = crew.candidatesFor('electrician')[0];
+assert(crew.toggleDirectSpecialist('electrician', electrician.id, direct).changed);
+let directTotal = crew.directSummary(direct);
+assert.strictEqual(directTotal.workerCount, 3);
+assert.strictEqual(directTotal.dailyRate, directPainters[0].rate + directPainters[1].rate + electrician.rate);
+
+// Price filters use profile rates and never deselect hidden specialists.
+assert.deepStrictEqual(crew.filterCandidates('painter', directPainters[1].rate, directPainters[1].rate).map(p => p.id), [directPainters[1].id]);
+assert.strictEqual(crew.filterCandidates('painter', 999999, '').length, 0);
+direct.minRate = 999999;
+assert.strictEqual(crew.directSummary(direct).workerCount, 3);
+direct.minRate = ''; direct.maxRate = '';
+assert.strictEqual(crew.filterCandidates('painter', direct.minRate, direct.maxRate).length, 3);
+
+// Removing one of several equivalent works preserves the profession and selection;
+// removing the final sources cleans only the now-irrelevant selection.
+assert(crew.removeDirectChoice('work', 'wall_painting', direct));
+assert(crew.directRoleIds(direct).includes('painter'));
+assert.strictEqual(crew.directSummary(direct).workerCount, 3);
+assert(crew.removeDirectChoice('work', 'wallpapering', direct));
+assert(crew.directRoleIds(direct).includes('painter')); // explicit profession still requires it
+assert(crew.removeDirectChoice('profession', 'painter', direct));
+assert(!crew.directRoleIds(direct).includes('painter'));
+assert(!direct.selected.painter);
+assert.strictEqual(crew.directSummary(direct).workerCount, 1);
 """, encoding="utf-8")
     checked = subprocess.run([node, str(check)], text=True, capture_output=True)
     assert checked.returncode == 0, checked.stderr

@@ -68,7 +68,9 @@
     "Даниил Куликов", "Семён Зайцев", "Василий Мельников"
   ];
   const EXPERIENCES = [7, 5, 9, 6, 8, 10, 4, 7];
-  const state = { estimate: null, roles: [], selected: {}, days: 1, selectionMessage: "" };
+  // The entry mode is explicit: a cached estimate must never decide which UI is shown.
+  const state = { mode: "direct", estimate: null, roles: [], selected: {}, days: 1, selectionMessage: "" };
+  const directState = { works: [], professions: [], selected: {}, minRate: "", maxRate: "", selectionMessage: "" };
 
   const candidatesFor = role => {
     const def = ROLE_DEFS[role] || ROLE_DEFS.universal;
@@ -172,6 +174,59 @@
     render();
   }
 
+  const directRoleIds = direct => [...new Set([
+    ...direct.works.map(work => WORK_TO_ROLE[work]).filter(Boolean),
+    ...direct.professions.filter(role => ROLE_DEFS[role])
+  ])];
+
+  const directRoles = direct => directRoleIds(direct).map(id => ({ id, ...ROLE_DEFS[id] }));
+
+  function addDirectChoice(kind, id, direct = directState) {
+    const collection = kind === "work" ? direct.works : direct.professions;
+    const valid = kind === "work" ? WORK_TO_ROLE[id] : ROLE_DEFS[id];
+    if (!valid || collection.includes(id)) return false;
+    collection.push(id);
+    return true;
+  }
+
+  function removeDirectChoice(kind, id, direct = directState) {
+    const collection = kind === "work" ? direct.works : direct.professions;
+    const index = collection.indexOf(id);
+    if (index < 0) return false;
+    collection.splice(index, 1);
+    const relevant = new Set(directRoleIds(direct));
+    Object.keys(direct.selected).forEach(role => { if (!relevant.has(role)) delete direct.selected[role]; });
+    return true;
+  }
+
+  function filterCandidates(role, minRate = "", maxRate = "") {
+    const min = minRate === "" ? -Infinity : Number(minRate);
+    const max = maxRate === "" ? Infinity : Number(maxRate);
+    return candidatesFor(role).filter(person => (!Number.isFinite(min) || person.rate >= min) && (!Number.isFinite(max) || person.rate <= max));
+  }
+
+  function directSummary(direct = directState) {
+    const relevant = new Set(directRoleIds(direct));
+    const specialists = Object.entries(direct.selected)
+      .filter(([role]) => relevant.has(role))
+      .flatMap(([role, people]) => selectedFor({ id: role }, { [role]: people }));
+    return { specialists, workerCount: specialists.length, dailyRate: specialists.reduce((sum, person) => sum + person.rate, 0) };
+  }
+
+  function toggleDirectSpecialist(role, specialistId, direct = directState) {
+    if (!directRoleIds(direct).includes(role)) return { changed: false, reason: "Сначала добавьте профессию." };
+    const specialist = candidatesFor(role).find(person => person.id === specialistId);
+    if (!specialist) return { changed: false, reason: "Специалист недоступен." };
+    const current = selectedFor({ id: role }, direct.selected);
+    direct.selected[role] = current.some(person => person.id === specialistId)
+      ? current.filter(person => person.id !== specialistId)
+      : [...current, specialist];
+    return { changed: true, reason: "" };
+  }
+
+  function enterDirect() { state.mode = "direct"; render(); }
+  function enterEstimate() { state.mode = "estimate"; render(); }
+
   const money = value => Number(value).toLocaleString("ru-RU", { maximumFractionDigits: 0 }) + " ₽";
   const escapeHtml = value => String(value ?? "").replace(/[&<>\"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '\"': "&quot;" }[c]));
   const initials = name => name.split(" ").map(x => x[0]).join("");
@@ -180,7 +235,45 @@
     return labels.length > 3 ? "" : labels.join(", ");
   };
 
+  function directCard(role, person) {
+    const selected = selectedFor(role, directState.selected).some(item => item.id === person.id);
+    return `<button data-direct-specialist="${person.id}" data-role="${role.id}" aria-pressed="${selected}" class="text-left p-4 rounded-xl border-2 transition-all ${selected ? "border-brand-red bg-red-50/40 shadow-sm" : "border-gray-100 hover:border-brand-blue"}"><div class="flex gap-3"><span class="w-11 h-11 shrink-0 rounded-full bg-gray-900 text-white grid place-items-center font-bold text-sm">${initials(person.name)}</span><span><b class="block text-sm">${escapeHtml(person.name)}</b><span class="block text-xs text-gray-500 mt-0.5">${person.experience} лет · ${money(person.rate)}/день</span></span></div><p class="text-xs text-gray-500 mt-3 min-h-[2rem]">${escapeHtml(person.specialty)}</p><span class="block mt-3 text-sm font-bold ${selected ? "text-brand-red" : "text-gray-700"}">${selected ? "Выбран ✓" : "Выбрать"}</span></button>`;
+  }
+
+  function renderDirect() {
+    const box = document.getElementById("crew-builder");
+    if (!box) return;
+    const roles = directRoles(directState);
+    const summary = directSummary(directState);
+    const chips = [
+      ...directState.works.map(id => ({ kind: "work", id, label: WORK_LABELS[id] })),
+      ...directState.professions.map(id => ({ kind: "profession", id, label: ROLE_DEFS[id].title }))
+    ].map(item => `<span class="pill ok inline-flex items-center gap-2">${escapeHtml(item.label)}<button data-remove-kind="${item.kind}" data-remove-id="${item.id}" class="font-bold" aria-label="Удалить ${escapeHtml(item.label)}">×</button></span>`).join("");
+    const workOptions = Object.entries(WORK_LABELS).map(([id, label]) => `<option value="${id}" ${directState.works.includes(id) ? "disabled" : ""}>${escapeHtml(label)}</option>`).join("");
+    const roleOptions = Object.entries(ROLE_DEFS).map(([id, def]) => `<option value="${id}" ${directState.professions.includes(id) ? "disabled" : ""}>${escapeHtml(def.title)}</option>`).join("");
+    const sections = roles.map(role => {
+      const visible = filterCandidates(role.id, directState.minRate, directState.maxRate);
+      const hiddenSelected = selectedFor(role, directState.selected).filter(person => !visible.some(item => item.id === person.id)).length;
+      return `<section class="border border-gray-200 rounded-2xl p-4 md:p-5"><div class="flex flex-wrap justify-between gap-2 mb-4"><div><h3 class="font-bold text-lg">${escapeHtml(role.title)}</h3><p class="text-xs text-gray-500 mt-1">${escapeHtml(role.specialty)}</p></div><div class="text-right text-xs"><b class="block text-brand-red">Выбрано: ${selectedFor(role, directState.selected).length}</b>${hiddenSelected ? `<span class="text-amber-700">Скрыто фильтром: ${hiddenSelected}</span>` : ""}</div></div>${visible.length ? `<div class="grid sm:grid-cols-2 xl:grid-cols-3 gap-3">${visible.map(person => directCard(role, person)).join("")}</div>` : `<div class="rounded-xl bg-gray-50 p-6 text-center text-sm text-gray-500">Нет специалистов в выбранном диапазоне цен. Измените или сбросьте фильтр.</div>`}</section>`;
+    }).join("");
+    const people = summary.specialists.map(person => `<div class="flex justify-between gap-3 text-sm"><span><b class="block">${escapeHtml(person.name)}</b><span class="text-gray-400 text-xs">${escapeHtml(ROLE_DEFS[person.role].title)}</span></span><span class="text-gray-300 whitespace-nowrap">${money(person.rate)}/дн.</span></div>`).join("");
+    box.innerHTML = `<div class="p-6 md:p-8 border-b bg-gray-50/50"><p class="text-xs font-bold uppercase tracking-wider text-brand-red">Вымышленные демонстрационные данные</p><h2 class="text-2xl md:text-3xl font-extrabold mt-1">Найдите специалиста для ремонта</h2><p class="text-sm text-gray-500 mt-2">Выберите нужный вид работ или профессию — мы покажем подходящих специалистов.</p><div class="grid md:grid-cols-2 gap-4 mt-6"><label class="text-sm font-semibold">Какую работу нужно выполнить?<select data-add-work class="block mt-2 w-full bg-white border border-gray-300 rounded-lg p-2.5"><option value="">Выберите вид работ</option>${workOptions}</select></label><label class="text-sm font-semibold">Какой специалист вам нужен?<select data-add-profession class="block mt-2 w-full bg-white border border-gray-300 rounded-lg p-2.5"><option value="">Выберите профессию</option>${roleOptions}</select></label></div>${chips ? `<div class="flex flex-wrap gap-2 mt-4">${chips}</div>` : ""}<div class="mt-5 pt-5 border-t border-gray-200"><p class="text-sm font-semibold">Стоимость работы в день</p><div class="flex flex-wrap items-end gap-3 mt-2"><label class="text-xs text-gray-500">От, ₽<input data-min-rate type="number" min="0" step="100" value="${escapeHtml(directState.minRate)}" class="block mt-1 w-32 bg-white border border-gray-300 rounded-lg px-3 py-2"></label><label class="text-xs text-gray-500">До, ₽<input data-max-rate type="number" min="0" step="100" value="${escapeHtml(directState.maxRate)}" class="block mt-1 w-32 bg-white border border-gray-300 rounded-lg px-3 py-2"></label><button data-reset-filter class="text-sm font-semibold text-brand-blue px-3 py-2">Сбросить фильтры</button></div></div></div><div class="grid lg:grid-cols-[minmax(0,1fr)_340px] gap-6 p-6 md:p-8"><main>${directState.selectionMessage ? `<div class="mb-4 text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-xl p-3">${escapeHtml(directState.selectionMessage)}</div>` : ""}${roles.length ? `<div class="grid gap-5">${sections}</div>` : `<div class="border border-dashed border-gray-300 rounded-2xl p-10 text-center text-gray-500">Выберите вид работ или специалиста, чтобы увидеть подходящие предложения.</div>`}</main><aside><div class="lg:sticky lg:top-24 bg-gray-900 text-white rounded-2xl p-5 md:p-6 shadow-xl"><h3 class="text-xl font-bold">Выбранные специалисты</h3><div class="mt-4 space-y-3">${people || `<p class="text-sm text-gray-400">Добавьте специалистов из подходящих профилей.</p>`}</div><dl class="border-t border-gray-700 mt-5 pt-5 space-y-2 text-sm"><div class="flex justify-between"><dt class="text-gray-400">Профессий</dt><dd>${roles.length}</dd></div><div class="flex justify-between"><dt class="text-gray-400">Всего специалистов</dt><dd>${summary.workerCount}</dd></div></dl><div class="border-t border-gray-700 mt-5 pt-5"><p class="text-sm font-semibold">Общая ставка бригады</p><p class="text-3xl font-extrabold mt-1 text-brand-yellow">${money(summary.dailyRate)}/день</p><p class="text-[11px] text-gray-500 mt-2">Без расчёта объёма, срока и полной стоимости ремонта.</p></div><p class="text-[11px] text-gray-500 mt-4 leading-relaxed">Профили и ставки вымышлены. Это не оферта и не предложение реальных подрядчиков.</p></div></aside></div>`;
+    box.querySelector("[data-add-work]").onchange = event => { if (event.target.value) addDirectChoice("work", event.target.value); render(); };
+    box.querySelector("[data-add-profession]").onchange = event => { if (event.target.value) addDirectChoice("profession", event.target.value); render(); };
+    box.querySelectorAll("[data-remove-kind]").forEach(button => button.onclick = () => { removeDirectChoice(button.dataset.removeKind, button.dataset.removeId); render(); });
+    box.querySelectorAll("[data-direct-specialist]").forEach(button => button.onclick = () => { const result = toggleDirectSpecialist(button.dataset.role, button.dataset.directSpecialist); directState.selectionMessage = result.reason; render(); });
+    const updateRate = (key, event) => { directState[key] = event.target.value === "" ? "" : Number(event.target.value); render(); };
+    box.querySelector("[data-min-rate]").onchange = event => updateRate("minRate", event);
+    box.querySelector("[data-max-rate]").onchange = event => updateRate("maxRate", event);
+    box.querySelector("[data-reset-filter]").onclick = () => { directState.minRate = ""; directState.maxRate = ""; render(); };
+  }
+
   function render() {
+    if (typeof document === "undefined") return;
+    if (state.mode === "direct") renderDirect(); else renderEstimateMode();
+  }
+
+  function renderEstimateMode() {
     if (typeof document === "undefined") return;
     const box = document.getElementById("crew-builder");
     if (!box) return;
@@ -212,5 +305,5 @@
     box.querySelector("#crew-days").oninput = event => { state.days = event.target.value === "" ? "" : Number(event.target.value); render(); const input = box.querySelector("#crew-days"); input?.focus(); };
   }
 
-  return { ROLE_DEFS, WORK_TO_ROLE, WORK_LABELS, PRODUCTIVITY, candidatesFor, selectedFor, toggleSpecialist, workDescription, workEntries, deriveCrew, calculateCost, setEstimate, render, state };
+  return { ROLE_DEFS, WORK_TO_ROLE, WORK_LABELS, PRODUCTIVITY, candidatesFor, selectedFor, toggleSpecialist, workDescription, workEntries, deriveCrew, calculateCost, setEstimate, directRoleIds, directRoles, addDirectChoice, removeDirectChoice, filterCandidates, directSummary, toggleDirectSpecialist, enterDirect, enterEstimate, render, state, directState };
 });
