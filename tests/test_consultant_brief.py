@@ -34,9 +34,17 @@ def test_brief_lists_what_is_missing():
     assert r["ready"] and r["rooms"][0]["doors"] == 1 and any("типичные" in n for n in r["notes"])
 
 
-def test_transcript_keeps_latest_messages_in_order():
+def test_transcript_keeps_client_words_from_the_start_of_a_long_chat():
+    chat = [("user", "ванная 4 на 2, капитальный ремонт")]
+    for k in range(12):  # длинный разговор: консультант отвечает подробно
+        chat += [("assistant", f"совет {k} " + "очень подробно " * 60), ("user", f"вопрос {k}")]
+    t = transcript(chat, limit_chars=8000)
+    assert len(t) <= 8000 and t.splitlines()[0] == "Клиент: ванная 4 на 2, капитальный ремонт"
+    assert all(f"Клиент: вопрос {k}" in t for k in range(12))
+    assert ("совет 11 " + "очень подробно " * 60).strip() in t  # последние ответы консультанта целиком
+    # совсем тесно: сначала уходят ответы консультанта, потом самые старые слова клиента
     t = transcript([("user", "a" * 50), ("assistant", "ответ"), ("user", "спальня 4 на 3")], limit_chars=60)
-    assert t.splitlines() == ["Консультант: ответ", "Клиент: спальня 4 на 3"]
+    assert t.splitlines() == ["Клиент: спальня 4 на 3"]
 
 
 class FakeGigaChat:
@@ -113,12 +121,13 @@ def test_brief_variant_replaces_default_variant():
     assert not added  # already in defaults (laminate)
 
 
-def test_renovation_type_is_required_unless_only_some_works_are_wanted():
-    one_work = {"rooms": [{"room_type": "bedroom", "length_m": 4, "width_m": 3, "add_works": ["wall_painting:wall:"]}]}
-    r = build(parse(json.dumps(one_work)))
+def test_named_works_are_enough_without_renovation_type():
+    no_works = {"rooms": [{"room_type": "bedroom", "length_m": 4, "width_m": 3}]}
+    r = build(parse(json.dumps(no_works)))
     assert not r["ready"] and "вид ремонта" in r["missing"][0]
-    only = {"rooms": [dict(one_work["rooms"][0], only_works=True)]}
-    r = build(parse(json.dumps(only)))
+    # человек назвал работы, а не вид ремонта — считаем только их
+    one_work = {"rooms": [dict(no_works["rooms"][0], add_works=["wall_painting:wall:"])]}
+    r = build(parse(json.dumps(one_work)))
     assert r["ready"] and r["renovation_type"] == "cosmetic"
     room = r["rooms"][0]
     assert [w["work_type"] for w in room["works"]] == ["wall_painting"] and room["auto"]["only"] is True
@@ -287,3 +296,31 @@ def test_area_only_room_is_estimated():
     room = out["rooms"][0]
     assert out["ready"] and float(room["custom_floor_area"]) == 16 and float(room["custom_perimeter"]) == 16
     assert any("только площадь" in n for n in out["notes"] + room["auto"]["notes"])
+
+
+def test_works_named_in_words_count_when_model_missed_them():
+    from app.consultant_brief import verify, works_from_text
+    assert works_from_text("проводку не трогаем, только покрасить потолок") == ["wall_painting:ceiling:"]
+    assert works_from_text("хочу покрасить стены и положить ламинат") == ["wall_painting:wall:", "floor_covering_install:floor:ламинат"]
+    assert works_from_text("положить плитку на пол") == ["tiling:floor:"]
+    assert works_from_text("без плитки") == [] and works_from_text("хочу обновить спальню, обои бежевые") == []
+    draft = verify(parse(json.dumps({"rooms": [{"room_type": "bathroom"}]})),
+                   "ванная 2 на 2, надо поменять унитаз и положить плитку на пол")
+    r = build(draft)
+    room = r["rooms"][0]
+    assert r["ready"] and sorted(w["work_type"] for w in room["works"]) == ["plumbing_fixture_install", "tiling"]
+    assert any("вы назвали отдельные работы" in n for n in room["auto"]["notes"] + r["notes"])
+
+
+def test_hint_becomes_mandatory_in_a_long_chat():
+    from app.api.consultant_brief import BriefOut
+    from app.consultant_brief import ASK_AFTER, CACHE, TURNS, missing_hint
+    CACHE["chat-long"] = (9, BriefOut(ready=False, missing=["вид ремонта"], notes=[], rooms=[]))
+    TURNS["chat-long"] = ASK_AFTER - 1
+    assert "Если это уместно" in missing_hint("chat-long")
+    TURNS["chat-long"] = ASK_AFTER
+    hint = missing_hint("chat-long")
+    assert "обязательно спроси" in hint and "вид ремонта" in hint
+    CACHE["chat-long"] = (10, BriefOut(ready=True, missing=[], notes=[], rooms=[]))
+    assert missing_hint("chat-long") == ""  # всё собрано — не давим
+    CACHE.pop("chat-long"); TURNS.pop("chat-long")

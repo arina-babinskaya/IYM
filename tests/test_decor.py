@@ -255,9 +255,14 @@ def test_photo_search_ranks_similar_products_first(client, monkeypatch):
     assert lamp["product"]["id"] == 4  # bronze loft chandelier
 
 
-def test_photo_search_without_gigachat_key_explains_why(client):
+def test_photo_search_without_gigachat_key_explains_why(client, monkeypatch):
     import base64 as b64
 
+    from app import decor_photo
+    from app.config import Settings
+
+    # без ключа — даже если в .env на этом компьютере ключ есть, в настоящий GigaChat тест не ходит
+    monkeypatch.setattr(decor_photo, "get_settings", lambda: Settings(gigachat_enabled=False, gigachat_credentials=None))
     r = client.post("/api/v1/decor/photo", json={"image": b64.b64encode(b"x").decode()})
     assert r.status_code == 503 and "GigaChat" in r.json()["detail"]
     assert client.post("/api/v1/decor/photo", json={"image": "not base64!"}).status_code == 422

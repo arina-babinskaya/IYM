@@ -57,4 +57,5 @@ async def chat_brief(chat_id: str, request: Request, response: Response, db: Ses
         raise HTTPException(502, "Не удалось разобрать разговор, попробуйте ещё раз")
     result = BriefOut(**brief.build(draft))
     brief.CACHE[chat.id] = (last_id, result)
+    brief.TURNS[chat.id] = sum(1 for role, _ in history if role == "user")
     return result

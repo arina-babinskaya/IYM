@@ -140,15 +140,28 @@ def prompt(transcript: str) -> list[dict[str, str]]:
 
 
 def transcript(messages: list[tuple[str, str]], limit_chars: int = 8000) -> str:
-    """Последние реплики, которые помещаются в лимит, в хронологическом порядке."""
-    lines, size = [], 0
-    for role, content in reversed(messages):
-        line = f"{'Клиент' if role == 'user' else 'Консультант'}: {content.strip()}"
-        if size + len(line) > limit_chars:
-            break
-        lines.append(line)
-        size += len(line)
-    return "\n".join(reversed(lines))
+    """Разговор для проверки данных, в хронологическом порядке.
+
+    Слова клиента важнее всего (там размеры, вид ремонта, работы) и они короткие — оставляем их целиком,
+    даже из начала длинного чата. Старые ответы консультанта сокращаем: из них нужно только то,
+    с чем клиент согласился, а это обычно видно по двум последним ответам.
+    """
+    assistant_at = [i for i, (role, _) in enumerate(messages) if role != "user"]
+    recent = set(assistant_at[-2:])
+    lines = []
+    for i, (role, content) in enumerate(messages):
+        text = content.strip()
+        if role == "user":
+            lines.append(["Клиент", text[:1500]])
+        else:
+            cap = 2000 if i in recent else 300
+            lines.append(["Консультант", text if len(text) <= cap else text[:cap].rstrip() + "…"])
+    size = sum(len(a) + len(b) + 2 for a, b in lines)
+    while size > limit_chars and len(lines) > 1:  # сначала убираем старые ответы консультанта, потом старые слова клиента
+        drop = next((k for k, (who, _) in enumerate(lines) if who == "Консультант"), 0)
+        size -= len(lines[drop][0]) + len(lines[drop][1]) + 2
+        del lines[drop]
+    return "\n".join(f"{who}: {text}" for who, text in lines)
 
 
 def parse(content: str) -> BriefDraft:
@@ -271,6 +284,39 @@ def sizes_from_text(text: str) -> dict[str, float]:
     return found
 
 
+_V = r"(?:полож|улож|постел|стел|замен|помен|постав|установ|перенес|добав|сдела|провест|проложи|передел|повес|смонтир)\w*\s+(?:\S+\s+){0,2}"
+# работы, которые клиент назвал сам: «покрасить стены», «поменять проводку», «положить плитку на пол»
+TEXT_WORKS = [
+    (re.compile(r"(?:по|о)крас\w*\s+(?:\S+\s+){0,2}потол", re.I), "wall_painting:ceiling:"),
+    (re.compile(r"(?:по|о)крас\w*\b(?!\s+потол)", re.I), "wall_painting:wall:"),
+    (re.compile(r"(?:по|пере|о)кле\w*|клеить\s+обо|обои\s+(?:поклеить|поменять|заменить)", re.I), "wallpapering:wall:"),
+    (re.compile(_V + r"ламинат", re.I), "floor_covering_install:floor:ламинат"),
+    (re.compile(_V + r"линолеум", re.I), "floor_covering_install:floor:линолеум"),
+    (re.compile(_V + r"плитк\w*\s+(?:\S+\s+){0,1}(?:на\s+)?пол\b", re.I), "tiling:floor:"),
+    (re.compile(_V + r"плитк\w*\b(?!\s+(?:\S+\s+){0,1}(?:на\s+)?пол\b)", re.I), "tiling:wall:"),
+    (re.compile(_V + r"(?:проводк|электрик)", re.I), "electrical_wiring::"),
+    (re.compile(_V + r"(?:розетк|выключател)", re.I), "electrical_fittings::"),
+    (re.compile(_V + r"(?:светильник|люстр|свет\b|освещени|подсветк)", re.I), "lighting_install::"),
+    (re.compile(_V + r"(?:унитаз|раковин|смесител|ванн[уы]?\b|душев|сантехник)", re.I), "plumbing_fixture_install::"),
+    (re.compile(_V + r"(?:двер|окн|окон)", re.I), "door_window_install::"),
+    (re.compile(r"стяжк", re.I), "floor_screed:floor:"), (re.compile(r"штукатур", re.I), "wall_plastering:wall:"),
+    (re.compile(r"шпакл|шпатл", re.I), "wall_putty:wall:"), (re.compile(r"гидроизол", re.I), "waterproofing:floor:"),
+    (re.compile(r"гипсокартон", re.I), "drywall_install:wall:"), (re.compile(r"демонтаж|снести\s+стен", re.I), "demolition::"),
+]
+_NEGATION = re.compile(r"(?:\bне|\bбез|\bкроме)\s+(?:\S+\s+){0,2}$", re.I)
+
+
+def works_from_text(text: str) -> list[str]:
+    """Работы, которые клиент прямо назвал; «не трогаем проводку» и «без плитки» не считаются."""
+    found = []
+    for rx, key in TEXT_WORKS:
+        # отрицание ищем только в той же части фразы: «проводку не трогаем, только покрасить» — покраска нужна
+        if any(not _NEGATION.search(re.split(r"[,.;:!?\n]|\bтолько\b|\bно\b", text[max(0, m.start() - 30):m.start()])[-1])
+               for m in rx.finditer(text)):
+            found.append(key)
+    return list(dict.fromkeys(found))
+
+
 def verify(draft: BriefDraft, client_text: str) -> BriefDraft:
     """Убираем то, чего клиент не говорил: вид ремонта без его слов, размеры, которых нет в переписке."""
     try:
@@ -288,6 +334,8 @@ def verify(draft: BriefDraft, client_text: str) -> BriefDraft:
         for field, value in found.items():
             if getattr(room, field) is None:
                 setattr(room, field, value)
+        if draft.renovation_type is None and not room.add_works:  # вида ремонта нет — может, человек назвал работы
+            room.add_works = [k for k in works_from_text(client_text) if k not in room.remove_works]
         if not re.search(r"окн|окон", client_text, re.I):
             room.windows = None
         if not re.search(r"двер", client_text, re.I):
@@ -315,8 +363,9 @@ def build(draft: BriefDraft) -> dict:
     except ValueError:
         renovation = None
     # вид ремонта нужен, только если человек говорит о ремонте целиком, а не об отдельных работах
-    if renovation is None and not all(r.only_works and r.add_works for r in draft.rooms):
-        missing.append("вид ремонта: косметический, капитальный, евроремонт или под сдачу — или скажите, что нужны только отдельные работы")
+    # если вид ремонта не назван, а работы названы, — считаем только эти работы
+    if renovation is None and not all(r.add_works for r in draft.rooms):
+        missing.append("вид ремонта: косметический, капитальный, евроремонт или под сдачу — или назовите, какие работы нужны")
     if not draft.rooms:
         missing.append("какое помещение ремонтируем")
     for raw in draft.rooms[:5]:
@@ -350,12 +399,13 @@ def build(draft: BriefDraft) -> dict:
                 or list(dict.fromkeys(m.value for rx, m in WISH_TEXT_MATERIAL if rx.search(w.text)))
             if w.text.strip():
                 wishes.append({"text": w.text.strip()[:120], "materials": mats or None})
-        only = raw.only_works and bool(raw.add_works)
+        only = bool(raw.add_works) and (raw.only_works or renovation is None)
         room_reno = renovation
         if only and room_reno is None:
             room_reno = renovation_for(room_type, raw.add_works)
             if room_reno:
-                notes.append(f"{title}: нужны только отдельные работы — посчитаем их в рамках «{RENOVATION_TITLES[room_reno]}»")
+                notes.append(f"{title}: вы назвали отдельные работы — считаем только их (цены как для «{RENOVATION_TITLES[room_reno]}»). "
+                             "Если нужен ремонт целиком, скажите консультанту вид ремонта")
         if room_reno is None:
             if only:
                 missing.append(f"{title}: какие именно работы нужны")
@@ -387,6 +437,8 @@ def build(draft: BriefDraft) -> dict:
 
 # чат → (id последнего сообщения, последняя проверка): пока разговор не продолжился, GigaChat повторно не спрашиваем
 CACHE: dict[str, tuple[int, object]] = {}
+TURNS: dict[str, int] = {}  # сколько сообщений клиента было в разговоре на момент последней проверки
+ASK_AFTER = 4  # после стольких сообщений клиента недостающее консультант спрашивает обязательно
 
 
 def missing_hint(chat_id: str) -> str:
@@ -394,5 +446,12 @@ def missing_hint(chat_id: str) -> str:
     hit = CACHE.get(chat_id)
     if not hit or hit[1].ready or not hit[1].missing:
         return ""
-    return ("\n\nДля расчёта сметы по этому разговору пока не хватает: " + "; ".join(hit[1].missing)
+    missing = "; ".join(hit[1].missing)
+    if TURNS.get(chat_id, 0) >= ASK_AFTER:
+        # разговор уже длинный, а данных для сметы всё нет — больше не откладываем
+        return ("\n\nВАЖНО: разговор идёт уже долго, а для расчёта сметы всё ещё не хватает: " + missing + ". "
+                "В этом ответе обязательно спроси об этом: сначала коротко ответь на сообщение клиента, затем "
+                "отдельной строкой задай один короткий вопрос сразу про всё недостающее. Не переспрашивай то, "
+                "что клиент уже сказал. Если клиент говорит, что не знает размеров, попроси примерную площадь.")
+    return ("\n\nДля расчёта сметы по этому разговору пока не хватает: " + missing
             + ". Если это уместно, спроси об этом в ответе — коротко, одним-двумя вопросами, не повторяя уже известное.")
