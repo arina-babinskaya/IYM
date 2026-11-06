@@ -293,3 +293,22 @@ def test_photo_is_uploaded_and_sent_as_attachment(tmp_path, monkeypatch):
     r = asyncio.run(decor_photo.analyze(b"image-bytes", "room.jpg", "image/jpeg", httpx.MockTransport(handler)))
     assert r.style == "scandi" and r.objects[0].slot == "rug"
     assert calls[-1].endswith("/files/file-1/delete")
+
+
+def test_style_ranking_is_remembered_until_catalog_changes(client):
+    client.get("/api/v1/decor/styles?room_type=living_room")
+    first = INDEX.ranked("chandelier", STYLES["loft"])
+    assert INDEX.ranked("chandelier", STYLES["loft"]) is first  # второй раз не пересчитываем
+    INDEX.version = None  # каталог обновился
+    client.get("/api/v1/decor/styles?room_type=living_room")
+    again = INDEX.ranked("chandelier", STYLES["loft"])
+    assert again is not first and [x.item.id for x in again] == [x.item.id for x in first]
+
+
+def test_colour_family_follows_changed_colour():
+    from app.decor import family
+    item = Item(1, "ваза", Decimal(100), 4.0, None, None, None, colors="черный")
+    assert family(item) == family(item)
+    before = family(item)
+    item.colors = "белый"
+    assert family(item) != before

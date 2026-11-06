@@ -507,6 +507,13 @@ _CARTOON_PETS = rx(r"единорог|лабубу|динозавр|мульт(?
 
 def family(item: "Item") -> str | None:
     """Основной цвет товара: из характеристики «Цвет», а если её нет — из названия."""
+    if item.family_of == (item.colors, item.name):  # запомнили: цвет нужен при оценке в каждом стиле
+        return item.family
+    item.family, item.family_of = _family(item), (item.colors, item.name)
+    return item.family
+
+
+def _family(item: "Item") -> str | None:
     for text in (item.colors, item.name):
         found = [(m.start(), name) for name, pattern in COLOR_FAMILIES.items() if (m := pattern.search(text))]
         if found:
@@ -532,6 +539,8 @@ class Item:
     materials: str = ""
     words: str = ""
     in_stock: bool = True
+    family: str | None = field(default=None, repr=False, compare=False)  # кэш family(); пересчитывается при смене цвета
+    family_of: tuple | None = field(default=None, repr=False, compare=False)
 
 
 @dataclass
@@ -593,6 +602,9 @@ class DecorIndex:
     def __init__(self) -> None:
         self.version: tuple | None = None
         self.by_slot: dict[str, list[Item]] = {}
+        # готовые результаты: оценка всех товаров позиции в стиле — самая долгая часть, считаем её один раз
+        self._ranked: dict[tuple[str, int], tuple[Style, list[Scored]]] = {}
+        self._zones: dict[tuple[str, str], list[Item]] = {}
         self._lock = threading.Lock()  # фоновый прогрев при старте и первый запрос не строят индекс дважды
 
     def ensure(self, session: Session) -> None:
@@ -602,8 +614,16 @@ class DecorIndex:
             return
         with self._lock:
             if version != self.version:
-                self.by_slot = self._build(session)
+                by_slot = self._build(session)
+                self._ranked, self._zones, self.by_slot = {}, {}, by_slot
                 self.version = version
+
+    def warm(self, session: Session) -> None:
+        """Прогрев при старте: индекс и оценка товаров во всех стилях, чтобы первые клики не ждали."""
+        self.ensure(session)
+        for slot in SLOTS:
+            for style in STYLES.values():
+                self.ranked(slot, style)
 
     @staticmethod
     def _build(session: Session) -> dict[str, list[Item]]:
@@ -658,10 +678,14 @@ class DecorIndex:
 
     def zone_items(self, zone: str, group: str) -> list[Item]:
         """Товары раздела зоны: сначала с хорошим рейтингом и картинкой, потом дешевле."""
+        if (hit := self._zones.get((zone, group))) is not None:
+            return hit
         items = self.by_slot.get(f"{zone}:{group}", [])
         lead = ZONES[zone].groups[group].lead
-        return sorted(items, key=lambda x: (not x.in_stock, not (lead and lead.search(x.name)), -x.rating,
-                                            x.picture_url is None, x.price))
+        out = sorted(items, key=lambda x: (not x.in_stock, not (lead and lead.search(x.name)), -x.rating,
+                                           x.picture_url is None, x.price))
+        self._zones[(zone, group)] = out
+        return out
 
     def kit_items(self, zone: str, kit: str, key: str) -> list[Item]:
         """Подходящие товары для позиции набора, главные первыми."""
@@ -677,7 +701,17 @@ class DecorIndex:
         return top[min(len(top) - 1, int(BUDGETS[budget] * len(top)))], len(items)
 
     def ranked(self, slot: str, style: Style) -> list[Scored]:
-        """Товары позиции в этом стиле, лучшие первыми. Если в стиле нет ничего — нейтральные."""
+        """Товары позиции в этом стиле, лучшие первыми. Если в стиле нет ничего — нейтральные.
+
+        Результат запоминается до обновления каталога; список общий — не изменяйте его.
+        """
+        if (hit := self._ranked.get((slot, id(style)))) and hit[0] is style:
+            return hit[1]
+        out = self._rank(slot, style)
+        self._ranked[(slot, id(style))] = (style, out)
+        return out
+
+    def _rank(self, slot: str, style: Style) -> list[Scored]:
         scored = [score(x, style) for x in self.by_slot.get(slot, [])]
         fitting = [x for x in scored if x.score >= FIT and x.strong]  # один цвет стиль не делает
         if not fitting:

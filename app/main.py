@@ -32,7 +32,7 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
 def _warm_decor_index() -> None:
     try:
         with get_sessionmaker()() as session:
-            decor_index.ensure(session)
+            decor_index.warm(session)
     except Exception:
         logging.getLogger(__name__).exception("decor index warm-up failed")
 

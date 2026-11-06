@@ -229,7 +229,7 @@
 </main>
 
 <script src="/static/consultant_state.js?v=20261031-3"></script>
-<script src="/static/crew_builder.js?v=20261104-1"></script>
+<script src="/static/crew_builder.js?v=20261106-1"></script>
 <script>
 const ROOMS = {};
 const ROOM_OPENINGS = {};
@@ -266,7 +266,7 @@ async function api(path, options = {}) {
   return body;
 }
 
-function switchTab(tab) {
+function switchTab(tab, crewMode = null) {
   const b = document.querySelector(`nav button[data-tab="${tab}"]`);
   if (!b) return;
   document.querySelectorAll("nav button").forEach(x => {
@@ -280,7 +280,10 @@ function switchTab(tab) {
   if (b.dataset.tab === "cart") renderCart();
   if (b.dataset.tab === "decor" && !D.shown) decorRooms();
   if (b.dataset.tab === "consultant") loadChats();
-  if (b.dataset.tab === "crew") CrewBuilder.render();
+  if (b.dataset.tab === "crew") {
+    if (crewMode === "estimate") CrewBuilder.enterEstimate();
+    else CrewBuilder.enterDirect();
+  }
 }
 document.querySelectorAll("nav button").forEach(b => b.onclick = () => switchTab(b.dataset.tab));
 
@@ -1394,7 +1397,7 @@ function renderEstimate(r) {
   const warns = r.warnings.length ? `<div class="warn mb-6">${r.warnings.map(esc).join("<br>")}</div>` : "";
   const heading = estimateStatus === "unavailable" ? "Смету не удалось рассчитать" : estimateStatus === "partial" ? "Предварительная смета рассчитана частично" : "Ваша смета готова";
   const emptyNotice = estimateStatus === "unavailable" ? `<div class="warn mb-6"><b>Нет рассчитанных товарных позиций.</b><br>Проверьте загрузку и привязки каталога в разделе администратора, затем повторите расчёт.</div>` : "";
-  return `<div class="p-6 md:p-8"><h2 class="text-2xl font-bold mb-6">${heading}</h2>${emptyNotice}${warns}${rooms}<div class="mt-8 p-6 bg-gray-900 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4 shadow-xl"><div><p class="text-gray-400 text-sm font-medium mb-1">${estimateStatus === "unavailable" ? "Стоимость недоступна" : "Общая стоимость материалов"}</p><p class="text-4xl font-extrabold text-white">${rub(r.total)}</p></div><div class="flex flex-wrap gap-3 w-full md:w-auto"><button class="flex-1 md:flex-none bg-gray-800 hover:bg-gray-700 text-white font-semibold py-3 px-6 rounded-xl transition-colors border border-gray-700" id="copy-list">Скопировать</button><button class="flex-1 md:flex-none bg-brand-yellow hover:bg-yellow-500 text-gray-900 font-bold py-3 px-8 rounded-xl transition-colors shadow-md shadow-brand-yellow/20" id="estimate-cart">В корзину</button><button class="basis-full md:basis-auto bg-brand-red hover:bg-red-900 text-white font-bold py-3 px-6 rounded-xl transition-colors" onclick="switchTab('crew')">Подобрать бригаду</button></div></div><p class="text-center text-xs text-gray-400 mt-4">Рассчитано за ${r.elapsed_ms} мс. Цены ориентировочные.</p></div>`;
+  return `<div class="p-6 md:p-8"><h2 class="text-2xl font-bold mb-6">${heading}</h2>${emptyNotice}${warns}${rooms}<div class="mt-8 p-6 bg-gray-900 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4 shadow-xl"><div><p class="text-gray-400 text-sm font-medium mb-1">${estimateStatus === "unavailable" ? "Стоимость недоступна" : "Общая стоимость материалов"}</p><p class="text-4xl font-extrabold text-white">${rub(r.total)}</p></div><div class="flex flex-wrap gap-3 w-full md:w-auto"><button class="flex-1 md:flex-none bg-gray-800 hover:bg-gray-700 text-white font-semibold py-3 px-6 rounded-xl transition-colors border border-gray-700" id="copy-list">Скопировать</button><button class="flex-1 md:flex-none bg-brand-yellow hover:bg-yellow-500 text-gray-900 font-bold py-3 px-8 rounded-xl transition-colors shadow-md shadow-brand-yellow/20" id="estimate-cart">В корзину</button><button class="basis-full md:basis-auto bg-brand-red hover:bg-red-900 text-white font-bold py-3 px-6 rounded-xl transition-colors" onclick="switchTab('crew', 'estimate')">Подобрать бригаду</button></div></div><p class="text-center text-xs text-gray-400 mt-4">Рассчитано за ${r.elapsed_ms} мс. Цены ориентировочные.</p></div>`;
 }
 
 function copyList(r) {
@@ -1581,7 +1584,7 @@ async function decorRooms() {
 }
 
 const zoneCard = p => `<div class="border border-gray-200 rounded-xl p-3 flex flex-col gap-2 bg-white">
-    ${p.picture_url ? `<img src="${esc(p.picture_url)}" alt="" class="w-full h-32 object-contain bg-white rounded-lg">` : `<div class="w-full h-32 bg-gray-100 rounded-lg"></div>`}
+    ${p.picture_url ? `<img src="${esc(p.picture_url)}" alt="" loading="lazy" decoding="async" class="w-full h-32 object-contain bg-white rounded-lg">` : `<div class="w-full h-32 bg-gray-100 rounded-lg"></div>`}
     <div class="text-sm font-semibold leading-snug">${esc(p.name)}</div>
     ${p.in_stock === false ? `<div class="text-xs text-gray-500">нет в наличии</div>` : ""}
     <b class="mt-auto">${rub(p.price)}</b></div>`;
@@ -1652,7 +1655,7 @@ function decorPhotoResult(image) {
     return `<div class="border border-gray-200 rounded-xl p-4 flex flex-col gap-2 bg-white">
       <div class="text-xs font-semibold uppercase tracking-wide text-gray-500">${esc(x.title)}</div>
       <div class="text-sm text-gray-600">на фото: ${esc(seen || "—")}</div>
-      ${p ? `${p.picture_url ? `<img src="${esc(p.picture_url)}" alt="" class="w-full h-40 object-contain bg-white rounded-lg">` : `<div class="w-full h-40 bg-gray-100 rounded-lg"></div>`}
+      ${p ? `${p.picture_url ? `<img src="${esc(p.picture_url)}" alt="" loading="lazy" decoding="async" class="w-full h-40 object-contain bg-white rounded-lg">` : `<div class="w-full h-40 bg-gray-100 rounded-lg"></div>`}
       <div class="font-semibold text-sm leading-snug">${esc(p.name)}</div>
       <div class="flex flex-wrap">${p.in_stock === false ? `<span class="pill">нет в наличии</span>` : ""}${p.why.map(w => `<span class="pill">${esc(w)}</span>`).join("")}</div>
       <div class="text-xs text-gray-500">вариантов: ${x.alternatives.length}</div>
@@ -1683,7 +1686,7 @@ function decorPhotoReplace(i, image) {
       <div class="flex justify-between items-center gap-4"><h2 class="text-xl font-bold">${esc(line.title)}: похожие товары</h2><button class="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold rounded-lg py-2 px-4 text-sm shadow-sm" id="picker-close">✕ Закрыть</button></div>
       <p class="text-sm text-gray-500">Сначала самые похожие на предмет с фото.</p>
       <div class="grid gap-2">${line.alternatives.map(p => `<button data-pick="${p.id}" class="flex gap-3 items-center text-left bg-white border ${p.id === line.product?.id ? "border-brand-red" : "border-gray-200"} hover:border-brand-red rounded-xl p-3">
-        ${p.picture_url ? `<img src="${esc(p.picture_url)}" alt="" class="w-16 h-16 object-contain">` : `<div class="w-16 h-16 bg-gray-100 rounded"></div>`}
+        ${p.picture_url ? `<img src="${esc(p.picture_url)}" alt="" loading="lazy" decoding="async" class="w-16 h-16 object-contain">` : `<div class="w-16 h-16 bg-gray-100 rounded"></div>`}
         <div class="flex-1"><div class="font-semibold text-sm">${esc(p.name)}</div><div class="text-xs text-gray-500 mt-1">${(p.in_stock === false ? ["нет в наличии"] : []).concat(p.why).map(esc).join(" · ")}</div></div><b class="whitespace-nowrap">${rub(p.price)}</b></button>`).join("")}</div>
     </aside>`);
   document.getElementById("picker-close").onclick = closePicker;
@@ -1773,7 +1776,7 @@ function renderDecorResult() {
   const r = D.result;
   r.items.forEach(x => { x.baseQty ??= x.qty; x.qty = D.qty[x.slot] ?? x.baseQty; x.cost = x.product ? Number(x.product.price) * x.qty : 0; });
   r.total = r.items.reduce((sum, x) => sum + x.cost, 0);
-  const img = p => p.picture_url ? `<img src="${esc(p.picture_url)}" alt="" class="w-full h-40 object-contain bg-white rounded-lg">` : `<div class="w-full h-40 bg-gray-100 rounded-lg"></div>`;
+  const img = p => p.picture_url ? `<img src="${esc(p.picture_url)}" alt="" loading="lazy" decoding="async" class="w-full h-40 object-contain bg-white rounded-lg">` : `<div class="w-full h-40 bg-gray-100 rounded-lg"></div>`;
   const card = x => x.product ? `<div class="border border-gray-200 rounded-xl p-4 flex flex-col gap-2 bg-white">
       ${img(x.product)}
       <div class="text-xs font-semibold uppercase tracking-wide text-gray-500">${esc(x.title)}</div>
@@ -1813,7 +1816,7 @@ async function decorReplace(line) {
     const url = D.kit ? `/api/v1/decor/zones/${D.zone}/kits/${D.kit}/${line.slot}?limit=60` : `/api/v1/decor/options?style=${D.style}&slot=${line.slot}&limit=60`;
     const rows = await api(url + (q ? `&q=${encodeURIComponent(q)}` : ""));
     document.getElementById("decor-options").innerHTML = rows.length ? rows.map(p => `<button data-pick="${p.id}" class="flex gap-3 items-center text-left bg-white border ${p.id === line.product?.id ? "border-brand-red" : "border-gray-200"} hover:border-brand-red rounded-xl p-3">
-        ${p.picture_url ? `<img src="${esc(p.picture_url)}" alt="" class="w-16 h-16 object-contain">` : `<div class="w-16 h-16 bg-gray-100 rounded"></div>`}
+        ${p.picture_url ? `<img src="${esc(p.picture_url)}" alt="" loading="lazy" decoding="async" class="w-16 h-16 object-contain">` : `<div class="w-16 h-16 bg-gray-100 rounded"></div>`}
         <div class="flex-1"><div class="font-semibold text-sm">${esc(p.name)}</div><div class="text-xs text-gray-500 mt-1">${(p.in_stock === false ? ["нет в наличии"] : []).concat(p.why).map(esc).join(" · ")}</div></div><b class="whitespace-nowrap">${rub(p.price)}</b></button>`).join("") : `<p class="text-gray-500">Ничего не нашлось.</p>`;
     document.querySelectorAll("#decor-options [data-pick]").forEach(b => b.onclick = () => { D.picks[line.slot] = Number(b.dataset.pick); closePicker(); decorResult(); });
   };
@@ -2161,7 +2164,7 @@ function renderCart() {
   if (!CART.length) { box.innerHTML = `<p class="text-gray-500">Корзина пуста. Добавьте товары из сметы или из раздела «Декор и мебель» кнопкой «В корзину».</p>`; return; }
   const total = CART.reduce((sum, x) => sum + x.price * x.qty, 0);
   box.innerHTML = `<div class="grid gap-3">${CART.map((x, i) => `<div class="flex flex-wrap md:flex-nowrap items-center gap-4 border border-gray-200 rounded-xl p-3">
-      ${x.picture_url ? `<img src="${esc(x.picture_url)}" alt="" class="w-16 h-16 object-contain">` : `<div class="w-16 h-16 bg-gray-100 rounded"></div>`}
+      ${x.picture_url ? `<img src="${esc(x.picture_url)}" alt="" loading="lazy" decoding="async" class="w-16 h-16 object-contain">` : `<div class="w-16 h-16 bg-gray-100 rounded"></div>`}
       <div class="flex-1 min-w-[12rem]"><div class="font-semibold text-sm">${esc(x.name)}</div><div class="text-xs text-gray-500 mt-1">${rub(x.price)} за ${esc(x.unit)}</div></div>
       <div class="flex items-center border border-gray-300 rounded-lg overflow-hidden text-sm"><button data-cart-dec="${i}" class="px-2.5 py-1 hover:bg-gray-100">−</button><span class="px-2 min-w-[2rem] text-center font-semibold">${x.qty}</span><button data-cart-inc="${i}" class="px-2.5 py-1 hover:bg-gray-100">+</button></div>
       <b class="w-28 text-right">${rub(x.price * x.qty)}</b>
