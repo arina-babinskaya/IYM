@@ -43,7 +43,7 @@ async def chat_brief(chat_id: str, request: Request, response: Response, db: Ses
         data, _ = await gigachat._chat("consultant_brief", brief.prompt(brief.transcript(history)), 700)
         # сверяем с тем, что клиент написал сам: придуманные вид ремонта и размеры отбрасываем
         client_text = "\n".join(content for role, content in history if role == "user")
-        draft = brief.verify(brief.parse(gigachat._content(data)), client_text)
+        draft = brief.verify(brief.merge(brief.DRAFTS.get(chat.id), brief.parse(gigachat._content(data))), client_text)
     except GigaChatError as exc:
         if exc.kind == "backend_configuration" or "credentials" in str(exc) or "disabled" in str(exc):
             raise HTTPException(503, "Консультант пока не настроен: нужен ключ GigaChat в .env")
@@ -57,5 +57,6 @@ async def chat_brief(chat_id: str, request: Request, response: Response, db: Ses
         raise HTTPException(502, "Не удалось разобрать разговор, попробуйте ещё раз")
     result = BriefOut(**brief.build(draft))
     brief.CACHE[chat.id] = (last_id, result)
+    brief.DRAFTS[chat.id] = draft
     brief.TURNS[chat.id] = sum(1 for role, _ in history if role == "user")
     return result

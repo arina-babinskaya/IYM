@@ -324,3 +324,47 @@ def test_hint_becomes_mandatory_in_a_long_chat():
     CACHE["chat-long"] = (10, BriefOut(ready=True, missing=[], notes=[], rooms=[]))
     assert missing_hint("chat-long") == ""  # всё собрано — не давим
     CACHE.pop("chat-long"); TURNS.pop("chat-long")
+
+
+def test_new_check_does_not_forget_what_was_collected():
+    from app.consultant_brief import merge
+    first = parse(json.dumps({"renovation_type": "capital", "rooms": [
+        {"room_type": "bathroom", "length_m": 4, "width_m": 2, "wishes": [{"text": "голубая плитка"}]}]}))
+    assert build(first)["ready"]
+    # следующий ответ модели «забыл» вид ремонта и размеры, но человек сказал новое — высоту
+    later = parse(json.dumps({"rooms": [{"room_type": "bathroom", "height_m": 2.5}]}))
+    assert not build(later)["ready"]
+    merged = merge(first, later)
+    r = build(merged)
+    room = r["rooms"][0]
+    assert r["ready"] and room["length_m"] == 4 and room["height_m"] == 2.5 and room["wishes"][0]["text"] == "голубая плитка"
+    # человек передумал: новое значение важнее прошлого
+    assert build(merge(first, parse(json.dumps({"rooms": [{"room_type": "bathroom", "length_m": 3}]}))))["rooms"][0]["length_m"] == 3
+    # модель не упомянула второе помещение — оно не пропадает
+    two = parse(json.dumps({"renovation_type": "cosmetic", "rooms": [
+        {"room_type": "kitchen", "length_m": 3, "width_m": 3}, {"room_type": "hallway", "length_m": 2, "width_m": 1}]}))
+    assert len(build(merge(two, parse(json.dumps({"rooms": [{"room_type": "kitchen"}]}))))["rooms"]) == 2
+
+
+def test_only_ceiling_chat_from_a_real_conversation():
+    from app.consultant_brief import merge, verify
+    said = "\n".join(["хочу ремонт кухни", "хочу поменять потолки", "только потолок без всего другого любой",
+                      "любые высота обычная", "5000 ничего не хочу", "натяжной", "нет", "кухня 4 на 5"])
+    prev = verify(parse(json.dumps({"rooms": [{"room_type": "kitchen"}]})), said)
+    # модель в этот раз не вернула помещение — размеры и работа всё равно из слов клиента
+    r = build(verify(merge(prev, parse('{"rooms": []}')), said))
+    room = r["rooms"][0]
+    assert r["ready"] and room["length_m"] == 4 and room["width_m"] == 5
+    assert [(w["work_type"], w["surface"]) for w in room["works"]] == [("wall_painting", "ceiling")]
+    assert any("Натяжной" in n for n in room["auto"]["notes"])
+    # модель совсем не назвала помещение, а клиент говорил только про кухню
+    assert build(verify(parse('{"rooms": []}'), said))["rooms"][0]["room_type"] == "kitchen"
+
+
+def test_invented_windows_are_dropped_in_every_room():
+    from app.consultant_brief import verify
+    two = parse(json.dumps({"renovation_type": "cosmetic", "rooms": [
+        {"room_type": "kitchen", "length_m": 3, "width_m": 3, "windows": 4},
+        {"room_type": "hallway", "length_m": 2, "width_m": 1, "doors": 3}]}))
+    d = verify(two, "косметический, кухня 3 на 3 и коридор 2 на 1")
+    assert all(r.windows is None and r.doors is None for r in d.rooms)

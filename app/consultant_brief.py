@@ -109,6 +109,7 @@ class BriefRoom(BaseModel):
 class BriefDraft(BaseModel):
     renovation_type: str | None = None
     rooms: list[BriefRoom] = []
+    notes: list[str] = []  # предупреждения для клиента, которые нашли при сверке со словами клиента
 
 
 def prompt(transcript: str) -> list[dict[str, str]]:
@@ -289,6 +290,8 @@ _V = r"(?:полож|улож|постел|стел|замен|помен|пос
 TEXT_WORKS = [
     (re.compile(r"(?:по|о)крас\w*\s+(?:\S+\s+){0,2}потол", re.I), "wall_painting:ceiling:"),
     (re.compile(r"(?:по|о)крас\w*\b(?!\s+потол)", re.I), "wall_painting:wall:"),
+    (re.compile(_V + r"потол|(?:обнов|отремонт)\w*\s+(?:\S+\s+){0,1}потол|\bтолько\s+потол|натяжн\w*\s+потол|потол\w*\s+натяжн", re.I),
+     "wall_painting:ceiling:"),
     (re.compile(r"(?:по|пере|о)кле\w*|клеить\s+обо|обои\s+(?:поклеить|поменять|заменить)", re.I), "wallpapering:wall:"),
     (re.compile(_V + r"ламинат", re.I), "floor_covering_install:floor:ламинат"),
     (re.compile(_V + r"линолеум", re.I), "floor_covering_install:floor:линолеум"),
@@ -317,29 +320,80 @@ def works_from_text(text: str) -> list[str]:
     return list(dict.fromkeys(found))
 
 
+def merge(prev: BriefDraft | None, new: BriefDraft) -> BriefDraft:
+    """Новая проверка дополняет прошлую, а не начинает с нуля.
+
+    GigaChat каждый раз отвечает чуть по-разному и может «забыть» уже сказанное — тогда кнопка расчёта
+    пропадала бы. Что клиент назвал заново, берём новое; чего в новом ответе нет — оставляем из прошлого.
+    """
+    if prev is None:
+        return new
+    out = BriefDraft(renovation_type=new.renovation_type or prev.renovation_type, rooms=[])
+    left = list(prev.rooms)
+    for room in new.rooms:
+        old = next((r for r in left if r.room_type == room.room_type and (not room.name or not r.name or r.name == room.name)), None)
+        if old is None:
+            out.rooms.append(room)
+            continue
+        left.remove(old)
+        merged = room.model_copy()
+        for field in ("name", "length_m", "width_m", "height_m", "area_m2", "windows", "doors"):
+            if getattr(merged, field) is None:
+                setattr(merged, field, getattr(old, field))
+        for field in ("openings", "wishes", "add_works", "remove_works"):
+            if not getattr(merged, field):
+                setattr(merged, field, getattr(old, field))
+        merged.only_works = room.only_works or old.only_works
+        out.rooms.append(merged)
+    out.rooms += left  # помещения, о которых в этот раз модель не упомянула, не теряем
+    return out
+
+
+ROOM_WORDS = [(re.compile(r"кухн", re.I), "kitchen"), (re.compile(r"столов", re.I), "dining_room"),
+              (re.compile(r"гостин|зал\b", re.I), "living_room"), (re.compile(r"спальн|детск", re.I), "bedroom"),
+              (re.compile(r"ванн|санузел|туалет", re.I), "bathroom"), (re.compile(r"прихож|коридор", re.I), "hallway"),
+              (re.compile(r"кабинет", re.I), "home_office"), (re.compile(r"кладов|постироч", re.I), "utility_room"),
+              (re.compile(r"балкон|лоджи", re.I), "balcony")]
+# потолок, который калькулятор посчитать не может: в нём есть только окраска потолка
+SPECIAL_CEILING = re.compile(r"натяжн|реечн|кассетн|армстронг", re.I)
+
+
 def verify(draft: BriefDraft, client_text: str) -> BriefDraft:
-    """Убираем то, чего клиент не говорил: вид ремонта без его слов, размеры, которых нет в переписке."""
+    """Убираем то, чего клиент не говорил: вид ремонта без его слов, размеры, которых нет в переписке.
+
+    Вызывается уже после merge(): так данные из прошлых проверок тоже сверяются со словами клиента,
+    а пропущенное моделью добираем из этих слов.
+    """
     try:
         reno = RenovationType(draft.renovation_type)
     except ValueError:
         reno = None
     if reno and not RENOVATION_WORDS[reno].search(client_text):
         draft.renovation_type = None
+    if not draft.rooms:  # модель не назвала помещение — возьмём из слов клиента, если оно одно
+        named = list(dict.fromkeys(t for rx, t in ROOM_WORDS if rx.search(client_text)))
+        if len(named) == 1:
+            draft.rooms = [BriefRoom(room_type=named[0])]
     for room in draft.rooms:
         for field in ("length_m", "width_m", "height_m", "area_m2"):
             if not _said(getattr(room, field), client_text):
                 setattr(room, field, None)
-    if len(draft.rooms) == 1:  # одно помещение: размеры, которые модель пропустила, берём прямо из слов клиента
-        room, found = draft.rooms[0], sizes_from_text(client_text)
-        for field, value in found.items():
-            if getattr(room, field) is None:
-                setattr(room, field, value)
-        if draft.renovation_type is None and not room.add_works:  # вида ремонта нет — может, человек назвал работы
-            room.add_works = [k for k in works_from_text(client_text) if k not in room.remove_works]
         if not re.search(r"окн|окон", client_text, re.I):
             room.windows = None
         if not re.search(r"двер", client_text, re.I):
             room.doors = None
+    if len(draft.rooms) == 1:  # одно помещение: размеры и работы, которые модель пропустила, берём прямо из слов клиента
+        room, found = draft.rooms[0], sizes_from_text(client_text)
+        for field, value in found.items():
+            if getattr(room, field) is None:
+                setattr(room, field, value)
+        if draft.renovation_type is None:  # вида ремонта нет — может, человек назвал работы
+            room.add_works = list(dict.fromkeys(room.add_works + [k for k in works_from_text(client_text)
+                                                                  if k not in room.remove_works]))
+    draft.notes = []
+    if SPECIAL_CEILING.search(client_text) and re.search(r"потол", client_text, re.I):
+        draft.notes.append("Натяжной и подвесной потолок калькулятор пока не считает — в смете окраска потолка; "
+                           "натяжной обычно заказывают у монтажников под ключ")
     return draft
 
 
@@ -431,13 +485,17 @@ def build(draft: BriefDraft) -> dict:
                         "only": only}
         rooms.append(room)
     renovation = renovation or (RenovationType(rooms[0]["renovation_type"]) if rooms else None)
+    if rooms and draft.notes:  # видно и в полоске под чатом, и на шаге «Работы»
+        rooms[0]["auto"]["notes"] = list(draft.notes) + rooms[0]["auto"]["notes"]
+    notes = list(draft.notes) + notes
     return {"ready": not missing and bool(rooms), "missing": missing, "notes": notes,
             "renovation_type": renovation.value if renovation else None, "rooms": rooms}
 
 
 # чат → (id последнего сообщения, последняя проверка): пока разговор не продолжился, GigaChat повторно не спрашиваем
 CACHE: dict[str, tuple[int, object]] = {}
-TURNS: dict[str, int] = {}  # сколько сообщений клиента было в разговоре на момент последней проверки
+TURNS: dict[str, int] = {}
+DRAFTS: dict[str, BriefDraft] = {}  # последний проверенный черновик чата — следующая проверка его дополняет  # сколько сообщений клиента было в разговоре на момент последней проверки
 ASK_AFTER = 4  # после стольких сообщений клиента недостающее консультант спрашивает обязательно
 
 
